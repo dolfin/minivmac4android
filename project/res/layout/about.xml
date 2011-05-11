@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	android:orientation="vertical">
+	<ScrollView
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_weight="1">
+
+		<LinearLayout
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:orientation="vertical"
+		android:paddingLeft="4px"
+		android:paddingRight="4px">
+			<TextView android:text="Mini vMac for Android"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:textSize="16px" />
+			<TextView android:text="version/build"
+				android:id="@+id/versionText"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:textSize="13px" />
+			<TextView android:text="@string/aboutText"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:textSize="15px"
+				android:autoLink="web" />
+		</LinearLayout>
+	</ScrollView>
+
+	<LinearLayout
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_weight="0">
+	<Button
+		android:id="@+id/buttonOK"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:text="OK"
+		android:layout_weight="1"/>
+	</LinearLayout>
+</LinearLayout>

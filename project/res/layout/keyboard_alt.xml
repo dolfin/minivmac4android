@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:key="http://schemas.android.com/apk/res/name.osher.gil.minivmac">
+    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
+    	<name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="18" android:text="1"/>
+    	<name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="19" android:text="2"/>
+    	<name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="20" android:text="3"/>
+    	<name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="21" android:text="4"/>
+    	<name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="23" android:text="5"/>
+    	<name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="22" android:text="6"/>
+    	<name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="26" android:text="7"/>
+    	<name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="28" android:text="8"/>
+    	<name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="25" android:text="9"/>
+    	<name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="29" android:text="0"/>
+    </LinearLayout>
+    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
+     	<name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="50" android:text="`"/>
+     	<name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="27" android:text="-"/>
+     	<name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="24" android:text="="/>
+     	<name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="33" android:text="["/>
+     	<name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="30" android:text="]"/>
+     	<name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="77" android:text="↑"/>
+     	<name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="41" android:text=";"/>
+     	<name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="39" android:text="'"/>
+     	<name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="42" android:text="\\"/>
+    </LinearLayout>
+    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
+    	 <name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="56" key:upImage="@drawable/kb_shift_up" key:downImage="@drawable/kb_shift_down" key:holdImage="@drawable/kb_shift_hold" />
+    	 <name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="43" android:text=","/>
+        <name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="47" android:text="."/>
+        <name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="44" android:text="/"/>
+    	 <name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="70" android:text="←"/>
+    	 <name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="72" android:text="↓"/>
+    	 <name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="66" android:text="→" android:layout_marginRight="47px"/>
+    	 <name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="51" key:upImage="@drawable/kb_backspace_up" key:downImage="@drawable/kb_backspace_down"/>
+    </LinearLayout>
+    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
+    	<Button android:id="@+id/btnHide" android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/toggle_button" />
+    	<name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="58" key:upImage="@drawable/kb_option_up" key:downImage="@drawable/kb_option_down" key:holdImage="@drawable/kb_option_hold" />
+        <name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="55" key:upImage="@drawable/kb_command_up" key:downImage="@drawable/kb_command_down" key:holdImage="@drawable/kb_command_hold" />
+        <name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="49" key:upImage="@drawable/kb_space_up" key:downImage="@drawable/kb_space_down"/>
+        <name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="53" key:upImage="@drawable/kb_escape_up" key:downImage="@drawable/kb_escape_down"/>
+        <name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="48" key:upImage="@drawable/kb_tab_up" key:downImage="@drawable/kb_tab_down"/>
+        <name.osher.gil.minivmac.Key android:layout_width="wrap_content" android:layout_height="wrap_content" key:scanCode="36" key:upImage="@drawable/kb_return_up" key:downImage="@drawable/kb_return_down" />
+        
+    </LinearLayout>
+</merge>

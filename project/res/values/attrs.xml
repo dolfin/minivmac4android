@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+<declare-styleable name="Key">
+
+<attr name="scanCode" format="integer"/>
+<attr name="downImage" format="integer"/>
+<attr name="upImage" format="integer"/>
+<attr name="holdImage" format="integer"/>
+
+</declare-styleable>
+
+</resources>
