@@ -77,9 +77,10 @@ containing a value of this type.
         public static final int kb_toggle_down=0x7f02001f;
         public static final int kb_toggle_up=0x7f020020;
         public static final int keyboard=0x7f020021;
-        public static final int ps_interrupt=0x7f020022;
-        public static final int ps_reset=0x7f020023;
-        public static final int toggle_button=0x7f020024;
+        public static final int magnifier=0x7f020022;
+        public static final int ps_interrupt=0x7f020023;
+        public static final int ps_reset=0x7f020024;
+        public static final int toggle_button=0x7f020025;
     }
     public static final class id {
         public static final int btnHide=0x7f050002;
@@ -95,22 +96,25 @@ containing a value of this type.
         public static final int screen=0x7f030003;
     }
     public static final class string {
-        public static final int aboutText=0x7f04000a;
+        public static final int aboutText=0x7f04000b;
         public static final int app_name=0x7f040000;
-        public static final int btn_continue=0x7f040008;
-        public static final int btn_ok=0x7f040009;
-        public static final int btn_quit=0x7f040007;
-        public static final int build=0x7f04000c;
-        public static final int errInitEmu=0x7f04000f;
-        public static final int errNoDataDir=0x7f04000d;
-        public static final int errNoROM=0x7f04000e;
+        public static final int btn_continue=0x7f040009;
+        public static final int btn_ok=0x7f04000a;
+        public static final int btn_quit=0x7f040008;
+        public static final int build=0x7f04000d;
+        public static final int errInitEmu=0x7f040012;
+        public static final int errNoDataDir=0x7f04000e;
+        public static final int errNoDataDir2=0x7f04000f;
+        public static final int errNoROM=0x7f040010;
+        public static final int errNoROM2=0x7f040011;
         public static final int menu_about=0x7f040002;
         public static final int menu_insert_disk=0x7f040003;
         public static final int menu_interrupt=0x7f040006;
         public static final int menu_keyboard=0x7f040004;
         public static final int menu_reset=0x7f040005;
+        public static final int menu_scale=0x7f040007;
         public static final int menu_settings=0x7f040001;
-        public static final int version=0x7f04000b;
+        public static final int version=0x7f04000c;
     }
     public static final class styleable {
         /** Attributes that can be used with a Key.

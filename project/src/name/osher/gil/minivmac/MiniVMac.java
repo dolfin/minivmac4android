@@ -5,16 +5,18 @@ import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.nio.ByteBuffer;
 
-import name.osher.gil.minivmac.R;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Environment;
+import android.text.SpannableString;
+import android.text.method.LinkMovementMethod;
+import android.text.util.Linkify;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -23,6 +25,7 @@ import android.view.MotionEvent;
 import android.view.SubMenu;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.TextView;
 
 public class MiniVMac extends Activity {
 	private static MiniVMac instance;
@@ -34,6 +37,7 @@ public class MiniVMac extends Activity {
 	private final static int MENU_KEYBOARD = 4;
 	private final static int MENU_RESET = 5;
 	private final static int MENU_INTERRUPT = 6;
+	private final static int MENU_SCALE = 7;
 	private static int TRACKBALL_SENSITIVITY = 8;
 	private File dataDir;
 	private ScreenView screenView;
@@ -63,14 +67,7 @@ public class MiniVMac extends Activity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         
         // set screen orientation
-        Display d = ((WindowManager) getSystemService(WINDOW_SERVICE)).getDefaultDisplay();  //getWindowManager().getDefaultDisplay();
-        if (d.getHeight() > d.getWidth() && d.getOrientation() == 0) {
-        	setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        } else if (d.getHeight() < d.getWidth() && d.getOrientation() == 1) {
-        	setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        } else {
-        	setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        }
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
         setContentView(R.layout.screen);
         screenView = (ScreenView)findViewById(R.id.screen);
@@ -78,7 +75,8 @@ public class MiniVMac extends Activity {
         // find data directory
         dataDir = new File(Environment.getExternalStorageDirectory(), "minivmac");
         if (!(dataDir.isDirectory() && dataDir.canRead())) {
-        	showAlert(getString(R.string.errNoDataDir) + " " + dataDir.getPath(), true);
+        	showAlert(getString(R.string.errNoDataDir) + " " + dataDir.getPath()
+        			+ "\n\n" + getString(R.string.errNoDataDir2), true);
         	return;
         }
 
@@ -89,7 +87,8 @@ public class MiniVMac extends Activity {
         	FileInputStream romReader = new FileInputStream(romFile);
         	romReader.getChannel().read(rom);
         } catch (Exception x) {
-        	showAlert(getString(R.string.errNoROM) + " " + romFile.getPath(), true);
+        	showAlert(getString(R.string.errNoROM) + " " + romFile.getPath()
+        			+ "\n\n" + getString(R.string.errNoROM2), true);	
         	return;
         }
         
@@ -117,8 +116,11 @@ public class MiniVMac extends Activity {
     }
 
 	public static void showAlert(String msg, boolean end) {
+		final SpannableString s = new SpannableString(msg);
+	    Linkify.addLinks(s, Linkify.ALL);
+	    
 		AlertDialog.Builder alert = new AlertDialog.Builder(instance);
-		alert.setMessage(msg);
+		alert.setMessage(s);
 		alert.setCancelable(false);
 		if (end) {
 			alert.setNegativeButton(R.string.btn_quit, new OnClickListener() { 
@@ -130,7 +132,11 @@ public class MiniVMac extends Activity {
 			alert.setNeutralButton(R.string.btn_ok, null);
 		}
 		
-		alert.show();
+		AlertDialog d = alert.create();
+		d.show();
+		
+	    // Make the textview clickable. Must be called after show()
+	    ((TextView)d.findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
 	}
 	
 	public static void showWarnMessage(String title, String msg, boolean end) {
@@ -208,6 +214,7 @@ public class MiniVMac extends Activity {
 		menu.addSubMenu(0, MENU_INSERTDISK, 0, R.string.menu_insert_disk).setIcon(R.drawable.disk_floppy_color);
 		//menu.add(0, MENU_SETTINGS, 0, R.string.menu_settings);
 		menu.add(0, MENU_KEYBOARD, 0, R.string.menu_keyboard).setIcon(R.drawable.keyboard);
+		menu.add(0, MENU_SCALE, 0, R.string.menu_scale).setIcon(R.drawable.magnifier);
 		menu.add(0, MENU_RESET, 0, R.string.menu_reset).setIcon(R.drawable.ps_reset);
 		menu.add(0, MENU_INTERRUPT, 0, R.string.menu_interrupt).setIcon(R.drawable.ps_interrupt);
 		menu.add(0, MENU_ABOUT, 0, R.string.menu_about).setIcon(R.drawable.icon_classic);
@@ -252,6 +259,9 @@ public class MiniVMac extends Activity {
 			break;
 		case MENU_INTERRUPT:
 			interrupt();
+			break;
+		case MENU_SCALE:
+			screenView.setScaled(!screenView.isScaled());
 			break;
 		case MENU_SETTINGS:
 			

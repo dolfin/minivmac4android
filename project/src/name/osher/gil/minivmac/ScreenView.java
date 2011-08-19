@@ -97,18 +97,27 @@ public class ScreenView extends View {
 		int realHeight = dm.heightPixels;
 		int realWidth = dm.widthPixels;
 		
-		if (dm.heightPixels > dm.widthPixels && wm.getDefaultDisplay().getOrientation() == 1) {
+		if (dm.heightPixels > dm.widthPixels) {
 			realHeight = dm.widthPixels;
 			realWidth = dm.heightPixels;
-		} else if(dm.heightPixels < dm.widthPixels && wm.getDefaultDisplay().getOrientation() == 0) {
-			realHeight = dm.widthPixels;
-			realWidth = dm.heightPixels;
+		}
+		
+		Boolean perfectScale = false;
+		if (((screenWidth * 2) <= realWidth) && ((screenHeight * 2) <= realHeight)) {
+			perfectScale = true;
+		} else if (scaled) {
+			double aspectRatio = (double)screenWidth / screenHeight;
+			realWidth = (int) (realHeight * aspectRatio);
 		}
 		
 		this.scaled = scaled;
 		screenPaint.setFilterBitmap(scaled);
 		if (scaled) {
-			srcRect = new Rect(0, 0, screenWidth, screenHeight);
+			if (perfectScale) {
+				srcRect = new Rect(0, 0, realWidth/2, realHeight/2);
+			} else {
+				srcRect = new Rect(0, 0, screenWidth, screenHeight);
+			}
 			dstRect = new Rect(0, 0, realWidth, realHeight);
 		} else {
 			srcRect = new Rect(0, 0, realWidth, realHeight);
