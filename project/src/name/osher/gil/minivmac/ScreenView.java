@@ -80,8 +80,8 @@ public class ScreenView extends View {
 	private int[] translateMouseCoords(int x, int y) {
 		int[] coords = new int[2];
 		if (scaled) {
-			coords[0] = (x * screenWidth) / dstRect.right;
-			coords[1] = (y * screenHeight) / dstRect.bottom;
+			coords[0] = (x * srcRect.right) / dstRect.right;
+			coords[1] = (y * srcRect.bottom) / dstRect.bottom;
 		} else {
 			coords[0] = x + srcRect.left;
 			coords[1] = y + srcRect.top;
