@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='utf-8'>
+
+  <title>dolfin/minivmac4android @ GitHub</title>
+
+  <style type="text/css">
+    body {
+      margin-top: 1.0em;
+      background-color: #e1e2e3;
+      font-family: Helvetica, Arial, FreeSans, san-serif;
+      color: #000000;
+    }
+    #container {
+      margin: 0 auto;
+      width: 700px;
+    }
+    h1 { font-size: 3.8em; color: #4e4d4c; margin-bottom: 3px; }
+    h1 .small { font-size: 0.4em; }
+    h1 a { text-decoration: none }
+    h2 { font-size: 1.5em; color: #4e4d4c; }
+    h3 { text-align: center; color: #4e4d4c; }
+    a { color: #4e4d4c; }
+    .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
+    .download { float: right; }
+    pre { background: #000; color: #fff; padding: 15px;}
+    hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
+    .footer { text-align:center; padding-top:30px; font-style: italic; }
+  </style>
+</head>
+
+<body>
+  <a href="http://github.com/dolfin/minivmac4android"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+
+  <div id="container">
+
+    <div class="download">
+      <a href="https://github.com/downloads/dolfin/minivmac4android/MiniVMac_1_0_3.apk">
+        <img border="0" width="150" src="https://chart.googleapis.com/chart?cht=qr&chs=150x150&chl=https://github.com/downloads/dolfin/minivmac4android/MiniVMac_1_0_3.apk"></a>
+    </div>
+
+    <h1><a href="http://github.com/dolfin/minivmac4android">Mini vMac for Android</a>
+      <span class="small">by <a href="http://github.com/dolfin">dolfin</a></span></h1>
+
+    <div class="description">
+      Mini vMac port for Android
+    </div>
+
+    <p>This is a port of the Mini vMac emulator for the Android platform. It supports almost any Android device, starting from android version 1.5.</p>
+<p>It is based on a port by Jesús A. Álvarez who also made the iPhone port of Mini vMac.</p>
+<h2>Features</h2>
+<ul>
+<li>4MB Mac Plus</li>
+<li>Full screen (scaled down if needed) or scrolling if needed (full size)</li>
+<li>Full simulated keyboard (including all Mac keys) and physical keyboard support</li>
+<li>Sound</li>
+</ul>
+<h2>Requirements</h2>
+<ul>
+<li>Android device (version 1.5 or more)</li>
+<li>SD Card</li>
+<li><a href="http://minivmac.sourceforge.net/doc/start.html">Mac Plus ROM image</a></li>
+<li>Disk images with Mac software</li>
+</ul>
+<h2>Install</h2>
+<p><a href="http://market.android.com/details?id=name.osher.gil.minivmac">
+  <img src="http://www.android.com/images/brand/60_avail_market_logo2.png"
+       alt="Available in Android Market" />
+</a></p>
+<p>Alternatively, You can <a href="https://github.com/downloads/dolfin/minivmac4android/MiniVMac_1_0_3.apk">download the apk file</a> and open it on your device. Or <a href="https://github.com/dolfin/minivmac4android/MiniVMac_1_0_3.apk/qr_code">grab this barcode</a> with your camera.</p>
+
+<h2>Usage</h2>
+<h3>Rom Installation</h3>
+<p>The ROM file must be named <code>vMac.ROM</code> and placed in <code>minivmac</code> directory
+in your SD Card.</p>
+<h3>Disk Images</h3>
+<p>Disk images should have <code>.img</code> or <code>.dsk</code> extensions, and be located in <code>minivmac</code> directory
+in your SD Card for them to show up in the disk chooser.</p>
+<p>To insert disk images, click the <b>Menu</b> button and choose <b>Insert Disk</b> and the list of disks will appear.</p>
+<h3>Keyboard</h3>
+<p>Click the <b>Menu</b> button and choose <b>Keyboard</b> to show or hide the keyboard.</p>
+<p>The emulated keyboard features all the keys on the Mac Plus keyboard, except the keypad. The Command, Option and Shift keys are sticky. If your device have a physical keyboard you can use it as well.</p>
+<h3>Mouse</h3>
+<p>Use the screen as a touchscreen, where tapping anything sends a mouse click.</p>
+<h3>Screen</h3>
+<p>You can toggle between full screen (if you have a device with low resolution the Mac screen will be scaled down to fit your screen) or full size (the Mac screen is shown at its real size) by clicking the <b>Select</b> button. In full size mode, you can scroll by using the arrows.</p>
+<h3>Suspend</h3>
+<p>If you press the home button while the emulated Mac has disks inserted, Mini vMac will pause but stay open. To quit Mini vMac properly, eject all disks before pressing home. Note that when Mini vMac is suspended, it still uses memory and could be forced to quit if the memory is low.</p>
+
+<h2>Screenshots</h2>
+<p><img src="screenshot1.png"></p>
+<p><img src="screenshot2.png"></p>
+<p><img src="screenshot3.png"></p>
+<p><img src="screenshot4.png"></p>
+
+<h2>Change Log</h2>
+<p><b>1.0.3</b>
+<ul>
+<li>Fixed pointer issue on scaled screens.
+</ul>
+</p>
+<p><b>1.0.2</b>
+<ul>
+<li>Fixed screen resolution for Motorola XOOM. (Thanks for Ethan Piliavin)
+<li>Added scale screen button to the menu
+</ul>
+</p>
+<p><b>1.0.1</b>
+<ul>
+<li>Fixed screen resolution for Samsung Galaxy Tab devices. (Thanks for Matthias von Davier)
+</ul>
+</p>
+<p><b>1.0.0</b>
+<ul>
+<li>Initial Release
+</ul>
+</p>
+<h2>License</h2>
+<p>This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.</p>
+
+<p>This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<a href="http://www.gnu.org/licenses/#GPL">GNU General Public License</a> for more details.</p>
+
+<p>You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA</p>
+<h2>Authors</h2>
+<p>Gil Osher (<a href="matilto:gilosher@gmail.com">gilosher@gmail.com</a>)
+<br/>Jesús A. Álvarez (<a href="matilto:maczydeco@gmail.com">maczydeco@gmail.com</a>)
+<br/>      </p>
+<h2>Contact</h2>
+<p>Gil Osher (<a href="matilto:gilosher@gmail.com">gilosher@gmail.com</a>)
+<br/>      </p>
+
+
+    <h2>Development</h2>
+    <p>
+     <ul>
+      <li>Mini vMac for Android is based on Mini vMac 3.1.3 by Paul C. Pratt.</li>
+      <li>Mini vMac for Android is written and built using <a href="http://developer.android.com/sdk/index.html">Android SDK</a>, <a href="http://developer.android.com/sdk/ndk/index.html">Android NDK</a> and <a href="http://www.eclipse.org/">Eclipse</a>.</li>
+      <li><a href="http://minivmac.sourceforge.net/">Mini vMac main page</a></li>
+     </ul>
+    </p>
+    <p>
+      You can download this project source in either
+      <a href="http://github.com/dolfin/minivmac4android/zipball/master">zip</a> or
+      <a href="http://github.com/dolfin/minivmac4android/tarball/master">tar</a> formats.
+    </p>
+    <p>You can also clone the project with <a href="http://git-scm.com">Git</a>
+      by running:
+      <pre>$ git clone git://github.com/dolfin/minivmac4android</pre>
+    </p>
+
+    <div class="footer">
+      get the source code on GitHub : <a href="http://github.com/dolfin/minivmac4android">dolfin/minivmac4android</a>
+    </div>
+
+  </div>
+
+  <script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-23389273-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+</body>
+</html>
