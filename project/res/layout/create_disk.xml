@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:orientation="vertical"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent">
+    <SeekBar android:id="@+id/size" android:layout_height="wrap_content" android:layout_width="match_parent" android:layout_below="@+id/name" android:layout_alignLeft="@+id/name" android:layout_marginTop="23dp" android:layout_alignRight="@+id/name"></SeekBar>
+    <TextView android:id="@+id/sizeText" android:text="@string/sizeTextStub" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignBottom="@+id/size" android:layout_alignLeft="@+id/create"></TextView>
+    <TextView android:id="@+id/sizeLabel" android:text="@string/size" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignTop="@+id/size" android:layout_alignLeft="@+id/nameLabel"></TextView>
+    <EditText android:id="@+id/name" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignTop="@+id/nameLabel" android:layout_toRightOf="@+id/nameLabel" android:layout_toLeftOf="@+id/create" android:layout_marginLeft="16dp" android:layout_marginRight="16dp">
+        <requestFocus></requestFocus>
+    </EditText>
+    <TextView android:id="@+id/nameLabel" android:text="@string/name" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentTop="true" android:layout_alignParentLeft="true" android:layout_marginLeft="16dp" android:layout_marginTop="18dp"></TextView>
+    <Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/create" android:text="@string/create" android:layout_alignTop="@+id/name" android:layout_alignParentRight="true" android:layout_marginRight="20dp"></Button>
+</RelativeLayout>
+<!-- <TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:orientation="vertical"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content">
+    <TableRow android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/tableRow1">
+        <TextView android:layout_width="wrap_content" android:text="@string/name" android:layout_height="wrap_content" android:id="@+id/nameLabel"></TextView>
+        <EditText android:layout_height="wrap_content" android:id="@+id/name" android:layout_width="match_parent"></EditText>
+        <Button android:text="@string/create" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignTop="@+id/name" android:id="@+id/create"></Button>
+    </TableRow>
+	<TableRow android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/tableRow2">
+	    <TextView android:layout_width="wrap_content" android:text="@string/size" android:layout_height="wrap_content" android:id="@+id/sizeLabel"></TextView>
+	    <SeekBar android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/size" android:layout_below="@+id/name"></SeekBar>
+	    <TextView android:layout_width="wrap_content" android:text="@string/sizeTextStub" android:layout_height="wrap_content" android:id="@+id/sizeText"></TextView>
+	</TableRow>
+</TableLayout>-->

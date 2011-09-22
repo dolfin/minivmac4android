@@ -83,38 +83,54 @@ containing a value of this type.
         public static final int toggle_button=0x7f020025;
     }
     public static final class id {
-        public static final int btnHide=0x7f050002;
+        public static final int btnHide=0x7f050008;
         public static final int buttonOK=0x7f050001;
-        public static final int keyboard=0x7f050004;
-        public static final int screen=0x7f050003;
+        public static final int create=0x7f050005;
+        public static final int keyboard=0x7f05000a;
+        public static final int name=0x7f050003;
+        public static final int nameLabel=0x7f050007;
+        public static final int screen=0x7f050009;
+        public static final int size=0x7f050002;
+        public static final int sizeLabel=0x7f050006;
+        public static final int sizeText=0x7f050004;
         public static final int versionText=0x7f050000;
     }
     public static final class layout {
         public static final int about=0x7f030000;
-        public static final int keyboard=0x7f030001;
-        public static final int keyboard_alt=0x7f030002;
-        public static final int screen=0x7f030003;
+        public static final int create_disk=0x7f030001;
+        public static final int keyboard=0x7f030002;
+        public static final int keyboard_alt=0x7f030003;
+        public static final int screen=0x7f030004;
     }
     public static final class string {
-        public static final int aboutText=0x7f04000b;
+        public static final int aboutText=0x7f04000c;
         public static final int app_name=0x7f040000;
-        public static final int btn_continue=0x7f040009;
-        public static final int btn_ok=0x7f04000a;
-        public static final int btn_quit=0x7f040008;
-        public static final int build=0x7f04000d;
-        public static final int errInitEmu=0x7f040012;
-        public static final int errNoDataDir=0x7f04000e;
-        public static final int errNoDataDir2=0x7f04000f;
-        public static final int errNoROM=0x7f040010;
-        public static final int errNoROM2=0x7f040011;
+        public static final int btn_continue=0x7f04000a;
+        public static final int btn_ok=0x7f04000b;
+        public static final int btn_quit=0x7f040009;
+        public static final int build=0x7f04000e;
+        public static final int create=0x7f040019;
+        public static final int creatingDisk=0x7f04001b;
+        public static final int errCreateDisk=0x7f040014;
+        public static final int errFileExist=0x7f040015;
+        public static final int errGeneral=0x7f040016;
+        public static final int errInitEmu=0x7f040013;
+        public static final int errNoDataDir=0x7f04000f;
+        public static final int errNoDataDir2=0x7f040010;
+        public static final int errNoROM=0x7f040011;
+        public static final int errNoROM2=0x7f040012;
         public static final int menu_about=0x7f040002;
+        public static final int menu_create_disk=0x7f040008;
         public static final int menu_insert_disk=0x7f040003;
         public static final int menu_interrupt=0x7f040006;
         public static final int menu_keyboard=0x7f040004;
         public static final int menu_reset=0x7f040005;
         public static final int menu_scale=0x7f040007;
         public static final int menu_settings=0x7f040001;
-        public static final int version=0x7f04000c;
+        public static final int name=0x7f040017;
+        public static final int size=0x7f040018;
+        public static final int sizeTextStub=0x7f04001a;
+        public static final int version=0x7f04000d;
     }
     public static final class styleable {
         /** Attributes that can be used with a Key.

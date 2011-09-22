@@ -9,6 +9,7 @@
 	<string name="menu_reset">Reset</string>
 	<string name="menu_interrupt">Interrupt</string>
 	<string name="menu_scale">Scale</string>
+	<string name="menu_create_disk">Create a new disk...</string>
 	<string name="btn_quit">Quit</string>
 	<string name="btn_continue">Continue</string>
 	<string name="btn_ok">OK</string>
@@ -20,4 +21,12 @@
 	<string name="errNoROM">Cannot find ROM file:</string>
 	<string name="errNoROM2">This file should be named \&quot;vMac.ROM\&quot; and should be put on a folder named \&quot;minivmac\&quot; on you external SD card, together with the disk images.\n\nPlease refer http://minivmac.sourceforge.net/doc/start.html for more info.</string>
 	<string name="errInitEmu">Could not initialize emulation</string>
+	<string name="errCreateDisk">Sorry, I couldn\'t create the disk because an I/O error occurred. Make sure you got enough space on your SD card.</string>
+	<string name="errFileExist">File already exists. Please choose a different disk name.</string>
+	<string name="errGeneral">Can\'t create disk.</string>
+	<string name="name">Name:</string>
+	<string name="size">Size:</string>
+	<string name="create">Create</string>
+	<string name="sizeTextStub">125.00 MiB</string>
+	<string name="creatingDisk">Creating disk. Please wait...</string>
 </resources>

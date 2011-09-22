@@ -10,14 +10,13 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
-import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Environment;
 import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
 import android.text.util.Linkify;
-import android.view.Display;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -38,9 +37,12 @@ public class MiniVMac extends Activity {
 	private final static int MENU_RESET = 5;
 	private final static int MENU_INTERRUPT = 6;
 	private final static int MENU_SCALE = 7;
+	private final static int MENU_CREATEDISK = 8;
+	private final static int ACTIVITY_CREATE_DISK = 200;
 	private static int TRACKBALL_SENSITIVITY = 8;
 	private File dataDir;
 	private ScreenView screenView;
+	private Boolean onActivity = false;
 	
 	public static MiniVMac getInstance() {
 		return instance;
@@ -71,6 +73,8 @@ public class MiniVMac extends Activity {
 
         setContentView(R.layout.screen);
         screenView = (ScreenView)findViewById(R.id.screen);
+        
+        onActivity = false;
         
         // find data directory
         dataDir = new File(Environment.getExternalStorageDirectory(), "minivmac");
@@ -107,7 +111,7 @@ public class MiniVMac extends Activity {
     public void onPause () {
     	Core.pauseEmulation();
     	super.onPause();
-    	if (!Core.hasDisksInserted()) System.exit(0);
+    	if (!Core.hasDisksInserted() && !onActivity) System.exit(0);
     }
     
     public void onResume () {
@@ -225,6 +229,8 @@ public class MiniVMac extends Activity {
 		SubMenu dm = menu.findItem(MENU_INSERTDISK).getSubMenu();
 		dm.clear();
 		dm.setHeaderIcon(R.drawable.disk_floppy_color);
+		// add create disk
+		dm.add(0, MENU_CREATEDISK, 0, R.string.menu_create_disk);
 		// add disks
 		File[] disks = getAvailableDisks();
 		for(int i=0; i < disks.length; i++) {
@@ -263,6 +269,9 @@ public class MiniVMac extends Activity {
 		case MENU_SCALE:
 			screenView.setScaled(!screenView.isScaled());
 			break;
+		case MENU_CREATEDISK:
+			showCreateDisk();
+			break;
 		case MENU_SETTINGS:
 			
 			break;
@@ -273,6 +282,12 @@ public class MiniVMac extends Activity {
 	public void showAbout() {
 		Dialog dialog = new AboutDialog(this);
         dialog.show(); 
+	}
+	
+	public void showCreateDisk() {
+		onActivity = true;
+		Intent i = new Intent(MiniVMac.this, CreateDisk.class);
+		startActivityForResult(i, ACTIVITY_CREATE_DISK);
 	}
 	
 	public void toggleKeyboard() {
@@ -306,5 +321,25 @@ public class MiniVMac extends Activity {
 		});
 	}
 
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data)
+	{
+		super.onActivityResult(requestCode, resultCode, data);
+		
+		onActivity = false;
+		
+		if (requestCode == ACTIVITY_CREATE_DISK && resultCode == RESULT_OK)
+		{
+			Bundle extras = data.getExtras();
+	    	
+	    	if (extras != null) {
+	    		if (extras.containsKey("diskPath")) {
+	    			String diskPath = extras.getString("diskPath");
+	    			Core.insertDisk(diskPath);
+	    		}
+	    	}
+		}
+	}
+	
 }
 
