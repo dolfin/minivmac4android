@@ -13,7 +13,7 @@
 	<string name="btn_quit">Quit</string>
 	<string name="btn_continue">Continue</string>
 	<string name="btn_ok">OK</string>
-	<string name="aboutText">based on Mini vMac 3.1.3 by Paul C. Pratt\n\nMini vMac contains the work of many people.\nThis version is maintained by:\nGil Osher, http://dolfin.github.com/minivmac4android\n\nBased on a version by:\nJesús A. Álvarez, http://namedfork.net\n\nMini vMac is distributed under the terms of the GNU Public License, version 2.\n\nMini vMac is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.</string>
+	<string name="aboutText">based on Mini vMac 3.2.3 by Paul C. Pratt\n\nMini vMac contains the work of many people.\nThis version is maintained by:\nGil Osher, http://dolfin.github.com/minivmac4android\n\nBased on a version by:\nJesús A. Álvarez, http://namedfork.net\n\nMini vMac is distributed under the terms of the GNU Public License, version 2.\n\nMini vMac is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.</string>
 	<string name="version">version</string>
 	<string name="build">build</string>
 	<string name="errNoDataDir">Cannot read data directory:</string>
