@@ -22,12 +22,15 @@
 
 enum {
 	kIKindTst,
-	kIKindCmp,
-	kIKindCmpI,
-	kIKindCmpM,
-	kIKindBcc,
-	kIKindBra,
+	kIKindCmpB,
+	kIKindCmpW,
+	kIKindCmpL,
+	kIKindBccB,
+	kIKindBccW,
+	kIKindBraB,
+	kIKindBraW,
 	kIKindDBcc,
+	kIKindDBF,
 	kIKindSwap,
 	kIKindMoveL,
 	kIKindMoveW,
@@ -35,18 +38,17 @@ enum {
 	kIKindMoveAL,
 	kIKindMoveAW,
 	kIKindMoveQ,
-	kIKindAddEaR,
-	kIKindAddQ,
-	kIKindAddI,
-	kIKindAddREa,
-	kIKindSubEaR,
-	kIKindSubQ,
-	kIKindSubI,
-	kIKindSubREa,
+	kIKindAddB,
+	kIKindAddW,
+	kIKindAddL,
+	kIKindSubB,
+	kIKindSubW,
+	kIKindSubL,
 	kIKindLea,
 	kIKindPEA,
 	kIKindA,
-	kIKindBsr,
+	kIKindBsrB,
+	kIKindBsrW,
 	kIKindJsr,
 	kIKindLinkA6,
 	kIKindMOVEMRmML,
@@ -60,10 +62,12 @@ enum {
 	kIKindSubA,
 	kIKindSubQA,
 	kIKindCmpA,
-	kIKindAddXd,
-	kIKindAddXm,
-	kIKindSubXd,
-	kIKindSubXm,
+	kIKindAddXB,
+	kIKindAddXW,
+	kIKindAddXL,
+	kIKindSubXB,
+	kIKindSubXW,
+	kIKindSubXL,
 	kIKindRolopNM,
 	kIKindRolopND,
 	kIKindRolopDD,
@@ -81,8 +85,12 @@ enum {
 	kIKindEorI,
 	kIKindNot,
 	kIKindScc,
-	kIKindNegX,
-	kIKindNeg,
+	kIKindNegXB,
+	kIKindNegXW,
+	kIKindNegXL,
+	kIKindNegB,
+	kIKindNegW,
+	kIKindNegL,
 	kIKindEXTW,
 	kIKindEXTL,
 	kIKindMulU,
@@ -125,6 +133,9 @@ enum {
 	kIKindReset,
 
 #if Use68020
+	kIKindBraL,
+	kIKindBccL,
+	kIKindBsrL,
 	kIKindEXTBL,
 	kIKindTRAPcc,
 	kIKindChkL,
@@ -146,4 +157,78 @@ enum {
 	kNumIKinds
 };
 
-EXPORTPROC M68KITAB_setup(ui3b *p);
+enum {
+	kAMdReg,
+	kAMdIndirect,
+	kAMdAPosIncB,
+	kAMdAPosIncW,
+	kAMdAPosIncL,
+	kAMdAPreDecB,
+	kAMdAPreDecW,
+	kAMdAPreDecL,
+	kAMdADisp,
+	kAMdAIndex,
+	kAMdAbsW,
+	kAMdAbsL,
+	kAMdPCDisp,
+	kAMdPCIndex,
+	kAMdImmedB,
+	kAMdImmedW,
+	kAMdImmedL,
+	kAMdDat4,
+
+	kNumAMds
+};
+
+enum {
+	kArgkRegB,
+	kArgkRegW,
+	kArgkRegL,
+	kArgkMemB,
+	kArgkMemW,
+	kArgkMemL,
+	kArgkCnst,
+
+	kNumArgks
+};
+
+struct DecOpR {
+	/* expected size : 8 bytes */
+	ui5b A;
+	ui5b B;
+};
+typedef struct DecOpR DecOpR;
+
+#define GetUi5rField(v, shift, sz) \
+	(((v) >> (shift)) & ((1UL << (sz)) - 1))
+#define SetUi5rField(v, shift, sz, x) \
+	(v) = (((v) & ~ (((1UL << (sz)) - 1) << (shift))) \
+		| (((x) & ((1UL << (sz)) - 1)) << (shift)))
+
+#define GetDcoFldAMd(f) (GetUi5rField((f), 16, 8))
+#define GetDcoFldArgk(f) (GetUi5rField((f), 24, 4))
+#define GetDcoFldArgDat(f) (GetUi5rField((f), 28, 4))
+
+#define SetDcoFldAMd(f, x) SetUi5rField((f), 16, 8, x)
+#define SetDcoFldArgk(f, x) SetUi5rField((f), 24, 4, x)
+#define SetDcoFldArgDat(f, x) SetUi5rField((f), 28, 4, x)
+
+#define GetDcoMainClas(p) (GetUi5rField((p)->A, 0, 16))
+#define GetDcoDstAMd(p) (GetDcoFldAMd((p)->A))
+#define GetDcoDstArgk(p) (GetDcoFldArgk((p)->A))
+#define GetDcoDstArgDat(p) (GetDcoFldArgDat((p)->A))
+#define GetDcoSrcAMd(p) (GetDcoFldAMd((p)->B))
+#define GetDcoSrcArgk(p) (GetDcoFldArgk((p)->B))
+#define GetDcoSrcArgDat(p) (GetDcoFldArgDat((p)->B))
+#define GetDcoCycles(p) (GetUi5rField((p)->B, 0, 16))
+
+#define SetDcoMainClas(p, x) SetUi5rField((p)->A, 0, 16, x)
+#define SetDcoDstAMd(p, x) SetDcoFldAMd((p)->A, x)
+#define SetDcoDstArgk(p, x) SetDcoFldArgk((p)->A, x)
+#define SetDcoDstArgDat(p, x) SetDcoFldArgDat((p)->A, x)
+#define SetDcoSrcAMd(p, x) SetDcoFldAMd((p)->B, x)
+#define SetDcoSrcArgk(p, x) SetDcoFldArgk((p)->B, x)
+#define SetDcoSrcArgDat(p, x) SetDcoFldArgDat((p)->B, x)
+#define SetDcoCycles(p, x) SetUi5rField((p)->B, 0, 16, x)
+
+EXPORTPROC M68KITAB_setup(DecOpR *p);

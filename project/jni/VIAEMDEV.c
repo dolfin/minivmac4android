@@ -103,109 +103,101 @@ IMPORTPROC VIA1_iCB2_ChangeNtfy(void);
 #define Ui3rPowOf2(p) (1 << (p))
 #define Ui3rTestBit(i, p) (((i) & Ui3rPowOf2(p)) != 0)
 
-#if ! (Ui3rTestBit(VIA1_ORA_CanIn, 7) || Ui3rTestBit(VIA1_ORA_CanOut, 7))
+#define VIA1_ORA_CanInOrOut (VIA1_ORA_CanIn | VIA1_ORA_CanOut)
+
+#if ! Ui3rTestBit(VIA1_ORA_CanInOrOut, 7)
 #ifdef VIA1_iA7
 #error "VIA1_iA7 defined but not used"
 #endif
 #endif
 
-#if ! (Ui3rTestBit(VIA1_ORA_CanIn, 6) || Ui3rTestBit(VIA1_ORA_CanOut, 6))
+#if ! Ui3rTestBit(VIA1_ORA_CanInOrOut, 6)
 #ifdef VIA1_iA6
 #error "VIA1_iA6 defined but not used"
 #endif
 #endif
 
-#if ! (Ui3rTestBit(VIA1_ORA_CanIn, 5) || Ui3rTestBit(VIA1_ORA_CanOut, 5))
+#if ! Ui3rTestBit(VIA1_ORA_CanInOrOut, 5)
 #ifdef VIA1_iA5
 #error "VIA1_iA5 defined but not used"
 #endif
 #endif
 
-#if ! (Ui3rTestBit(VIA1_ORA_CanIn, 5) || Ui3rTestBit(VIA1_ORA_CanOut, 5))
-#ifdef VIA1_iA5
-#error "VIA1_iA5 defined but not used"
-#endif
-#endif
-
-#if ! (Ui3rTestBit(VIA1_ORA_CanIn, 4) || Ui3rTestBit(VIA1_ORA_CanOut, 4))
+#if ! Ui3rTestBit(VIA1_ORA_CanInOrOut, 4)
 #ifdef VIA1_iA4
 #error "VIA1_iA4 defined but not used"
 #endif
 #endif
 
-#if ! (Ui3rTestBit(VIA1_ORA_CanIn, 3) || Ui3rTestBit(VIA1_ORA_CanOut, 3))
+#if ! Ui3rTestBit(VIA1_ORA_CanInOrOut, 3)
 #ifdef VIA1_iA3
 #error "VIA1_iA3 defined but not used"
 #endif
 #endif
 
-#if ! (Ui3rTestBit(VIA1_ORA_CanIn, 2) || Ui3rTestBit(VIA1_ORA_CanOut, 2))
+#if ! Ui3rTestBit(VIA1_ORA_CanInOrOut, 2)
 #ifdef VIA1_iA2
 #error "VIA1_iA2 defined but not used"
 #endif
 #endif
 
-#if ! (Ui3rTestBit(VIA1_ORA_CanIn, 1) || Ui3rTestBit(VIA1_ORA_CanOut, 1))
+#if ! Ui3rTestBit(VIA1_ORA_CanInOrOut, 1)
 #ifdef VIA1_iA1
 #error "VIA1_iA1 defined but not used"
 #endif
 #endif
 
-#if ! (Ui3rTestBit(VIA1_ORA_CanIn, 0) || Ui3rTestBit(VIA1_ORA_CanOut, 0))
+#if ! Ui3rTestBit(VIA1_ORA_CanInOrOut, 0)
 #ifdef VIA1_iA0
 #error "VIA1_iA0 defined but not used"
 #endif
 #endif
 
-#if ! (Ui3rTestBit(VIA1_ORB_CanIn, 7) || Ui3rTestBit(VIA1_ORB_CanOut, 7))
+#define VIA1_ORB_CanInOrOut (VIA1_ORB_CanIn | VIA1_ORB_CanOut)
+
+#if ! Ui3rTestBit(VIA1_ORB_CanInOrOut, 7)
 #ifdef VIA1_iB7
 #error "VIA1_iB7 defined but not used"
 #endif
 #endif
 
-#if ! (Ui3rTestBit(VIA1_ORB_CanIn, 6) || Ui3rTestBit(VIA1_ORB_CanOut, 6))
+#if ! Ui3rTestBit(VIA1_ORB_CanInOrOut, 6)
 #ifdef VIA1_iB6
 #error "VIA1_iB6 defined but not used"
 #endif
 #endif
 
-#if ! (Ui3rTestBit(VIA1_ORB_CanIn, 5) || Ui3rTestBit(VIA1_ORB_CanOut, 5))
+#if ! Ui3rTestBit(VIA1_ORB_CanInOrOut, 5)
 #ifdef VIA1_iB5
 #error "VIA1_iB5 defined but not used"
 #endif
 #endif
 
-#if ! (Ui3rTestBit(VIA1_ORB_CanIn, 5) || Ui3rTestBit(VIA1_ORB_CanOut, 5))
-#ifdef VIA1_iB5
-#error "VIA1_iB5 defined but not used"
-#endif
-#endif
-
-#if ! (Ui3rTestBit(VIA1_ORB_CanIn, 4) || Ui3rTestBit(VIA1_ORB_CanOut, 4))
+#if ! Ui3rTestBit(VIA1_ORB_CanInOrOut, 4)
 #ifdef VIA1_iB4
 #error "VIA1_iB4 defined but not used"
 #endif
 #endif
 
-#if ! (Ui3rTestBit(VIA1_ORB_CanIn, 3) || Ui3rTestBit(VIA1_ORB_CanOut, 3))
+#if ! Ui3rTestBit(VIA1_ORB_CanInOrOut, 3)
 #ifdef VIA1_iB3
 #error "VIA1_iB3 defined but not used"
 #endif
 #endif
 
-#if ! (Ui3rTestBit(VIA1_ORB_CanIn, 2) || Ui3rTestBit(VIA1_ORB_CanOut, 2))
+#if ! Ui3rTestBit(VIA1_ORB_CanInOrOut, 2)
 #ifdef VIA1_iB2
 #error "VIA1_iB2 defined but not used"
 #endif
 #endif
 
-#if ! (Ui3rTestBit(VIA1_ORB_CanIn, 1) || Ui3rTestBit(VIA1_ORB_CanOut, 1))
+#if ! Ui3rTestBit(VIA1_ORB_CanInOrOut, 1)
 #ifdef VIA1_iB1
 #error "VIA1_iB1 defined but not used"
 #endif
 #endif
 
-#if ! (Ui3rTestBit(VIA1_ORB_CanIn, 0) || Ui3rTestBit(VIA1_ORB_CanOut, 0))
+#if ! Ui3rTestBit(VIA1_ORB_CanInOrOut, 0)
 #ifdef VIA1_iB0
 #error "VIA1_iB0 defined but not used"
 #endif
@@ -239,8 +231,13 @@ LOCALVAR VIA1_Ty VIA1_D;
 #define kIntT2 5 /* Timer_2 */
 #define kIntT1 6 /* Timer_1 */
 
+#define VIA1_dolog (dbglog_HAVE && 0)
+
 /* VIA1_Get_ORA : VIA Get Port A Data */
-/* This function queries VIA Port A interfaced hardware about their status */
+/*
+	This function queries VIA Port A interfaced hardware
+	about their status
+*/
 
 LOCALFUNC ui3b VIA1_Get_ORA(ui3b Selection)
 {
@@ -298,7 +295,10 @@ LOCALFUNC ui3b VIA1_Get_ORA(ui3b Selection)
 }
 
 /* VIA1_Get_ORB : VIA Get Port B Data */
-/* This function queries VIA Port B interfaced hardware about their status */
+/*
+	This function queries VIA Port B interfaced hardware
+	about their status
+*/
 
 LOCALFUNC ui3b VIA1_Get_ORB(ui3b Selection)
 {
@@ -554,7 +554,8 @@ LOCALPROC VIA1_SetDDR_B(ui3b Data)
 
 LOCALPROC VIA1_CheckInterruptFlag(void)
 {
-	ui3b NewInterruptRequest = ((VIA1_D.IFR & VIA1_D.IER) != 0) ? 1 : 0;
+	ui3b NewInterruptRequest =
+		((VIA1_D.IFR & VIA1_D.IER) != 0) ? 1 : 0;
 
 	if (NewInterruptRequest != VIA1_InterruptRequest) {
 		VIA1_InterruptRequest = NewInterruptRequest;
@@ -618,7 +619,10 @@ LOCALPROC VIA1_ClrInterruptFlag(ui3b VIA_Int)
 
 GLOBALPROC VIA1_ShiftInData(ui3b v)
 {
-	/* external hardware generates 8 pulses on CB1, writes 8 bits to CB2 */
+	/*
+		external hardware generates 8 pulses on CB1,
+		writes 8 bits to CB2
+	*/
 	ui3b ShiftMode = (VIA1_D.ACR & 0x1C) >> 2;
 	if (ShiftMode != 3) {
 		if (ShiftMode == 0) {
@@ -635,7 +639,10 @@ GLOBALPROC VIA1_ShiftInData(ui3b v)
 
 GLOBALFUNC ui3b VIA1_ShiftOutData(void)
 {
-	/* external hardware generates 8 pulses on CB1, reads 8 bits from CB2 */
+	/*
+		external hardware generates 8 pulses on CB1,
+		reads 8 bits from CB2
+	*/
 	if (((VIA1_D.ACR & 0x1C) >> 2) != 7) {
 		ReportAbnormal("VIA Not ready to shift out");
 		return 0;
@@ -647,11 +654,8 @@ GLOBALFUNC ui3b VIA1_ShiftOutData(void)
 	}
 }
 
-#define TimerTicksPerTick (704UL * 370 / 20)
-#define TimerTicksPerSubTick (TimerTicksPerTick / kNumSubTicks)
-
-#define ConvertTimeConst (0x00010000UL * TimerTicksPerTick / InstructionsPerTick)
-#define ConvertTimeInv (0x00010000UL * InstructionsPerTick / TimerTicksPerTick)
+#define CyclesPerViaTime (10 * kMyClockMult)
+#define CyclesScaledPerViaTime (kCycleScale * CyclesPerViaTime)
 
 LOCALVAR blnr VIA1_T1Running = trueblnr;
 LOCALVAR iCountt VIA1_T1LastTime = 0;
@@ -660,12 +664,14 @@ GLOBALPROC VIA1_DoTimer1Check(void)
 {
 	if (VIA1_T1Running) {
 		iCountt NewTime = GetCuriCount();
-		iCountt deltaTime = NewTime - VIA1_T1LastTime;
+		iCountt deltaTime = (NewTime - VIA1_T1LastTime);
 		if (deltaTime != 0) {
 			ui5b Temp = VIA1_D.T1C_F; /* Get Timer 1 Counter */
-			ui5b deltaTemp = deltaTime * ConvertTimeConst; /* may overflow */
+			ui5b deltaTemp =
+				(deltaTime / CyclesPerViaTime) << (16 - kLn2CycleScale);
+					/* may overflow */
 			ui5b NewTemp = Temp - deltaTemp;
-			if ((deltaTime > ConvertTimeInv)
+			if ((deltaTime > (0x00010000UL * CyclesScaledPerViaTime))
 				|| ((Temp <= deltaTemp) && (Temp != 0)))
 			{
 				if ((VIA1_D.ACR & 0x40) != 0) { /* Free Running? */
@@ -685,10 +691,20 @@ GLOBALPROC VIA1_DoTimer1Check(void)
 					}
 #endif
 					VIA1_SetInterruptFlag(kIntT1);
+#if VIA1_dolog && 1
+					dbglog_StartLine();
+					dbglog_writeCStr("VIA1 Timer 1 Interrupt");
+					dbglog_writeReturn();
+#endif
 				} else {
 					if (VIA1_T1_Active == 1) {
 						VIA1_T1_Active = 0;
 						VIA1_SetInterruptFlag(kIntT1);
+#if VIA1_dolog && 1
+						dbglog_StartLine();
+						dbglog_writeCStr("VIA1 Timer 1 Interrupt");
+						dbglog_writeReturn();
+#endif
 					}
 				}
 			}
@@ -703,12 +719,15 @@ GLOBALPROC VIA1_DoTimer1Check(void)
 				ui5b NewTemp = VIA1_D.T1C_F; /* Get Timer 1 Counter */
 				ui5b NewTimer;
 #ifdef _VIA_Debug
-				fprintf(stderr, "posting Timer1Check, %d, %d\n", Temp, GetCuriCount());
+				fprintf(stderr, "posting Timer1Check, %d, %d\n",
+					Temp, GetCuriCount());
 #endif
 				if (NewTemp == 0) {
-					NewTimer = ConvertTimeInv;
+					NewTimer = (0x00010000UL * CyclesScaledPerViaTime);
 				} else {
-					NewTimer = (((NewTemp >> 16) * ConvertTimeInv) >> 16) + 1;
+					NewTimer =
+						(1 + (NewTemp >> (16 - kLn2CycleScale)))
+							* CyclesPerViaTime;
 				}
 				ICT_add(kICT_VIA1_Timer1Check, NewTimer);
 				VIA1_T1IntReady = trueblnr;
@@ -758,25 +777,33 @@ GLOBALPROC VIA1_DoTimer2Check(void)
 	if (VIA1_T2Running) {
 		iCountt NewTime = GetCuriCount();
 		ui5b Temp = VIA1_D.T2C_F; /* Get Timer 2 Counter */
-		iCountt deltaTime = NewTime - VIA1_T2LastTime;
-		ui5b deltaTemp = deltaTime * ConvertTimeConst; /* may overflow */
+		iCountt deltaTime = (NewTime - VIA1_T2LastTime);
+		ui5b deltaTemp = (deltaTime / CyclesPerViaTime)
+			<< (16 - kLn2CycleScale); /* may overflow */
 		ui5b NewTemp = Temp - deltaTemp;
 		if (VIA1_T2_Active == 1) {
-			if ((deltaTime > ConvertTimeInv)
+			if ((deltaTime > (0x00010000UL * CyclesScaledPerViaTime))
 				|| ((Temp <= deltaTemp) && (Temp != 0)))
 			{
 				VIA1_T2C_ShortTime = falseblnr;
 				VIA1_T2_Active = 0;
 				VIA1_SetInterruptFlag(kIntT2);
+#if VIA1_dolog && 1
+				dbglog_StartLine();
+				dbglog_writeCStr("VIA1 Timer 2 Interrupt");
+				dbglog_writeReturn();
+#endif
 			} else {
 				ui5b NewTimer;
 #ifdef _VIA_Debug
-				fprintf(stderr, "posting Timer2Check, %d, %d\n", Temp, GetCuriCount());
+				fprintf(stderr, "posting Timer2Check, %d, %d\n",
+					Temp, GetCuriCount());
 #endif
 				if (NewTemp == 0) {
-					NewTimer = ConvertTimeInv;
+					NewTimer = (0x00010000UL * CyclesScaledPerViaTime);
 				} else {
-					NewTimer = (((NewTemp >> 16) * ConvertTimeInv) >> 16) + 1;
+					NewTimer = (1 + (NewTemp >> (16 - kLn2CycleScale)))
+						* CyclesPerViaTime;
 				}
 				ICT_add(kICT_VIA1_Timer2Check, NewTimer);
 			}
@@ -821,6 +848,9 @@ GLOBALFUNC ui5b VIA1_Access(ui5b Data, blnr WriteMem, CPTR addr)
 				Data = (VIA1_D.ORB & VIA1_D.DDR_B)
 					| VIA1_Get_ORB(~ VIA1_D.DDR_B);
 			}
+#if VIA1_dolog && 1
+			dbglog_Access("VIA1_Access kORB", Data, WriteMem);
+#endif
 			break;
 		case kDDR_B :
 			if (WriteMem) {
@@ -828,6 +858,9 @@ GLOBALFUNC ui5b VIA1_Access(ui5b Data, blnr WriteMem, CPTR addr)
 			} else {
 				Data = VIA1_D.DDR_B;
 			}
+#if VIA1_dolog && 1
+			dbglog_Access("VIA1_Access kDDR_B", Data, WriteMem);
+#endif
 			break;
 		case kDDR_A :
 			if (WriteMem) {
@@ -835,6 +868,9 @@ GLOBALFUNC ui5b VIA1_Access(ui5b Data, blnr WriteMem, CPTR addr)
 			} else {
 				Data = VIA1_D.DDR_A;
 			}
+#if VIA1_dolog && 1
+			dbglog_Access("VIA1_Access kDDR_A", Data, WriteMem);
+#endif
 			break;
 		case kT1C_L :
 			if (WriteMem) {
@@ -844,6 +880,9 @@ GLOBALFUNC ui5b VIA1_Access(ui5b Data, blnr WriteMem, CPTR addr)
 				VIA1_DoTimer1Check();
 				Data = (VIA1_D.T1C_F & 0x00FF0000) >> 16;
 			}
+#if VIA1_dolog && 1
+			dbglog_Access("VIA1_Access kT1C_L", Data, WriteMem);
+#endif
 			break;
 		case kT1C_H :
 			if (WriteMem) {
@@ -859,6 +898,9 @@ GLOBALFUNC ui5b VIA1_Access(ui5b Data, blnr WriteMem, CPTR addr)
 				VIA1_DoTimer1Check();
 				Data = (VIA1_D.T1C_F & 0xFF000000) >> 24;
 			}
+#if VIA1_dolog && 1
+			dbglog_Access("VIA1_Access kT1C_H", Data, WriteMem);
+#endif
 			break;
 		case kT1L_L :
 			if (WriteMem) {
@@ -866,6 +908,9 @@ GLOBALFUNC ui5b VIA1_Access(ui5b Data, blnr WriteMem, CPTR addr)
 			} else {
 				Data = VIA1_D.T1L_L;
 			}
+#if VIA1_dolog && 1
+			dbglog_Access("VIA1_Access kT1L_L", Data, WriteMem);
+#endif
 			break;
 		case kT1L_H :
 			if (WriteMem) {
@@ -873,6 +918,9 @@ GLOBALFUNC ui5b VIA1_Access(ui5b Data, blnr WriteMem, CPTR addr)
 			} else {
 				Data = VIA1_D.T1L_H;
 			}
+#if VIA1_dolog && 1
+			dbglog_Access("VIA1_Access kT1L_H", Data, WriteMem);
+#endif
 			break;
 		case kT2_L  :
 			if (WriteMem) {
@@ -882,6 +930,9 @@ GLOBALFUNC ui5b VIA1_Access(ui5b Data, blnr WriteMem, CPTR addr)
 				VIA1_DoTimer2Check();
 				Data = (VIA1_D.T2C_F & 0x00FF0000) >> 16;
 			}
+#if VIA1_dolog && 1
+			dbglog_Access("VIA1_Access kT2_L", Data, WriteMem);
+#endif
 			break;
 		case kT2_H  :
 			if (WriteMem) {
@@ -907,10 +958,14 @@ GLOBALFUNC ui5b VIA1_Access(ui5b Data, blnr WriteMem, CPTR addr)
 				VIA1_DoTimer2Check();
 				Data = (VIA1_D.T2C_F & 0xFF000000) >> 24;
 			}
+#if VIA1_dolog && 1
+			dbglog_Access("VIA1_Access kT2_H", Data, WriteMem);
+#endif
 			break;
 		case kSR:
 #ifdef _VIA_Debug
-			fprintf(stderr, "VIA1_D.SR: %d, %d, %d\n", WriteMem, ((VIA1_D.ACR & 0x1C) >> 2), Data);
+			fprintf(stderr, "VIA1_D.SR: %d, %d, %d\n",
+				WriteMem, ((VIA1_D.ACR & 0x1C) >> 2), Data);
 #endif
 			if (WriteMem) {
 				VIA1_D.SR = Data;
@@ -943,6 +998,9 @@ GLOBALFUNC ui5b VIA1_Access(ui5b Data, blnr WriteMem, CPTR addr)
 			if (! WriteMem) {
 				Data = VIA1_D.SR;
 			}
+#if VIA1_dolog && 1
+			dbglog_Access("VIA1_Access kSR", Data, WriteMem);
+#endif
 			break;
 		case kACR:
 			if (WriteMem) {
@@ -950,8 +1008,10 @@ GLOBALFUNC ui5b VIA1_Access(ui5b Data, blnr WriteMem, CPTR addr)
 				if ((VIA1_D.ACR & 0x10) != ((ui3b)Data & 0x10)) {
 					/* shift direction has changed */
 					if ((Data & 0x10) == 0) {
-						/* no longer an output,
-							set data to float value */
+						/*
+							no longer an output,
+							set data to float value
+						*/
 						if (VIA1_iCB2 == 0) {
 							VIA1_iCB2 = 1;
 #ifdef VIA1_iCB2_ChangeNtfy
@@ -962,13 +1022,16 @@ GLOBALFUNC ui5b VIA1_Access(ui5b Data, blnr WriteMem, CPTR addr)
 				}
 #endif
 				VIA1_D.ACR = Data;
-				if ((VIA1_D.ACR & 0x20) != 0) { /* Not pulse counting? */
-					ReportAbnormal("Set VIA1_D.ACR T2 Timer pulse counting");
+				if ((VIA1_D.ACR & 0x20) != 0) {
+					/* Not pulse counting? */
+					ReportAbnormal(
+						"Set VIA1_D.ACR T2 Timer pulse counting");
 				}
 				switch ((VIA1_D.ACR & 0xC0) >> 6) {
 					/* case 1: happens in early System 6 */
 					case 2:
-						ReportAbnormal("Set VIA1_D.ACR T1 Timer mode 2");
+						ReportAbnormal(
+							"Set VIA1_D.ACR T1 Timer mode 2");
 						break;
 				}
 				CheckT1IntReady();
@@ -980,41 +1043,57 @@ GLOBALFUNC ui5b VIA1_Access(ui5b Data, blnr WriteMem, CPTR addr)
 					case 2:
 					case 4:
 					case 5:
-						ReportAbnormal("Set VIA1_D.ACR shift mode 1,2,4,5");
+						ReportAbnormal(
+							"Set VIA1_D.ACR shift mode 1,2,4,5");
 						break;
 					default:
 						break;
 				}
 				if ((VIA1_D.ACR & 0x03) != 0) {
-					ReportAbnormal("Set VIA1_D.ACR T2 Timer latching enabled");
+					ReportAbnormal(
+						"Set VIA1_D.ACR T2 Timer latching enabled");
 				}
 			} else {
 				Data = VIA1_D.ACR;
 			}
+#if VIA1_dolog && 1
+			dbglog_Access("VIA1_Access kACR", Data, WriteMem);
+#endif
 			break;
 		case kPCR:
 			if (WriteMem) {
 				VIA1_D.PCR = Data;
 #define Ui3rSetContains(s, i) (((s) & (1 << (i))) != 0)
-				if (! Ui3rSetContains(VIA1_CB2modesAllowed, (VIA1_D.PCR >> 5) & 0x07)) {
+				if (! Ui3rSetContains(VIA1_CB2modesAllowed,
+					(VIA1_D.PCR >> 5) & 0x07))
+				{
 					ReportAbnormal("Set VIA1_D.PCR CB2 Control mode?");
 				}
 				if ((VIA1_D.PCR & 0x10) != 0) {
-					ReportAbnormal("Set VIA1_D.PCR CB1 INTERRUPT CONTROL?");
+					ReportAbnormal(
+						"Set VIA1_D.PCR CB1 INTERRUPT CONTROL?");
 				}
-				if (! Ui3rSetContains(VIA1_CA2modesAllowed, (VIA1_D.PCR >> 1) & 0x07)) {
-					ReportAbnormal("Set VIA1_D.PCR CA2 INTERRUPT CONTROL?");
+				if (! Ui3rSetContains(VIA1_CA2modesAllowed,
+					(VIA1_D.PCR >> 1) & 0x07))
+				{
+					ReportAbnormal(
+						"Set VIA1_D.PCR CA2 INTERRUPT CONTROL?");
 				}
 				if ((VIA1_D.PCR & 0x01) != 0) {
-					ReportAbnormal("Set VIA1_D.PCR CA1 INTERRUPT CONTROL?");
+					ReportAbnormal(
+						"Set VIA1_D.PCR CA1 INTERRUPT CONTROL?");
 				}
 			} else {
 				Data = VIA1_D.PCR;
 			}
+#if VIA1_dolog && 1
+			dbglog_Access("VIA1_Access kPCR", Data, WriteMem);
+#endif
 			break;
 		case kIFR:
 			if (WriteMem) {
-				VIA1_D.IFR = VIA1_D.IFR & ((~ Data) & 0x7F); /* Clear Enable Bits */
+				VIA1_D.IFR = VIA1_D.IFR & ((~ Data) & 0x7F);
+					/* Clear Flag Bits */
 				VIA1_CheckInterruptFlag();
 				CheckT1IntReady();
 			} else {
@@ -1023,11 +1102,15 @@ GLOBALFUNC ui5b VIA1_Access(ui5b Data, blnr WriteMem, CPTR addr)
 					Data |= 0x80;
 				}
 			}
+#if VIA1_dolog && 1
+			dbglog_Access("VIA1_Access kIFR", Data, WriteMem);
+#endif
 			break;
 		case kIER   :
 			if (WriteMem) {
 				if ((Data & 0x80) == 0) {
-					VIA1_D.IER = VIA1_D.IER & ((~ Data) & 0x7F); /* Clear Enable Bits */
+					VIA1_D.IER = VIA1_D.IER & ((~ Data) & 0x7F);
+						/* Clear Enable Bits */
 #if 0 != VIA1_IER_Never0
 					/*
 						of course, will be 0 initially,
@@ -1038,7 +1121,8 @@ GLOBALFUNC ui5b VIA1_Access(ui5b Data, blnr WriteMem, CPTR addr)
 					}
 #endif
 				} else {
-					VIA1_D.IER = VIA1_D.IER | (Data & 0x7F); /* Set Enable Bits */
+					VIA1_D.IER = VIA1_D.IER | (Data & 0x7F);
+						/* Set Enable Bits */
 #if 0 != VIA1_IER_Never1
 					if ((VIA1_D.IER & VIA1_IER_Never1) != 0) {
 						ReportAbnormal("IER Never1 set");
@@ -1049,6 +1133,9 @@ GLOBALFUNC ui5b VIA1_Access(ui5b Data, blnr WriteMem, CPTR addr)
 			} else {
 				Data = VIA1_D.IER | 0x80;
 			}
+#if VIA1_dolog && 1
+			dbglog_Access("VIA1_Access kIER", Data, WriteMem);
+#endif
 			break;
 		case kORA   :
 		case kORA_H :
@@ -1063,6 +1150,9 @@ GLOBALFUNC ui5b VIA1_Access(ui5b Data, blnr WriteMem, CPTR addr)
 				Data = (VIA1_D.ORA & VIA1_D.DDR_A)
 					| VIA1_Get_ORA(~ VIA1_D.DDR_A);
 			}
+#if VIA1_dolog && 1
+			dbglog_Access("VIA1_Access kORA", Data, WriteMem);
+#endif
 			break;
 	}
 	return Data;
@@ -1096,12 +1186,30 @@ GLOBALPROC VIA1_ExtraTimeEnd(void)
 
 /* VIA Interrupt Interface */
 
+#ifdef VIA1_iCA1_PulseNtfy
 GLOBALPROC VIA1_iCA1_PulseNtfy(void)
 {
 	VIA1_SetInterruptFlag(kIntCA1);
 }
+#endif
 
+#ifdef VIA1_iCA2_PulseNtfy
 GLOBALPROC VIA1_iCA2_PulseNtfy(void)
 {
 	VIA1_SetInterruptFlag(kIntCA2);
 }
+#endif
+
+#ifdef VIA1_iCB1_PulseNtfy
+GLOBALPROC VIA1_iCB1_PulseNtfy(void)
+{
+	VIA1_SetInterruptFlag(kIntCB1);
+}
+#endif
+
+#ifdef VIA1_iCB2_PulseNtfy
+GLOBALPROC VIA1_iCB2_PulseNtfy(void)
+{
+	VIA1_SetInterruptFlag(kIntCB2);
+}
+#endif

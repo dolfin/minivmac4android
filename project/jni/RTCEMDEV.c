@@ -30,7 +30,7 @@
 #include "GLOBGLUE.h"
 #endif
 
-/*define _RTC_Debug */
+/* define _RTC_Debug */
 #ifdef _RTC_Debug
 #include <stdio.h>
 #endif
@@ -156,7 +156,9 @@ LOCALVAR ui5b LastRealDate;
 #define prb_volClickHi (SpeakerVol + (TrackSpeed << 3) + (AlarmOn << 7))
 #define prb_volClickLo (CaretBlinkTime + (DoubleClickTime << 4))
 #define prb_miscHi DiskCacheSz
-#define prb_miscLo ((MenuBlink << 2) + (StartUpDisk << 4) + (DiskCacheOn << 5) + (MouseScalingOn << 6))
+#define prb_miscLo \
+	((MenuBlink << 2) + (StartUpDisk << 4) \
+		+ (DiskCacheOn << 5) + (MouseScalingOn << 6))
 
 #if 0
 EXPORTPROC DumpRTC(void);
@@ -234,7 +236,9 @@ GLOBALFUNC blnr RTC_Init(void)
 #endif
 #endif
 
-#if ((CurEmMd >= kEmMd_SE) && (CurEmMd <= kEmMd_Classic)) || (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
+#if ((CurEmMd >= kEmMd_SE) && (CurEmMd <= kEmMd_Classic)) \
+	|| (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
+
 	RTC.PARAMRAM[0x01] = 0x80;
 	RTC.PARAMRAM[0x02] = 0x4F;
 #endif
@@ -248,7 +252,8 @@ GLOBALFUNC blnr RTC_Init(void)
 #if 0 == vMacScreenDepth
 	RTC.PARAMRAM[0x48] = 0x80;
 #else
-	RTC.PARAMRAM[0x48] = /* 0x81 doesn't quite work right at boot */ 0x80;
+	RTC.PARAMRAM[0x48] = 0x80;
+		/* 0x81 doesn't quite work right at boot */
 #endif
 #endif
 
@@ -256,7 +261,9 @@ GLOBALFUNC blnr RTC_Init(void)
 	RTC.PARAMRAM[0x77] = 0x01;
 #endif
 
-#if ((CurEmMd >= kEmMd_SE) && (CurEmMd <= kEmMd_Classic)) || (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
+#if ((CurEmMd >= kEmMd_SE) && (CurEmMd <= kEmMd_Classic)) \
+	|| (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
+
 	/* start up disk (encoded how?) */
 	RTC.PARAMRAM[0x78] = 0x00;
 	RTC.PARAMRAM[0x79] = 0x01;
@@ -291,7 +298,8 @@ GLOBALPROC RTC_Interrupt(void)
 	ui5b DateDelta = NewRealDate - LastRealDate;
 
 	if (DateDelta != 0) {
-		Seconds = (RTC.Seconds_1[3] << 24) + (RTC.Seconds_1[2] << 16) + (RTC.Seconds_1[1] << 8) + RTC.Seconds_1[0];
+		Seconds = (RTC.Seconds_1[3] << 24) + (RTC.Seconds_1[2] << 16)
+			+ (RTC.Seconds_1[1] << 8) + RTC.Seconds_1[0];
 		Seconds += DateDelta;
 		RTC.Seconds_1[0] = Seconds & 0xFF;
 		RTC.Seconds_1[1] = (Seconds & 0xFF00) >> 8;
@@ -372,7 +380,8 @@ LOCALPROC RTC_DoCmd(void)
 #endif
 			{
 				if ((RTC.ShiftData & 0x80) != 0x00) { /* Read Command */
-					RTC.ShiftData = RTC_Access_Reg(0, falseblnr, RTC.ShiftData);
+					RTC.ShiftData =
+						RTC_Access_Reg(0, falseblnr, RTC.ShiftData);
 					RTC.DataNextOut = 1;
 				} else { /* Write Command */
 					RTC.SavedCmd = RTC.ShiftData;
@@ -381,7 +390,8 @@ LOCALPROC RTC_DoCmd(void)
 			}
 			break;
 		case 1: /* This Byte is data for RTC Write */
-			(void) RTC_Access_Reg(RTC.ShiftData, trueblnr, RTC.SavedCmd);
+			(void) RTC_Access_Reg(RTC.ShiftData,
+				trueblnr, RTC.SavedCmd);
 			RTC.Mode = 0;
 			break;
 #if HaveXPRAM
@@ -396,7 +406,8 @@ LOCALPROC RTC_DoCmd(void)
 				RTC.DataNextOut = 1;
 				RTC.Mode = 0;
 #ifdef _RTC_Debug
-				printf("Reading X Address %2x, Data  %2x\n", RTC.Sector, RTC.ShiftData);
+				printf("Reading X Address %2x, Data  %2x\n",
+					RTC.Sector, RTC.ShiftData);
 #endif
 			} else {
 				RTC.Mode = 3;
@@ -406,7 +417,8 @@ LOCALPROC RTC_DoCmd(void)
 			}
 			break;
 		case 3: /* This Byte is data for an Extended RTC Write */
-			(void) RTC_Access_PRAM_Reg(RTC.ShiftData, trueblnr, RTC.Sector);
+			(void) RTC_Access_PRAM_Reg(RTC.ShiftData,
+				trueblnr, RTC.Sector);
 			RTC.Mode = 0;
 			break;
 #endif
@@ -439,7 +451,8 @@ GLOBALPROC RTCclock_ChangeNtfy(void)
 			RTC.Counter = (RTC.Counter - 1) & 0x07;
 			if (RTC.DataOut) {
 				RTCdataLine = ((RTC.ShiftData >> RTC.Counter) & 0x01);
-				/* should notify VIA if changed, so can check
+				/*
+					should notify VIA if changed, so can check
 					data direction
 				*/
 				if (RTC.Counter == 0) {
@@ -457,7 +470,7 @@ GLOBALPROC RTCclock_ChangeNtfy(void)
 
 GLOBALPROC RTCdataLine_ChangeNtfy(void)
 {
-#if DetailedAbnormalReport
+#if dbglog_HAVE
 	if (RTC.DataOut) {
 		if (! RTC.DataNextOut) {
 			/*

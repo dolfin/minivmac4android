@@ -19,6 +19,11 @@
 
 #define CurEmMd kEmMd_Plus
 
+#define kMyClockMult 1
+
+#define WantCycByPriOp 1
+#define WantCloserCyc 0
+
 #define kRAMa_Size 0x00200000
 #define kRAMb_Size 0x00200000
 
@@ -51,8 +56,8 @@ enum {
 #define VIA1_iA2 (Wires[Wire_VIA1_iA2_SoundVolb2])
 
 	Wire_VIA1_iA4_MemOverlay,
-#define VIA1_iA4 (Wires[Wire_VIA1_iA4_MemOverlay])
 #define MemOverlay (Wires[Wire_VIA1_iA4_MemOverlay])
+#define VIA1_iA4 (Wires[Wire_VIA1_iA4_MemOverlay])
 #define VIA1_iA4_ChangeNtfy MemOverlay_ChangeNtfy
 
 	Wire_VIA1_iA6_SCRNvPage2,
@@ -136,17 +141,24 @@ enum {
 
 #define Mouse_Enabled SCC_InterruptsEnabled
 
-#define RTC_OneSecond_PulseNtfy VIA1_iCA2_PulseNtfy
+#define VIA1_iCA1_PulseNtfy VIA1_iCA1_Sixtieth_PulseNtfy
+#define Sixtieth_PulseNtfy VIA1_iCA1_Sixtieth_PulseNtfy
+
+#define VIA1_iCA2_PulseNtfy VIA1_iCA2_RTC_OneSecond_PulseNtfy
+#define RTC_OneSecond_PulseNtfy VIA1_iCA2_RTC_OneSecond_PulseNtfy
 
 #define GetSoundInvertTime VIA1_GetT1InvertTime
 
 #define KYBD_ShiftInData VIA1_ShiftOutData
 #define KYBD_ShiftOutData VIA1_ShiftInData
 
-#define kCheckSumRom_Size kTrueROM_Size
+#define kCheckSumRom_Size kROM_Size
 
 #define kExtn_Block_Base 0x00F40000
 #define kExtn_ln2Spc 5
 
 #define kROM_Base 0x00400000
 #define kROM_ln2Spc 20
+
+#define WantDisasm 0
+#define ExtraAbnormalReports 0

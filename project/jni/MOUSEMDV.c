@@ -43,12 +43,15 @@ GLOBALPROC Mouse_Update(void)
 #endif
 
 	/*
-		Check mouse position first. After mouse button or key event, can't
-		process another mouse position until following tick, otherwise
-		button or key will be in wrong place.
+		Check mouse position first. After mouse button or key event,
+		can't process another mouse position until following tick,
+		otherwise button or key will be in wrong place.
 	*/
 
-	/* if start doing this too soon after boot, will mess up memory check */
+	/*
+		if start doing this too soon after boot,
+		will mess up memory check
+	*/
 	if (Mouse_Enabled()) {
 		MyEvtQEl *p;
 
@@ -63,12 +66,14 @@ GLOBALPROC Mouse_Update(void)
 			if (MyEvtQElKindMouseDelta == p->kind) {
 
 				if ((p->u.pos.h != 0) || (p->u.pos.v != 0)) {
-					put_ram_word(0x0828, get_ram_word(0x0828) + p->u.pos.v);
-					put_ram_word(0x082A, get_ram_word(0x082A) + p->u.pos.h);
+					put_ram_word(0x0828,
+						get_ram_word(0x0828) + p->u.pos.v);
+					put_ram_word(0x082A,
+						get_ram_word(0x082A) + p->u.pos.h);
 					put_ram_byte(0x08CE, get_ram_byte(0x08CF));
 						/* Tell MacOS to redraw the Mouse */
 				}
-				++MyEvtQOut;
+				MyEvtQOutDone();
 			} else
 #endif
 #endif
@@ -76,7 +81,8 @@ GLOBALPROC Mouse_Update(void)
 				ui5r NewMouse = (p->u.pos.v << 16) | p->u.pos.h;
 
 				if (get_ram_long(0x0828) != NewMouse) {
-					put_ram_long(0x0828, NewMouse); /* Set Mouse Position */
+					put_ram_long(0x0828, NewMouse);
+						/* Set Mouse Position */
 					put_ram_long(0x082C, NewMouse);
 #if EmClassicKbrd
 					put_ram_byte(0x08CE, get_ram_byte(0x08CF));
@@ -87,13 +93,9 @@ GLOBALPROC Mouse_Update(void)
 						/* Tell MacOS to redraw the Mouse */
 #endif
 				}
-				++MyEvtQOut;
+				MyEvtQOutDone();
 			}
 		}
-
-		/* tell platform specific code where the mouse went */
-		CurMouseV = get_ram_word(0x082C);
-		CurMouseH = get_ram_word(0x082E);
 	}
 
 #if EmClassicKbrd
@@ -108,10 +110,19 @@ GLOBALPROC Mouse_Update(void)
 		{
 			if (MyEvtQElKindMouseButton == p->kind) {
 				MouseBtnUp = p->u.press.down ? 0 : 1;
-				++MyEvtQOut;
+				MyEvtQOutDone();
 				MasterMyEvtQLock = 4;
 			}
 		}
 	}
 #endif
+}
+
+GLOBALPROC Mouse_EndTickNotify(void)
+{
+	if (Mouse_Enabled()) {
+		/* tell platform specific code where the mouse went */
+		CurMouseV = get_ram_word(0x082C);
+		CurMouseH = get_ram_word(0x082E);
+	}
 }

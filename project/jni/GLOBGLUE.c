@@ -34,22 +34,6 @@
 
 #include "GLOBGLUE.h"
 
-#if EmRTC
-IMPORTFUNC blnr RTC_Init(void);
-#endif
-IMPORTFUNC blnr ROM_Init(void);
-#if EmVidCard
-IMPORTFUNC blnr Vid_Init(void);
-#endif
-FORWARDFUNC blnr AddrSpac_Init(void);
-
-IMPORTPROC VIA1_Zap(void);
-#if EmVIA2
-IMPORTPROC VIA2_Zap(void);
-#endif
-
-IMPORTPROC Sony_EjectAllDisks(void);
-
 IMPORTPROC m68k_reset(void);
 IMPORTPROC IWM_Reset(void);
 IMPORTPROC SCC_Reset(void);
@@ -59,27 +43,6 @@ IMPORTPROC VIA1_Reset(void);
 IMPORTPROC VIA2_Reset(void);
 #endif
 IMPORTPROC Sony_Reset(void);
-FORWARDPROC Memory_Reset(void);
-FORWARDPROC ICT_Zap(void);
-FORWARDPROC Extn_Reset(void);
-
-IMPORTPROC Mouse_Update(void);
-#if EmClassicKbrd
-IMPORTPROC KeyBoard_Update(void);
-#endif
-#if EmADB
-IMPORTPROC ADB_Update(void);
-#endif
-IMPORTPROC InterruptReset_Update(void);
-IMPORTPROC VIA1_iCA1_PulseNtfy(void);
-IMPORTPROC Sony_Update(void);
-#if EmVidCard
-IMPORTPROC Vid_Update(void);
-#endif
-
-#if EmRTC
-IMPORTPROC RTC_Interrupt(void);
-#endif
 
 IMPORTPROC ExtnDisk_Access(CPTR p);
 IMPORTPROC ExtnSony_Access(CPTR p);
@@ -89,28 +52,15 @@ IMPORTPROC ExtnVideo_Access(CPTR p);
 
 IMPORTPROC Sony_SetQuitOnEject(void);
 
-IMPORTPROC MacSound_SubTick(int SubTick);
-
-IMPORTPROC VIA1_ExtraTimeBegin(void);
-IMPORTPROC VIA1_ExtraTimeEnd(void);
-
-#if EmVIA2
-IMPORTPROC VIA2_ExtraTimeBegin(void);
-IMPORTPROC VIA2_ExtraTimeEnd(void);
-#endif
-
-#if SmallGlobals
-IMPORTPROC MINEM68K_ReserveAlloc(void);
-#endif
-
 IMPORTPROC m68k_IPLchangeNtfy(void);
-IMPORTPROC MINEM68K_Init(ui3b **BankReadAddr, ui3b **BankWritAddr,
+IMPORTPROC MINEM68K_Init(
 	ui3b *fIPL);
 
-IMPORTFUNC ui5b GetInstructionsRemaining(void);
-IMPORTPROC SetInstructionsRemaining(ui5b n);
+IMPORTFUNC ui5b GetCyclesRemaining(void);
+IMPORTPROC SetCyclesRemaining(ui5b n);
 
-IMPORTPROC m68k_go_nInstructions(ui5b n);
+IMPORTPROC SetHeadATTel(ATTep p);
+IMPORTFUNC ATTep FindATTel(CPTR addr);
 
 IMPORTFUNC ui5b SCSI_Access(ui5b Data, blnr WriteMem, CPTR addr);
 IMPORTFUNC ui5b SCC_Access(ui5b Data, blnr WriteMem, CPTR addr);
@@ -122,72 +72,16 @@ IMPORTFUNC ui5b VIA2_Access(ui5b Data, blnr WriteMem, CPTR addr);
 #if EmASC
 IMPORTFUNC ui5b ASC_Access(ui5b Data, blnr WriteMem, CPTR addr);
 #endif
-FORWARDPROC Extn_Access(ui5b Data, CPTR addr);
 
-#if EmClassicKbrd
-IMPORTPROC DoKybd_ReceiveEndCommand(void);
-IMPORTPROC DoKybd_ReceiveCommand(void);
-#endif
-#if EmADB
-IMPORTPROC ADB_DoNewState(void);
-#endif
-#if EmPMU
-IMPORTPROC PMU_DoTask(void);
-#endif
-IMPORTPROC VIA1_DoTimer1Check(void);
-IMPORTPROC VIA1_DoTimer2Check(void);
-#if EmVIA2
-IMPORTPROC VIA2_DoTimer1Check(void);
-IMPORTPROC VIA2_DoTimer2Check(void);
-#endif
+IMPORTFUNC ui3r get_vm_byte(CPTR addr);
+IMPORTFUNC ui4r get_vm_word(CPTR addr);
+IMPORTFUNC ui5r get_vm_long(CPTR addr);
+
+IMPORTPROC put_vm_byte(CPTR addr, ui3r b);
+IMPORTPROC put_vm_word(CPTR addr, ui4r w);
+IMPORTPROC put_vm_long(CPTR addr, ui5r l);
 
 GLOBALVAR ui5r my_disk_icon_addr;
-
-GLOBALFUNC blnr InitEmulation(void)
-{
-#if EmRTC
-	if (RTC_Init())
-#endif
-	if (ROM_Init())
-#if EmVidCard
-	if (Vid_Init())
-#endif
-	if (AddrSpac_Init())
-	{
-		return trueblnr;
-	}
-	return falseblnr;
-}
-
-GLOBALPROC EmulationReserveAlloc(void)
-{
-	ReserveAllocOneBlock((ui3p *)&RAM, kRAM_Size + RAMSafetyMarginFudge, 5, falseblnr);
-#if EmVidCard
-	ReserveAllocOneBlock((ui3p *)&VidROM, kVidROM_Size, 5, falseblnr);
-#endif
-#if IncludeVidMem
-	ReserveAllocOneBlock((ui3p *)&VidMem, kVidMemRAM_Size + RAMSafetyMarginFudge, 5, trueblnr);
-#endif
-#if SmallGlobals
-	MINEM68K_ReserveAlloc();
-#endif
-}
-
-LOCALPROC EmulatedHardwareZap(void)
-{
-	Memory_Reset();
-	ICT_Zap();
-	IWM_Reset();
-	SCC_Reset();
-	SCSI_Reset();
-	VIA1_Zap();
-#if EmVIA2
-	VIA2_Zap();
-#endif
-	Sony_Reset();
-	Extn_Reset();
-	m68k_reset();
-}
 
 GLOBALPROC customreset(void)
 {
@@ -200,7 +94,7 @@ GLOBALPROC customreset(void)
 #endif
 	Sony_Reset();
 	Extn_Reset();
-#if CurEmMd <= kEmMd_128K
+#if CurEmMd <= kEmMd_Plus
 	WantMacReset = trueblnr;
 	/*
 		kludge, code in Finder appears
@@ -213,71 +107,7 @@ GLOBALPROC customreset(void)
 #endif
 }
 
-LOCALPROC SixtiethSecondNotify(void)
-{
-#if 0
-	DumpACStr("begin new Sixtieth");
-	DumpANewLine();
-#endif
-	Mouse_Update();
-	InterruptReset_Update();
-#if EmClassicKbrd
-	KeyBoard_Update();
-#endif
-#if EmADB
-	ADB_Update();
-#endif
-
-	VIA1_iCA1_PulseNtfy(); /* Vertical Blanking Interrupt */
-	Sony_Update();
-
-#if EmRTC
-	RTC_Interrupt();
-#endif
-#if EmVidCard
-	Vid_Update();
-#endif
-}
-
-LOCALPROC SubTickNotify(int SubTick)
-{
-#if 0
-	DumpACStr("ending sub tick ");
-	DumpANum(KiloInstructionsCounter);
-	DumpANewLine();
-#endif
-#if MySoundEnabled && (CurEmMd != kEmMd_PB100)
-	MacSound_SubTick(SubTick);
-#else
-	UnusedParam(SubTick);
-#endif
-}
-
-LOCALPROC ExtraTimeBeginNotify(void)
-{
-#if 0
-	DumpACStr("begin extra time");
-	DumpANewLine();
-#endif
-	VIA1_ExtraTimeBegin();
-#if EmVIA2
-	VIA2_ExtraTimeBegin();
-#endif
-}
-
-LOCALPROC ExtraTimeEndNotify(void)
-{
-	VIA1_ExtraTimeEnd();
-#if EmVIA2
-	VIA2_ExtraTimeEnd();
-#endif
-#if 0
-	DumpACStr("end extra time");
-	DumpANewLine();
-#endif
-}
-
-EXPORTVAR(ui3p, RAM);
+GLOBALVAR ui3p RAM = nullpr;
 
 #if EmVidCard
 GLOBALVAR ui3p VidROM = nullpr;
@@ -289,24 +119,76 @@ GLOBALVAR ui3p VidMem = nullpr;
 
 GLOBALVAR ui3b Wires[kNumWires];
 
+
+#if WantDisasm
+IMPORTPROC m68k_WantDisasmContext(void);
+#endif
+
+#if WantDisasm
+GLOBALPROC dbglog_StartLine(void)
+{
+	m68k_WantDisasmContext();
+	dbglog_writeCStr(" ");
+}
+#endif
+
+#if dbglog_HAVE
+GLOBALPROC dbglog_WriteMemArrow(blnr WriteMem)
+{
+	if (WriteMem) {
+		dbglog_writeCStr(" <- ");
+	} else {
+		dbglog_writeCStr(" -> ");
+	}
+}
+#endif
+
+#if dbglog_HAVE
+GLOBALPROC dbglog_AddrAccess(char *s, ui5r Data,
+	blnr WriteMem, ui5r addr)
+{
+	dbglog_StartLine();
+	dbglog_writeCStr(s);
+	dbglog_writeCStr("[");
+	dbglog_writeHex(addr);
+	dbglog_writeCStr("]");
+	dbglog_WriteMemArrow(WriteMem);
+	dbglog_writeHex(Data);
+	dbglog_writeReturn();
+}
+#endif
+
+#if dbglog_HAVE
+GLOBALPROC dbglog_Access(char *s, ui5r Data, blnr WriteMem)
+{
+	dbglog_StartLine();
+	dbglog_writeCStr(s);
+	dbglog_WriteMemArrow(WriteMem);
+	dbglog_writeHex(Data);
+	dbglog_writeReturn();
+}
+#endif
+
 LOCALVAR blnr GotOneAbnormal = falseblnr;
 
 #ifndef ReportAbnormalInterrupt
 #define ReportAbnormalInterrupt 0
 #endif
 
-#if DetailedAbnormalReport
+#if dbglog_HAVE
 GLOBALPROC DoReportAbnormal(char *s)
 #else
 GLOBALPROC DoReportAbnormal(void)
 #endif
 {
-	if (! GotOneAbnormal) {
-#if DetailedAbnormalReport
-		WarnMsgAbnormal(s);
-#else
-		WarnMsgAbnormal();
+#if dbglog_HAVE
+	dbglog_StartLine();
+	dbglog_writeCStr("*** abnormal : ");
+	dbglog_writeCStr(s);
+	dbglog_writeReturn();
 #endif
+	if (! GotOneAbnormal) {
+		WarnMsgAbnormal();
 #if ReportAbnormalInterrupt
 		SetInterruptButton(trueblnr);
 #endif
@@ -314,15 +196,12 @@ GLOBALPROC DoReportAbnormal(void)
 	}
 }
 
-/* top 8 bits out of 32 are ignored, so total size of address space is 2 ** 24 bytes */
-
-#define TotAddrBytes (1UL << ln2TotAddrBytes)
-#define kAddrMask (TotAddrBytes - 1)
-
 /* map of address space */
 
 #define kRAM_Base 0x00000000 /* when overlay off */
-#if (CurEmMd == kEmMd_PB100) || (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
+#if (CurEmMd == kEmMd_PB100)
+#define kRAM_ln2Spc 23
+#elif (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
 #define kRAM_ln2Spc 23
 #else
 #define kRAM_ln2Spc 22
@@ -385,822 +264,6 @@ GLOBALPROC DoReportAbnormal(void)
 #define kASC_Mask 0x00000FFF
 
 
-/* implementation of read/write for everything but RAM and ROM */
-
-#define kSCC_Mask 0x03
-
-#define kVIA1_Mask 0x00000F
-#if EmVIA2
-#define kVIA2_Mask 0x00000F
-#endif
-
-#define kIWM_Mask 0x00000F /* Allocated Memory Bandwidth for IWM */
-
-#if CurEmMd <= kEmMd_512Ke
-#define ROM_CmpZeroMask 0
-#elif CurEmMd <= kEmMd_Plus
-#define ROM_CmpZeroMask 0x00020000
-#elif CurEmMd <= kEmMd_PB100
-#define ROM_CmpZeroMask 0
-#elif CurEmMd <= kEmMd_IIx
-#define ROM_CmpZeroMask 0
-#else
-#error "ROM_CmpZeroMask not defined"
-#endif
-
-#if CurEmMd <= kEmMd_512Ke
-#define Overlay_ROM_CmpZeroMask 0x00100000
-#elif CurEmMd <= kEmMd_Plus
-#define Overlay_ROM_CmpZeroMask 0x00020000
-#elif CurEmMd <= kEmMd_Classic
-#define Overlay_ROM_CmpZeroMask 0x00300000
-#elif CurEmMd <= kEmMd_PB100
-#define Overlay_ROM_CmpZeroMask 0
-#elif CurEmMd <= kEmMd_IIx
-#define Overlay_ROM_CmpZeroMask 0
-#else
-#error "Overlay_ROM_CmpZeroMask not defined"
-#endif
-
-/* devide address space into banks, some of which are mapped to real memory */
-
-LOCALVAR ui3b *BankReadAddr[NumMemBanks];
-LOCALVAR ui3b *BankWritAddr[NumMemBanks];
-	/* if BankWritAddr[i] != NULL then BankWritAddr[i] == BankReadAddr[i] */
-
-LOCALPROC SetPtrVecToNULL(ui3b **x, ui5b n)
-{
-	ui5b i;
-
-	for (i = 0; i < n; i++) {
-		*x++ = nullpr;
-	}
-}
-
-LOCALPROC SetUpMemBanks(void)
-{
-	SetPtrVecToNULL(BankReadAddr, NumMemBanks);
-	SetPtrVecToNULL(BankWritAddr, NumMemBanks);
-}
-
-LOCALPROC get_RAM_realblock(blnr WriteMem, CPTR addr,
-	ui3p *RealStart, ui5b *RealSize)
-{
-	UnusedParam(WriteMem);
-
-#if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
-	{
-		ui5r bankbit = 0x00100000 << (((VIA2_iA7 << 1) | VIA2_iA6) << 1);
-		if (0 != (addr & bankbit)) {
-#if kRAMb_Size != 0
-			*RealStart = kRAMa_Size + RAM;
-			*RealSize = kRAMb_Size;
-#else
-			/* fail */
-#endif
-		} else {
-			*RealStart = RAM;
-			*RealSize = kRAMa_Size;
-		}
-	}
-#elif (0 == kRAMb_Size) || (kRAMa_Size == kRAMb_Size)
-	UnusedParam(addr);
-
-	*RealStart = RAM;
-	*RealSize = kRAM_Size;
-#else
-	/* unbalanced memory */
-	if (0 != (addr & kRAMa_Size)) {
-		*RealStart = kRAMa_Size + RAM;
-		*RealSize = kRAMb_Size;
-	} else {
-		*RealStart = RAM;
-		*RealSize = kRAMa_Size;
-	}
-#endif
-}
-
-LOCALPROC get_ROM_realblock(blnr WriteMem, CPTR addr,
-	ui3p *RealStart, ui5b *RealSize)
-{
-	UnusedParam(addr);
-
-	if (WriteMem) {
-		/* fail */
-	} else {
-		*RealStart = ROM;
-		*RealSize = kROM_Size;
-	}
-}
-
-LOCALPROC get_address24_realblock(blnr WriteMem, CPTR addr,
-	ui3p *RealStart, ui5b *RealSize)
-{
-	if ((addr >> kRAM_ln2Spc) == (kRAM_Base >> kRAM_ln2Spc)) {
-		if (MemOverlay) {
-#if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
-			ReportAbnormal("Overlay with 24 bit addressing");
-#endif
-			if ((addr & Overlay_ROM_CmpZeroMask) != 0) {
-				/* fail */
-			} else {
-				get_ROM_realblock(WriteMem, addr,
-					RealStart, RealSize);
-			}
-		} else {
-			get_RAM_realblock(WriteMem, addr,
-				RealStart, RealSize);
-		}
-	} else
-#if IncludeVidMem && ((CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx))
-	if ((addr >= 0x900000) && ((addr < 0xA00000))) {
-		*RealStart = VidMem;
-		*RealSize = ((kVidMemRAM_Size - 1) & 0x0FFFFF) + 1;
-	} else
-#endif
-#if IncludeVidMem && (CurEmMd != kEmMd_II) && (CurEmMd != kEmMd_IIx)
-	if ((addr >> kVidMem_ln2Spc) == (kVidMem_Base >> kVidMem_ln2Spc)) {
-		*RealStart = VidMem;
-		*RealSize = kVidMemRAM_Size;
-	} else
-#endif
-	if ((addr >> kROM_ln2Spc) == (kROM_Base >> kROM_ln2Spc)) {
-#if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
-		if (MemOverlay) {
-			ReportAbnormal("Overlay with 24 bit addressing");
-		}
-#elif CurEmMd >= kEmMd_SE
-		if (MemOverlay != 0) {
-			MemOverlay = 0;
-			SetUpMemBanks();
-		}
-#endif
-		if ((addr & ROM_CmpZeroMask) != 0) {
-			/* fail */
-		} else {
-			get_ROM_realblock(WriteMem, addr,
-				RealStart, RealSize);
-		}
-	} else
-#if (CurEmMd != kEmMd_II) && (CurEmMd != kEmMd_IIx)
-	if ((addr >> 19) == (kRAM_Overlay_Base >> 19)) {
-		if (MemOverlay) {
-			get_RAM_realblock(WriteMem, addr,
-				RealStart, RealSize);
-		}
-	} else
-#endif
-	{
-		/* fail */
-#if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
-		ReportAbnormal("bad memory access");
-#endif
-	}
-}
-
-#if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
-LOCALPROC get_address32_realblock(blnr WriteMem, CPTR addr,
-	ui3p *RealStart, ui5b *RealSize)
-{
-	if ((addr >> 30) == (0x00000000 >> 30)) {
-		if (MemOverlay) {
-			get_ROM_realblock(WriteMem, addr,
-				RealStart, RealSize);
-		} else {
-			get_RAM_realblock(WriteMem, addr,
-				RealStart, RealSize);
-		}
-	} else
-	if ((addr >> 28) == (0x40000000 >> 28)) {
-		get_ROM_realblock(WriteMem, addr,
-			RealStart, RealSize);
-	} else
-#if 0
-	/* haven't persuaded emulated computer to look here yet. */
-	if ((addr >> 28) == (0x90000000 >> 28)) {
-		/* NuBus super space */
-		*RealStart = VidMem;
-		*RealSize = kVidMemRAM_Size;
-	} else
-#endif
-	if ((addr >> 28) == (0xF0000000 >> 28)) {
-		/* Standard NuBus space */
-		if ((addr >> 24) == (0xF9000000 >> 24)) {
-			/* if ((addr >= 0xFA000000 - kVidROM_Size) && (addr < 0xFA000000)) */
-			/* if (addr >= 0xF9800000) */
-			if ((addr >> 20) == (0xF9F00000 >> 20))
-			{
-				if (WriteMem) {
-					/* fail */
-				} else {
-					*RealStart = VidROM;
-					*RealSize = kVidROM_Size;
-				}
-			} else {
-#if kVidMemRAM_Size <= 0x00100000
-				*RealStart = VidMem;
-				*RealSize = kVidMemRAM_Size;
-#else
-				/* ugly kludge to allow more 1M of Video Memory */
-				int i = (addr >> 20) & 0xF;
-				if (i >= 9) {
-					i -= 9;
-				}
-				*RealStart = VidMem + ((i << 20) & (kVidMemRAM_Size - 1));
-				*RealSize = 0x00100000;
-#endif
-			}
-		} else {
-			/* fail */
-		}
-	} else
-	{
-		/* fail */
-	}
-}
-#endif
-
-LOCALPROC GetBankAddr(blnr WriteMem, CPTR addr,
-	ui3p *RealStart)
-{
-	ui5b bi = bankindex(addr);
-	ui3b **CurBanks = WriteMem ? BankWritAddr : BankReadAddr;
-	ui3p RealStart0 = CurBanks[bi];
-
-	if (RealStart0 == nullpr) {
-		ui5b RealSize0;
-		get_address24_realblock(WriteMem, addr,
-			&RealStart0, &RealSize0);
-		if (RealStart0 != nullpr) {
-			RealStart0 += ((bi << ln2BytesPerMemBank)
-				& (RealSize0 - 1));
-			CurBanks[bi] = RealStart0;
-		}
-	}
-
-	*RealStart = RealStart0;
-	/* *RealSize = BytesPerMemBank; */
-}
-
-#if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
-LOCALFUNC ui5b MM_IOAccess(ui5b Data, blnr WriteMem, blnr ByteSize, CPTR addr)
-{
-	if ((addr >= 0) && (addr < 0x2000)) {
-		if (! ByteSize) {
-			ReportAbnormal("access VIA1 word");
-		} else if ((addr & 1) != 0) {
-			ReportAbnormal("access VIA1 odd");
-		} else {
-			if ((addr & 0x000001FE) != 0x00000000) {
-				ReportAbnormal("access VIA1 nonstandard address");
-			}
-			Data = VIA1_Access(Data, WriteMem, (addr >> 9) & kVIA1_Mask);
-		}
-	} else
-	if ((addr >= 0x2000) && (addr < 0x4000)) {
-		if (! ByteSize) {
-			if ((! WriteMem) && ((0x3e00 == addr) || (0x3e02 == addr))) {
-				/* for weirdness at offset 0x71E in ROM */
-				Data = (VIA2_Access(Data, WriteMem, (addr >> 9) & kVIA2_Mask) << 8)
-					| VIA2_Access(Data, WriteMem, (addr >> 9) & kVIA2_Mask);
-
-			} else {
-				ReportAbnormal("access VIA2 word");
-			}
-		} else if ((addr & 1) != 0) {
-			if (0x3FFF == addr) {
-				/* for weirdness at offset 0x7C4 in ROM. looks like bug. */
-				Data = VIA2_Access(Data, WriteMem, (addr >> 9) & kVIA2_Mask);
-			} else {
-				ReportAbnormal("access VIA2 odd");
-			}
-		} else {
-			if ((addr & 0x000001FE) != 0x00000000) {
-				ReportAbnormal("access VIA2 nonstandard address");
-			}
-			Data = VIA2_Access(Data, WriteMem, (addr >> 9) & kVIA2_Mask);
-		}
-	} else
-	if ((addr >= 0x4000) && (addr < 0x6000)) {
-		if (! ByteSize) {
-			ReportAbnormal("Attemped Phase Adjust");
-		} else
-		{
-			if ((addr & 0x1FF9) != 0x00000000) {
-				ReportAbnormal("access SCC nonstandard address");
-			}
-			Data = SCC_Access(Data, WriteMem, (addr >> 1) & kSCC_Mask);
-		}
-	} else
-	if ((addr >= 0x0C000) && (addr < 0x0E000)) {
-		if (ByteSize) {
-			ReportAbnormal("access Sony byte");
-		} else if ((addr & 1) != 0) {
-			ReportAbnormal("access Sony odd");
-		} else if (! WriteMem) {
-			ReportAbnormal("access Sony read");
-		} else {
-			Extn_Access(Data, (addr >> 1) & 0x0F);
-		}
-	} else
-	if ((addr >= 0x10000) && (addr < 0x12000)) {
-		if (! ByteSize) {
-			ReportAbnormal("access SCSI word");
-		} else {
-			if ((addr & 0x1F8F) != 0x00000000) {
-				ReportAbnormal("access SCC nonstandard address");
-			}
-			Data = SCSI_Access(Data, WriteMem, (addr >> 4) & 0x07);
-		}
-	} else
-	if ((addr >= 0x14000) && (addr < 0x16000)) {
-		if (! ByteSize) {
-			if (WriteMem) {
-				(void) ASC_Access((Data >> 8) & 0x00FF, WriteMem, addr & kASC_Mask);
-				Data = ASC_Access((Data) & 0x00FF, WriteMem, (addr + 1) & kASC_Mask);
-			} else {
-				ReportAbnormal("access ASC word");
-			}
-		} else {
-			Data = ASC_Access(Data, WriteMem, addr & kASC_Mask);
-		}
-	} else
-	if ((addr >= 0x16000) && (addr < 0x18000)) {
-		if (! ByteSize) {
-			ReportAbnormal("access IWM word");
-		} else if ((addr & 1) != 0) {
-			ReportAbnormal("access IWM odd");
-		} else {
-			Data = IWM_Access(Data, WriteMem, (addr >> 9) & kIWM_Mask);
-		}
-	} else
-#if 0
-	if ((addr >= 0x1C000) && (addr < 0x1E000)) {
-		/* fail, nothing supposed to be here, but rom accesses it anyway */
-		if ((addr != 0x1DA00) && (addr != 0x1DC00)) {
-			ReportAbnormal("another unknown access");
-		}
-	} else
-#endif
-	{
-		ReportAbnormal("MM_Access fails");
-	}
-	return Data;
-}
-#endif
-
-GLOBALFUNC ui5b MM_Access(ui5b Data, blnr WriteMem, blnr ByteSize, CPTR addr)
-{
-#if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
-	if (Addr32) {
-		ui3p RealStart = nullpr;
-		ui5b RealSize;
-		ui3p m;
-
-		get_address32_realblock(WriteMem, addr,
-			&RealStart, &RealSize);
-		if (nullpr != RealStart) {
-			m = RealStart + (addr & (RealSize - 1));
-
-			if (ByteSize) {
-				if (WriteMem) {
-					*m = Data;
-				} else {
-					Data = (si5b)(si3b)*m;
-				}
-			} else {
-				if (WriteMem) {
-					do_put_mem_word(m, Data);
-				} else {
-					Data = (si5b)(si4b)do_get_mem_word(m);
-				}
-			}
-		} else {
-			if ((addr >> 24) == (0x50000000 >> 24)) {
-				Data = MM_IOAccess(Data, WriteMem, ByteSize, addr & 0x1FFFF);
-			} else
-			if ((addr >= 0x58000000) && (addr < 0x58000004)) {
-				/* test hardware. fail */
-			} else
-			{
-				/* ReportAbnormal("Other IO access"); */
-			}
-		}
-	} else
-#endif
-	{
-		CPTR mAddressBus = addr & kAddrMask;
-
-#if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
-		if ((mAddressBus >> 20) == (0x00F00000 >> 20)) {
-			Data = MM_IOAccess(Data, WriteMem, ByteSize, mAddressBus & 0x1FFFF);
-		} else
-#else
-		if ((mAddressBus >> kVIA1_ln2Spc) == (kVIA1_Block_Base >> kVIA1_ln2Spc)) {
-			if (! ByteSize) {
-				ReportAbnormal("access VIA word");
-			} else if ((mAddressBus & 1) != 0) {
-				ReportAbnormal("access VIA odd");
-			} else {
-#if CurEmMd != kEmMd_PB100
-				if ((mAddressBus & 0x000FE1FE) != 0x000FE1FE) {
-					ReportAbnormal("access VIA nonstandard address");
-				}
-#endif
-				Data = VIA1_Access(Data, WriteMem, (mAddressBus >> 9) & kVIA1_Mask);
-			}
-		} else
-		if ((mAddressBus >> kSCC_ln2Spc) == (kSCCRd_Block_Base >> kSCC_ln2Spc)) {
-#if CurEmMd >= kEmMd_SE
-			if ((mAddressBus & 0x00100000) == 0) {
-				ReportAbnormal("access SCC unassigned address");
-			} else
-#endif
-			if (! ByteSize) {
-				ReportAbnormal("Attemped Phase Adjust");
-			} else if (WriteMem != ((mAddressBus & 1) != 0)) {
-				if (WriteMem) {
-#if CurEmMd >= kEmMd_512Ke
-#if CurEmMd != kEmMd_PB100
-					ReportAbnormal("access SCC even/odd");
-					/*
-						This happens on boot with 64k ROM.
-					*/
-#endif
-#endif
-				} else {
-					SCC_Reset();
-				}
-			} else
-#if CurEmMd != kEmMd_PB100
-			if (WriteMem != (mAddressBus >= kSCCWr_Block_Base)) {
-				ReportAbnormal("access SCC wr/rd base wrong");
-			} else
-#endif
-			{
-#if CurEmMd != kEmMd_PB100
-				if ((mAddressBus & 0x001FFFF8) != 0x001FFFF8) {
-					ReportAbnormal("access SCC nonstandard address");
-				}
-#endif
-				Data = SCC_Access(Data, WriteMem, (mAddressBus >> 1) & kSCC_Mask);
-			}
-		} else
-		if ((mAddressBus >> kExtn_ln2Spc) == (kExtn_Block_Base >> kExtn_ln2Spc)) {
-			if (ByteSize) {
-				ReportAbnormal("access Sony byte");
-			} else if ((mAddressBus & 1) != 0) {
-				ReportAbnormal("access Sony odd");
-			} else if (! WriteMem) {
-				ReportAbnormal("access Sony read");
-			} else {
-				Extn_Access(Data, (mAddressBus >> 1) & 0x0F);
-			}
-		} else
-#if CurEmMd == kEmMd_PB100
-		if ((mAddressBus >> kASC_ln2Spc) == (kASC_Block_Base >> kASC_ln2Spc)) {
-			if (! ByteSize) {
-				ReportAbnormal("access ASC word");
-			} else {
-				Data = ASC_Access(Data, WriteMem, mAddressBus & kASC_Mask);
-			}
-		} else
-#endif
-		if ((mAddressBus >> kSCSI_ln2Spc) == (kSCSI_Block_Base >> kSCSI_ln2Spc)) {
-			if (! ByteSize) {
-				ReportAbnormal("access SCSI word");
-			} else if (WriteMem != ((mAddressBus & 1) != 0)) {
-				ReportAbnormal("access SCSI even/odd");
-			} else {
-				Data = SCSI_Access(Data, WriteMem, (mAddressBus >> 4) & 0x07);
-			}
-		} else
-		if ((mAddressBus >> kIWM_ln2Spc) == (kIWM_Block_Base >> kIWM_ln2Spc)) {
-#if CurEmMd >= kEmMd_SE
-			if ((mAddressBus & 0x00100000) == 0) {
-				ReportAbnormal("access IWM unassigned address");
-			} else
-#endif
-			if (! ByteSize) {
-#if ExtraAbnormalReports
-				ReportAbnormal("access IWM word");
-				/*
-					This happens when quitting 'Glider 3.1.2'.
-					perhaps a bad handle is being disposed of.
-				*/
-#endif
-			} else if ((mAddressBus & 1) == 0) {
-				ReportAbnormal("access IWM even");
-			} else {
-#if CurEmMd != kEmMd_PB100
-				if ((mAddressBus & 0x001FE1FF) != 0x001FE1FF) {
-					ReportAbnormal("access IWM nonstandard address");
-				}
-#endif
-				Data = IWM_Access(Data, WriteMem, (mAddressBus >> 9) & kIWM_Mask);
-			}
-		} else
-#endif
-		{
-			ui3p RealStart;
-
-			GetBankAddr(WriteMem, mAddressBus, &RealStart);
-			if (nullpr != RealStart) {
-				ui3p m = RealStart + (mAddressBus & (BytesPerMemBank - 1));
-				if (ByteSize) {
-					if (WriteMem) {
-						*m = Data;
-					} else {
-						Data = (si5b)(si3b)*m;
-					}
-				} else {
-					if (WriteMem) {
-						do_put_mem_word(m, Data);
-					} else {
-						Data = (si5b)(si4b)do_get_mem_word(m);
-					}
-				}
-			}
-		}
-	}
-	return Data;
-}
-
-GLOBALFUNC ui3r get_vm_byte(CPTR addr)
-{
-	ui3p ba = BankReadAddr[bankindex(addr)];
-
-	if (ba != nullpr) {
-		ui3p m = (addr & MemBankAddrMask) + ba;
-		return *m;
-	} else {
-		return (ui3b) MM_Access(0, falseblnr, trueblnr, addr);
-	}
-}
-
-GLOBALFUNC ui4r get_vm_word(CPTR addr)
-{
-	ui3p ba = BankReadAddr[bankindex(addr)];
-
-	if (ba != nullpr) {
-		ui3p m = (addr & MemBankAddrMask) + ba;
-		return do_get_mem_word(m);
-	} else {
-		return (ui4b) MM_Access(0, falseblnr, falseblnr, addr);
-	}
-}
-
-GLOBALFUNC ui5r get_vm_long(CPTR addr)
-{
-	ui3p ba = BankReadAddr[bankindex(addr)];
-
-	if (ba != nullpr) {
-		ui3p m = (addr & MemBankAddrMask) + ba;
-		return do_get_mem_long(m);
-	} else {
-		ui5r hi = get_vm_word(addr);
-		ui5r lo = get_vm_word(addr + 2);
-		return (ui5r) ((hi << 16) & 0xFFFF0000)
-			| (lo & 0x0000FFFF);
-	}
-}
-
-GLOBALPROC put_vm_byte(CPTR addr, ui3r b)
-{
-	ui3p ba = BankWritAddr[bankindex(addr)];
-
-	if (ba != nullpr) {
-		ui3p m = (addr & MemBankAddrMask) + ba;
-		*m = b;
-	} else {
-		(void) MM_Access(b & 0x00FF, trueblnr, trueblnr, addr);
-	}
-}
-
-GLOBALPROC put_vm_word(CPTR addr, ui4r w)
-{
-	ui3p ba = BankWritAddr[bankindex(addr)];
-
-	if (ba != nullpr) {
-		ui3p m = (addr & MemBankAddrMask) + ba;
-		do_put_mem_word(m, w);
-	} else {
-		(void) MM_Access(w & 0x0000FFFF, trueblnr, falseblnr, addr);
-	}
-}
-
-GLOBALPROC put_vm_long(CPTR addr, ui5r l)
-{
-	ui3p ba = BankWritAddr[bankindex(addr)];
-
-	if (ba != nullpr) {
-		ui3p m = (addr & MemBankAddrMask) + ba;
-		do_put_mem_long(m, l);
-	} else {
-		put_vm_word(addr, l >> 16);
-		put_vm_word(addr + 2, l);
-	}
-}
-
-GLOBALPROC MemOverlay_ChangeNtfy(void)
-{
-#if CurEmMd <= kEmMd_Plus
-	SetUpMemBanks();
-#endif
-}
-
-#if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
-GLOBALPROC Addr32_ChangeNtfy(void)
-{
-	SetUpMemBanks();
-}
-#endif
-
-
-/*
-	unlike in the real Mac Plus, Mini vMac
-	will allow misaligned memory access,
-	since it is easier to allow it than
-	it is to correctly simulate a bus error
-	and back out of the current instruction.
-*/
-
-LOCALPROC get_address_realblock(blnr WriteMem, CPTR addr,
-	ui3p *RealStart, ui5b *RealSize)
-{
-#if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
-	if (Addr32) {
-		*RealStart = nullpr;
-		get_address32_realblock(WriteMem, addr,
-			RealStart, RealSize);
-	} else
-#endif
-	{
-		*RealSize = BytesPerMemBank;
-		GetBankAddr(WriteMem, addr & kAddrMask, RealStart);
-	}
-}
-
-GLOBALFUNC ui3p get_real_address0(ui5b L, blnr WritableMem, CPTR addr,
-	ui5b *actL)
-{
-	ui3p RealStart;
-	ui5b RealSize;
-	ui3p p;
-
-	get_address_realblock(WritableMem, addr,
-		&RealStart, &RealSize);
-	if (nullpr == RealStart) {
-		*actL = 0;
-		p = nullpr;
-	} else {
-		ui5b bankoffset = addr & (RealSize - 1);
-		ui5b bankleft = RealSize - bankoffset;
-		p = bankoffset + RealStart;
-		if (bankleft >= L) {
-			/* this block is big enough (by far the most common case) */
-			*actL = L;
-		} else {
-			/*
-				not big enough, look if following block
-				is contiguous in real memory.
-			*/
-			ui3p bankend;
-			ui5b n = L;
-label_1:
-			addr += bankleft;
-			n -= bankleft;
-			bankend = RealSize + RealStart;
-
-			get_address_realblock(WritableMem, addr,
-				&RealStart, &RealSize);
-			if ((nullpr == RealStart)
-				|| (RealStart != bankend))
-			{
-				/* following block not contiguous */
-				*actL = L - n;
-			} else if (RealSize >= n) {
-				/* following block is contiguous and big enough */
-				*actL = L; /* ok */
-			} else {
-				bankoffset = addr & (RealSize - 1);
-				if (bankoffset != 0) {
-					ReportAbnormal("problem with get_address_realblock");
-				}
-				bankleft = RealSize;
-				goto label_1;
-			}
-		}
-	}
-
-	return p;
-}
-
-GLOBALFUNC ui3p get_real_address(ui5b L, blnr WritableMem, CPTR addr)
-{
-	ui5b actL;
-	ui3p p = get_real_address0(L, WritableMem, addr, &actL);
-
-	return (L == actL) ? p : nullpr;
-}
-
-GLOBALVAR blnr InterruptButton = falseblnr;
-
-GLOBALPROC SetInterruptButton(blnr v)
-{
-	if (InterruptButton != v) {
-		InterruptButton = v;
-		VIAorSCCinterruptChngNtfy();
-	}
-}
-
-LOCALPROC DoMacReset(void)
-{
-	Sony_EjectAllDisks();
-	EmulatedHardwareZap();
-}
-
-GLOBALPROC InterruptReset_Update(void)
-{
-	SetInterruptButton(falseblnr);
-		/*
-			in case has been set. so only stays set
-			for 60th of a second.
-		*/
-
-	if (WantMacInterrupt) {
-		SetInterruptButton(trueblnr);
-		WantMacInterrupt = falseblnr;
-	}
-	if (WantMacReset) {
-		DoMacReset();
-		WantMacReset = falseblnr;
-	}
-}
-
-LOCALVAR ui3b CurIPL = 0;
-
-GLOBALPROC VIAorSCCinterruptChngNtfy(void)
-{
-#if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
-	ui3b NewIPL;
-
-	if (InterruptButton) {
-		NewIPL = 7;
-	} else if (SCCInterruptRequest) {
-		NewIPL = 4;
-	} else if (VIA2_InterruptRequest) {
-		NewIPL = 2;
-	} else if (VIA1_InterruptRequest) {
-		NewIPL = 1;
-	} else {
-		NewIPL = 0;
-	}
-#else
-	ui3b VIAandNotSCC = VIA1_InterruptRequest
-		& ~ SCCInterruptRequest;
-	ui3b NewIPL = VIAandNotSCC
-		| (SCCInterruptRequest << 1)
-		| (InterruptButton << 2);
-#endif
-	if (NewIPL != CurIPL) {
-		CurIPL = NewIPL;
-		m68k_IPLchangeNtfy();
-	}
-}
-
-LOCALFUNC blnr AddrSpac_Init(void)
-{
-	int i;
-
-	for (i = 0; i < kNumWires; i++) {
-		Wires[i] = 1;
-	}
-
-	MINEM68K_Init(BankReadAddr, BankWritAddr,
-		&CurIPL);
-	EmulatedHardwareZap();
-	return trueblnr;
-}
-
-LOCALPROC Memory_Reset(void)
-{
-	MemOverlay = 1;
-	SetUpMemBanks();
-}
-
-#if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
-EXPORTPROC PowerOff_ChangeNtfy(void);
-GLOBALPROC PowerOff_ChangeNtfy(void)
-{
-	if (! VIA2_iB2) {
-		ForceMacOff = trueblnr;
-	}
-}
-#endif
-
-/* extension mechanism */
-
 #if IncludeExtnPbufs
 LOCALFUNC tMacErr PbufTransferVM(CPTR Buffera,
 	tPbuf i, ui5r offset, ui5r count, blnr IsWrite)
@@ -1229,22 +292,7 @@ label_1:
 }
 #endif
 
-#if IncludePbufs
-GLOBALFUNC tMacErr CheckPbuf(tPbuf Pbuf_No)
-{
-	tMacErr result;
-
-	if (Pbuf_No >= NumPbufs) {
-		result = mnvm_nsDrvErr;
-	} else if (! PbufIsAllocated(Pbuf_No)) {
-		result = mnvm_offLinErr;
-	} else {
-		result = mnvm_noErr;
-	}
-
-	return result;
-}
-#endif
+/* extension mechanism */
 
 #if IncludeExtnPbufs
 #define kCmndPbufFeatures 1
@@ -1289,28 +337,31 @@ LOCALPROC ExtnParamBuffers_Access(CPTR p)
 			break;
 		case kCmndPbufGetSize:
 			{
+				ui5r Count;
 				tPbuf Pbuf_No = get_vm_word(p + ExtnDat_params + 0);
 				/* reserved word at offset 2, should be zero */
 
-				result = CheckPbuf(Pbuf_No);
+				result = PbufGetSize(Pbuf_No, &Count);
 				if (mnvm_noErr == result) {
-					put_vm_long(p + ExtnDat_params + 4, PbufSize[Pbuf_No]);
+					put_vm_long(p + ExtnDat_params + 4, Count);
 				}
 			}
 			break;
 		case kCmndPbufTransfer:
 			{
+				ui5r PbufCount;
 				tPbuf Pbuf_No = get_vm_word(p + ExtnDat_params + 0);
 				/* reserved word at offset 2, should be zero */
 				ui5r offset = get_vm_long(p + ExtnDat_params + 4);
 				ui5r count = get_vm_long(p + ExtnDat_params + 8);
 				CPTR Buffera = get_vm_long(p + ExtnDat_params + 12);
-				blnr IsWrite = (get_vm_word(p + ExtnDat_params + 16) != 0);
-				result = CheckPbuf(Pbuf_No);
+				blnr IsWrite =
+					(get_vm_word(p + ExtnDat_params + 16) != 0);
+				result = PbufGetSize(Pbuf_No, &PbufCount);
 				if (mnvm_noErr == result) {
 					ui5r endoff = offset + count;
 					if ((endoff < offset) /* overflow */
-						|| (endoff > PbufSize[Pbuf_No]))
+						|| (endoff > PbufCount))
 					{
 						result = mnvm_eofErr;
 					} else {
@@ -1404,18 +455,21 @@ LOCALPROC ExtnFind_Access(CPTR p)
 				} else
 #if IncludeExtnPbufs
 				if (extn == kHostParamBuffersExtension) {
-					put_vm_word(p + kParamFindExtnTheId, kExtnParamBuffers);
+					put_vm_word(p + kParamFindExtnTheId,
+						kExtnParamBuffers);
 					result = mnvm_noErr;
 				} else
 #endif
 #if IncludeExtnHostTextClipExchange
 				if (extn == kHostClipExchangeExtension) {
-					put_vm_word(p + kParamFindExtnTheId, kExtnHostTextClipExchange);
+					put_vm_word(p + kParamFindExtnTheId,
+						kExtnHostTextClipExchange);
 					result = mnvm_noErr;
 				} else
 #endif
 				if (extn == kFindExtnExtension) {
-					put_vm_word(p + kParamFindExtnTheId, kExtnFindExtn);
+					put_vm_word(p + kParamFindExtnTheId,
+						kExtnFindExtn);
 					result = mnvm_noErr;
 				} else
 				{
@@ -1428,23 +482,27 @@ LOCALPROC ExtnFind_Access(CPTR p)
 				ui4r extn = get_vm_word(p + kParamFindExtnTheId);
 
 				if (extn == kExtnDisk) {
-					put_vm_long(p + kParamFindExtnTheExtn, kDiskDriverExtension);
+					put_vm_long(p + kParamFindExtnTheExtn,
+						kDiskDriverExtension);
 					result = mnvm_noErr;
 				} else
 #if IncludeExtnPbufs
 				if (extn == kExtnParamBuffers) {
-					put_vm_long(p + kParamFindExtnTheExtn, kHostParamBuffersExtension);
+					put_vm_long(p + kParamFindExtnTheExtn,
+						kHostParamBuffersExtension);
 					result = mnvm_noErr;
 				} else
 #endif
 #if IncludeExtnHostTextClipExchange
 				if (extn == kExtnHostTextClipExchange) {
-					put_vm_long(p + kParamFindExtnTheExtn, kHostClipExchangeExtension);
+					put_vm_long(p + kParamFindExtnTheExtn,
+						kHostClipExchangeExtension);
 					result = mnvm_noErr;
 				} else
 #endif
 				if (extn == kExtnFindExtn) {
-					put_vm_long(p + kParamFindExtnTheExtn, kFindExtnExtension);
+					put_vm_long(p + kParamFindExtnTheExtn,
+						kFindExtnExtension);
 					result = mnvm_noErr;
 				} else
 				{
@@ -1478,7 +536,8 @@ LOCALPROC Extn_Access(ui5b Data, CPTR addr)
 				CPTR p = ParamAddrHi << 16 | Data;
 
 				ParamAddrHi = (ui4b) - 1;
-				if (kcom_callcheck == get_vm_word(p + ExtnDat_checkval)) {
+				if (kcom_callcheck == get_vm_word(p + ExtnDat_checkval))
+				{
 					put_vm_word(p + ExtnDat_checkval, 0);
 
 					switch (get_vm_word(p + ExtnDat_extension)) {
@@ -1507,7 +566,8 @@ LOCALPROC Extn_Access(ui5b Data, CPTR addr)
 							ExtnSony_Access(p);
 							break;
 						default:
-							put_vm_word(p + ExtnDat_result, mnvm_controlErr);
+							put_vm_word(p + ExtnDat_result,
+								mnvm_controlErr);
 							break;
 					}
 				}
@@ -1520,10 +580,1056 @@ LOCALPROC Extn_Access(ui5b Data, CPTR addr)
 	}
 }
 
-LOCALPROC Extn_Reset(void)
+GLOBALPROC Extn_Reset(void)
 {
 	ParamAddrHi = (ui4b) - 1;
 }
+
+/* implementation of read/write for everything but RAM and ROM */
+
+#define kSCC_Mask 0x03
+
+#define kVIA1_Mask 0x00000F
+#if EmVIA2
+#define kVIA2_Mask 0x00000F
+#endif
+
+#define kIWM_Mask 0x00000F /* Allocated Memory Bandwidth for IWM */
+
+#if CurEmMd <= kEmMd_512Ke
+#define ROM_CmpZeroMask 0
+#elif CurEmMd <= kEmMd_Plus
+#define ROM_CmpZeroMask 0x00020000
+#elif CurEmMd <= kEmMd_PB100
+#define ROM_CmpZeroMask 0
+#elif CurEmMd <= kEmMd_IIx
+#define ROM_CmpZeroMask 0
+#else
+#error "ROM_CmpZeroMask not defined"
+#endif
+
+#define kROM_cmpmask (0x00F00000 | ROM_CmpZeroMask)
+
+#if CurEmMd <= kEmMd_512Ke
+#define Overlay_ROM_CmpZeroMask 0x00100000
+#elif CurEmMd <= kEmMd_Plus
+#define Overlay_ROM_CmpZeroMask 0x00020000
+#elif CurEmMd <= kEmMd_Classic
+#define Overlay_ROM_CmpZeroMask 0x00300000
+#elif CurEmMd <= kEmMd_PB100
+#define Overlay_ROM_CmpZeroMask 0
+#elif CurEmMd <= kEmMd_IIx
+#define Overlay_ROM_CmpZeroMask 0
+#else
+#error "Overlay_ROM_CmpZeroMask not defined"
+#endif
+
+enum {
+	kMMDV_VIA1,
+#if EmVIA2
+	kMMDV_VIA2,
+#endif
+	kMMDV_SCC,
+	kMMDV_Extn,
+#if EmASC
+	kMMDV_ASC,
+#endif
+	kMMDV_SCSI,
+	kMMDV_IWM,
+
+	kNumMMDVs
+};
+
+enum {
+#if CurEmMd >= kEmMd_SE
+	kMAN_OverlayOff,
+#endif
+
+	kNumMANs
+};
+
+
+#define MaxATTListN 16
+
+LOCALVAR ATTer ATTListA[MaxATTListN];
+LOCALVAR ui4r LastATTel;
+
+
+LOCALPROC AddToATTList(ATTep p)
+{
+	ui4r NewLast = LastATTel + 1;
+	if (NewLast >= MaxATTListN) {
+		ReportAbnormal("MaxATTListN not big enough");
+	} else {
+		ATTListA[LastATTel] = *p;
+		LastATTel = NewLast;
+	}
+}
+
+LOCALPROC InitATTList(void)
+{
+	LastATTel = 0;
+}
+
+LOCALPROC FinishATTList(void)
+{
+	{
+		/* add guard */
+		ATTer r;
+
+		r.cmpmask = 0;
+		r.cmpvalu = 0;
+		r.usemask = 0;
+		r.usebase = nullpr;
+		r.Access = 0;
+		AddToATTList(&r);
+	}
+
+	{
+		ui4r i = LastATTel;
+		ATTep p = &ATTListA[LastATTel];
+		ATTep h = nullpr;
+
+		while (0 != i) {
+			--i;
+			--p;
+			p->Next = h;
+			h = p;
+		}
+
+#if 0 /* verify list. not for final version */
+		{
+			ATTep q1;
+			ATTep q2;
+			for (q1 = h; nullpr != q1->Next; q1 = q1->Next) {
+				if ((q1->cmpvalu & ~ q1->cmpmask) != 0) {
+					ReportAbnormal("ATTListA bad entry");
+				}
+				for (q2 = q1->Next; nullpr != q2->Next; q2 = q2->Next) {
+					ui5r common_mask = (q1->cmpmask) & (q2->cmpmask);
+					if ((q1->cmpvalu & common_mask) ==
+						(q2->cmpvalu & common_mask))
+					{
+						ReportAbnormal("ATTListA Conflict");
+					}
+				}
+			}
+		}
+#endif
+
+		SetHeadATTel(h);
+	}
+}
+
+#if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
+LOCALPROC SetUp_RAM24(void)
+{
+	ATTer r;
+	ui5r bankbit = 0x00100000 << (((VIA2_iA7 << 1) | VIA2_iA6) << 1);
+
+#if kRAMa_Size == kRAMb_Size
+	if (kRAMa_Size == bankbit) {
+		/* properly set up balanced RAM */
+		r.cmpmask = 0x00FFFFFF & ~ ((1 << kRAM_ln2Spc) - 1);
+		r.cmpvalu = 0;
+		r.usemask = ((1 << kRAM_ln2Spc) - 1) & (kRAM_Size - 1);
+		r.usebase = RAM;
+		r.Access = kATTA_readwritereadymask;
+		AddToATTList(&r);
+	} else
+#endif
+	{
+		bankbit &= 0x00FFFFFF; /* if too large, always use RAMa */
+
+		if (0 != bankbit) {
+#if kRAMb_Size != 0
+			r.cmpmask = bankbit
+				| (0x00FFFFFF & ~ ((1 << kRAM_ln2Spc) - 1));
+			r.cmpvalu = bankbit;
+			r.usemask = ((1 << kRAM_ln2Spc) - 1) & (kRAMb_Size - 1);
+			r.usebase = kRAMa_Size + RAM;
+			r.Access = kATTA_readwritereadymask;
+			AddToATTList(&r);
+#endif
+		}
+
+		{
+			r.cmpmask = bankbit
+				| (0x00FFFFFF & ~ ((1 << kRAM_ln2Spc) - 1));
+			r.cmpvalu = 0;
+			r.usemask = ((1 << kRAM_ln2Spc) - 1) & (kRAMa_Size - 1);
+			r.usebase = RAM;
+			r.Access = kATTA_readwritereadymask;
+			AddToATTList(&r);
+		}
+	}
+}
+#endif
+
+#if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
+LOCALPROC SetUp_io(void)
+{
+	ATTer r;
+
+	if (Addr32) {
+		r.cmpmask = 0xFF01E000;
+		r.cmpvalu = 0x50000000;
+	} else {
+		r.cmpmask = 0x00F1E000;
+		r.cmpvalu = 0x00F00000;
+	}
+	r.usebase = nullpr;
+	r.Access = kATTA_mmdvmask;
+	r.MMDV = kMMDV_VIA1;
+	AddToATTList(&r);
+
+	if (Addr32) {
+		r.cmpmask = 0xFF01E000;
+		r.cmpvalu = 0x50000000 | 0x2000;
+	} else {
+		r.cmpmask = 0x00F1E000;
+		r.cmpvalu = 0x00F00000 | 0x2000;
+	}
+	r.usebase = nullpr;
+	r.Access = kATTA_mmdvmask;
+	r.MMDV = kMMDV_VIA2;
+	AddToATTList(&r);
+
+	if (Addr32) {
+		r.cmpmask = 0xFF01E000;
+		r.cmpvalu = 0x50000000 | 0x4000;
+	} else {
+		r.cmpmask = 0x00F1E000;
+		r.cmpvalu = 0x00F00000 | 0x4000;
+	}
+	r.usebase = nullpr;
+	r.Access = kATTA_mmdvmask;
+	r.MMDV = kMMDV_SCC;
+	AddToATTList(&r);
+
+	if (Addr32) {
+		r.cmpmask = 0xFF01E000;
+		r.cmpvalu = 0x50000000 | 0x0C000;
+	} else {
+		r.cmpmask = 0x00F1E000;
+		r.cmpvalu = 0x00F00000 | 0x0C000;
+	}
+	r.usebase = nullpr;
+	r.Access = kATTA_mmdvmask;
+	r.MMDV = kMMDV_Extn;
+	AddToATTList(&r);
+
+	if (Addr32) {
+		r.cmpmask = 0xFF01E000;
+		r.cmpvalu = 0x50000000 | 0x10000;
+	} else {
+		r.cmpmask = 0x00F1E000;
+		r.cmpvalu = 0x00F00000 | 0x10000;
+	}
+	r.usebase = nullpr;
+	r.Access = kATTA_mmdvmask;
+	r.MMDV = kMMDV_SCSI;
+	AddToATTList(&r);
+
+	if (Addr32) {
+		r.cmpmask = 0xFF01E000;
+		r.cmpvalu = 0x50000000 | 0x14000;
+	} else {
+		r.cmpmask = 0x00F1E000;
+		r.cmpvalu = 0x00F00000 | 0x14000;
+	}
+	r.usebase = nullpr;
+	r.Access = kATTA_mmdvmask;
+	r.MMDV = kMMDV_ASC;
+	AddToATTList(&r);
+
+	if (Addr32) {
+		r.cmpmask = 0xFF01E000;
+		r.cmpvalu = 0x50000000 | 0x16000;
+	} else {
+		r.cmpmask = 0x00F1E000;
+		r.cmpvalu = 0x00F00000 | 0x16000;
+	}
+	r.usebase = nullpr;
+	r.Access = kATTA_mmdvmask;
+	r.MMDV = kMMDV_IWM;
+	AddToATTList(&r);
+
+#if 0
+		case 14:
+			/*
+				fail, nothing supposed to be here,
+				but rom accesses it anyway
+			*/
+			{
+				ui5r addr2 = addr & 0x1FFFF;
+
+				if ((addr2 != 0x1DA00) && (addr2 != 0x1DC00)) {
+					ReportAbnormal("another unknown access");
+				}
+			}
+			get_fail_realblock(p);
+			break;
+#endif
+}
+#endif
+
+#if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
+LOCALPROC SetUp_address24(void)
+{
+	ATTer r;
+
+	if (MemOverlay) {
+		ReportAbnormal("Overlay with 24 bit addressing");
+	}
+
+	if (MemOverlay) {
+		r.cmpmask = Overlay_ROM_CmpZeroMask |
+			(0x00FFFFFF & ~ ((1 << kRAM_ln2Spc) - 1));
+		r.cmpvalu = kRAM_Base;
+		r.usemask = kROM_Size - 1;
+		r.usebase = ROM;
+		r.Access = kATTA_readreadymask;
+		AddToATTList(&r);
+	} else {
+		SetUp_RAM24();
+	}
+
+	r.cmpmask = kROM_cmpmask;
+	r.cmpvalu = kROM_Base;
+	r.usemask = kROM_Size - 1;
+	r.usebase = ROM;
+	r.Access = kATTA_readreadymask;
+	AddToATTList(&r);
+
+	r.cmpmask = 0x00FFFFFF & ~ (0x100000 - 1);
+	r.cmpvalu = 0x900000;
+	r.usemask = (kVidMemRAM_Size - 1) & (0x100000 - 1);
+	r.usebase = VidMem;
+	r.Access = kATTA_readwritereadymask;
+	AddToATTList(&r);
+#if kVidMemRAM_Size >= 0x00200000
+	r.cmpmask = 0x00FFFFFF & ~ (0x100000 - 1);
+	r.cmpvalu = 0xA00000;
+	r.usemask = (0x100000 - 1);
+	r.usebase = VidMem + (1 << 20);
+	r.Access = kATTA_readwritereadymask;
+	AddToATTList(&r);
+#endif
+#if kVidMemRAM_Size >= 0x00400000
+	r.cmpmask = 0x00FFFFFF & ~ (0x100000 - 1);
+	r.cmpvalu = 0xB00000;
+	r.usemask = (0x100000 - 1);
+	r.usebase = VidMem + (2 << 20);
+	r.Access = kATTA_readwritereadymask;
+	AddToATTList(&r);
+	r.cmpmask = 0x00FFFFFF & ~ (0x100000 - 1);
+	r.cmpvalu = 0xC00000;
+	r.usemask = (0x100000 - 1);
+	r.usebase = VidMem + (3 << 20);
+	r.Access = kATTA_readwritereadymask;
+	AddToATTList(&r);
+#endif
+
+	SetUp_io();
+}
+#endif
+
+#if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
+LOCALPROC SetUp_address32(void)
+{
+	ATTer r;
+
+	if (MemOverlay) {
+		r.cmpmask = ~ ((1 << 30) - 1);
+		r.cmpvalu = 0;
+		r.usemask = kROM_Size - 1;
+		r.usebase = ROM;
+		r.Access = kATTA_readreadymask;
+		AddToATTList(&r);
+	} else {
+		ui5r bankbit =
+			0x00100000 << (((VIA2_iA7 << 1) | VIA2_iA6) << 1);
+#if kRAMa_Size == kRAMb_Size
+		if (kRAMa_Size == bankbit) {
+			/* properly set up balanced RAM */
+			r.cmpmask = ~ ((1 << 30) - 1);
+			r.cmpvalu = 0;
+			r.usemask = kRAM_Size - 1;
+			r.usebase = RAM;
+			r.Access = kATTA_readwritereadymask;
+			AddToATTList(&r);
+		} else
+#endif
+		{
+#if kRAMb_Size != 0
+			r.cmpmask = bankbit | ~ ((1 << 30) - 1);
+			r.cmpvalu = bankbit;
+			r.usemask = kRAMb_Size - 1;
+			r.usebase = kRAMa_Size + RAM;
+			r.Access = kATTA_readwritereadymask;
+			AddToATTList(&r);
+#endif
+
+			r.cmpmask = bankbit | ~ ((1 << 30) - 1);
+			r.cmpvalu = 0;
+			r.usemask = kRAMa_Size - 1;
+			r.usebase = RAM;
+			r.Access = kATTA_readwritereadymask;
+			AddToATTList(&r);
+		}
+	}
+
+	r.cmpmask = ~ ((1 << 28) - 1);
+	r.cmpvalu = 0x40000000;
+	r.usemask = kROM_Size - 1;
+	r.usebase = ROM;
+	r.Access = kATTA_readreadymask;
+	AddToATTList(&r);
+
+#if 0
+	/* haven't persuaded emulated computer to look here yet. */
+	/* NuBus super space */
+	r.cmpmask = ~ ((1 << 28) - 1);
+	r.cmpvalu = 0x90000000;
+	r.usemask = kVidMemRAM_Size - 1;
+	r.usebase = VidMem;
+	r.Access = kATTA_readwritereadymask;
+	AddToATTList(&r);
+#endif
+
+	/* Standard NuBus space */
+	r.cmpmask = ~ ((1 << 20) - 1);
+	r.cmpvalu = 0xF9F00000;
+	r.usemask = kVidROM_Size - 1;
+	r.usebase = VidROM;
+	r.Access = kATTA_readreadymask;
+	AddToATTList(&r);
+#if 0
+	r.cmpmask = ~ 0x007FFFFF;
+	r.cmpvalu = 0xF9000000;
+	r.usemask = 0x007FFFFF & (kVidMemRAM_Size - 1);
+	r.usebase = VidMem;
+	r.Access = kATTA_readwritereadymask;
+	AddToATTList(&r);
+#endif
+
+	r.cmpmask = ~ 0x000FFFFF;
+	r.cmpvalu = 0xF9900000;
+	r.usemask = 0x000FFFFF & (kVidMemRAM_Size - 1);
+	r.usebase = VidMem;
+	r.Access = kATTA_readwritereadymask;
+	AddToATTList(&r);
+/* kludge to allow more than 1M of Video Memory */
+#if kVidMemRAM_Size >= 0x00200000
+	r.cmpmask = ~ 0x000FFFFF;
+	r.cmpvalu = 0xF9A00000;
+	r.usemask = 0x000FFFFF & (kVidMemRAM_Size - 1);
+	r.usebase = VidMem + (1 << 20);
+	r.Access = kATTA_readwritereadymask;
+	AddToATTList(&r);
+#endif
+#if kVidMemRAM_Size >= 0x00400000
+	r.cmpmask = ~ 0x000FFFFF;
+	r.cmpvalu = 0xF9B00000;
+	r.usemask = 0x000FFFFF & (kVidMemRAM_Size - 1);
+	r.usebase = VidMem + (2 << 20);
+	r.Access = kATTA_readwritereadymask;
+	AddToATTList(&r);
+	r.cmpmask = ~ 0x000FFFFF;
+	r.cmpvalu = 0xF9C00000;
+	r.usemask = 0x000FFFFF & (kVidMemRAM_Size - 1);
+	r.usebase = VidMem + (3 << 20);
+	r.Access = kATTA_readwritereadymask;
+	AddToATTList(&r);
+#endif
+
+	SetUp_io();
+
+#if 0
+	if ((addr >= 0x58000000) && (addr < 0x58000004)) {
+		/* test hardware. fail */
+	}
+#endif
+}
+#endif
+
+#if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
+LOCALPROC SetUp_address(void)
+{
+	if (Addr32) {
+		SetUp_address32();
+	} else {
+		SetUp_address24();
+	}
+}
+#endif
+
+/*
+	unlike in the real Mac Plus, Mini vMac
+	will allow misaligned memory access,
+	since it is easier to allow it than
+	it is to correctly simulate a bus error
+	and back out of the current instruction.
+*/
+
+#if (CurEmMd != kEmMd_II) && (CurEmMd != kEmMd_IIx)
+LOCALPROC SetUp_RAM24(void)
+{
+	ATTer r;
+
+#if (0 == kRAMb_Size) || (kRAMa_Size == kRAMb_Size)
+	r.cmpmask = 0x00FFFFFF & ~ ((1 << kRAM_ln2Spc) - 1);
+	r.cmpvalu = kRAM_Base;
+	r.usemask = kRAM_Size - 1;
+	r.usebase = RAM;
+	r.Access = kATTA_readwritereadymask;
+	AddToATTList(&r);
+#else
+	/* unbalanced memory */
+
+#if 0 != (0x00FFFFFF & kRAMa_Size)
+	/* condition should always be true if configuration file right */
+	r.cmpmask = 0x00FFFFFF & (kRAMa_Size | ~ ((1 << kRAM_ln2Spc) - 1));
+	r.cmpvalu = kRAM_Base + kRAMa_Size;
+	r.usemask = kRAMb_Size - 1;
+	r.usebase = kRAMa_Size + RAM;
+	r.Access = kATTA_readwritereadymask;
+	AddToATTList(&r);
+#endif
+
+	r.cmpmask = 0x00FFFFFF & (kRAMa_Size | ~ ((1 << kRAM_ln2Spc) - 1));
+	r.cmpvalu = kRAM_Base;
+	r.usemask = kRAMa_Size - 1;
+	r.usebase = RAM;
+	r.Access = kATTA_readwritereadymask;
+	AddToATTList(&r);
+#endif
+}
+#endif
+
+#if (CurEmMd != kEmMd_II) && (CurEmMd != kEmMd_IIx)
+LOCALPROC SetUp_address(void)
+{
+	ATTer r;
+
+	if (MemOverlay) {
+		r.cmpmask = Overlay_ROM_CmpZeroMask |
+			(0x00FFFFFF & ~ ((1 << kRAM_ln2Spc) - 1));
+		r.cmpvalu = kRAM_Base;
+		r.usemask = kROM_Size - 1;
+		r.usebase = ROM;
+		r.Access = kATTA_readreadymask;
+		AddToATTList(&r);
+	} else {
+		SetUp_RAM24();
+	}
+
+	r.cmpmask = kROM_cmpmask;
+	r.cmpvalu = kROM_Base;
+#if (CurEmMd >= kEmMd_SE)
+	if (MemOverlay) {
+		r.usebase = nullpr;
+		r.Access = kATTA_ntfymask;
+		r.Ntfy = kMAN_OverlayOff;
+	} else
+#endif
+	{
+		r.usemask = kROM_Size - 1;
+		r.usebase = ROM;
+		r.Access = kATTA_readreadymask;
+	}
+	AddToATTList(&r);
+
+	if (MemOverlay) {
+		r.cmpmask = 0x00E00000;
+		r.cmpvalu = kRAM_Overlay_Base;
+#if (0 == kRAMb_Size) || (kRAMa_Size == kRAMb_Size)
+		r.usemask = kRAM_Size - 1;
+			/* note that cmpmask and usemask overlap for 4M */
+		r.usebase = RAM;
+		r.Access = kATTA_readwritereadymask;
+#else
+		/* unbalanced memory */
+		r.usemask = kRAMb_Size - 1;
+		r.usebase = kRAMa_Size + RAM;
+		r.Access = kATTA_readwritereadymask;
+#endif
+		AddToATTList(&r);
+	}
+
+#if IncludeVidMem
+	r.cmpmask = 0x00FFFFFF & ~ ((1 << kVidMem_ln2Spc) - 1);
+	r.cmpvalu = kVidMem_Base;
+	r.usemask = kVidMemRAM_Size - 1;
+	r.usebase = VidMem;
+	r.Access = kATTA_readwritereadymask;
+	AddToATTList(&r);
+#endif
+
+	r.cmpmask = 0x00FFFFFF & ~ ((1 << kVIA1_ln2Spc) - 1);
+	r.cmpvalu = kVIA1_Block_Base;
+	r.usebase = nullpr;
+	r.Access = kATTA_mmdvmask;
+	r.MMDV = kMMDV_VIA1;
+	AddToATTList(&r);
+
+	r.cmpmask = 0x00FFFFFF & ~ ((1 << kSCC_ln2Spc) - 1);
+	r.cmpvalu = kSCCRd_Block_Base;
+	r.usebase = nullpr;
+	r.Access = kATTA_mmdvmask;
+	r.MMDV = kMMDV_SCC;
+	AddToATTList(&r);
+
+	r.cmpmask = 0x00FFFFFF & ~ ((1 << kExtn_ln2Spc) - 1);
+	r.cmpvalu = kExtn_Block_Base;
+	r.usebase = nullpr;
+	r.Access = kATTA_mmdvmask;
+	r.MMDV = kMMDV_Extn;
+	AddToATTList(&r);
+
+#if CurEmMd == kEmMd_PB100
+	r.cmpmask = 0x00FFFFFF & ~ ((1 << kASC_ln2Spc) - 1);
+	r.cmpvalu = kASC_Block_Base;
+	r.usebase = nullpr;
+	r.Access = kATTA_mmdvmask;
+	r.MMDV = kMMDV_ASC;
+	AddToATTList(&r);
+#endif
+
+	r.cmpmask = 0x00FFFFFF & ~ ((1 << kSCSI_ln2Spc) - 1);
+	r.cmpvalu = kSCSI_Block_Base;
+	r.usebase = nullpr;
+	r.Access = kATTA_mmdvmask;
+	r.MMDV = kMMDV_SCSI;
+	AddToATTList(&r);
+
+	r.cmpmask = 0x00FFFFFF & ~ ((1 << kIWM_ln2Spc) - 1);
+	r.cmpvalu = kIWM_Block_Base;
+	r.usebase = nullpr;
+	r.Access = kATTA_mmdvmask;
+	r.MMDV = kMMDV_IWM;
+	AddToATTList(&r);
+}
+#endif
+
+LOCALPROC SetUpMemBanks(void)
+{
+	InitATTList();
+
+	SetUp_address();
+
+	FinishATTList();
+}
+
+#if 0
+LOCALPROC get_fail_realblock(ATTep p)
+{
+	p->cmpmask = 0;
+	p->cmpvalu = 0xFFFFFFFF;
+	p->usemask = 0;
+	p->usebase = nullpr;
+	p->Access = 0;
+}
+#endif
+
+GLOBALFUNC ui5b MMDV_Access(ATTep p, ui5b Data,
+	blnr WriteMem, blnr ByteSize, CPTR addr)
+{
+	switch (p->MMDV) {
+		case kMMDV_VIA1:
+			if (! ByteSize) {
+				ReportAbnormal("access VIA1 word");
+			} else if ((addr & 1) != 0) {
+				ReportAbnormal("access VIA1 odd");
+			} else {
+#if CurEmMd != kEmMd_PB100
+#if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
+				if ((addr & 0x000001FE) != 0x00000000)
+#else
+				if ((addr & 0x000FE1FE) != 0x000FE1FE)
+#endif
+				{
+					ReportAbnormal("access VIA1 nonstandard address");
+				}
+#endif
+				Data = VIA1_Access(Data, WriteMem,
+					(addr >> 9) & kVIA1_Mask);
+			}
+
+			break;
+#if EmVIA2
+		case kMMDV_VIA2:
+			if (! ByteSize) {
+				if ((! WriteMem)
+					&& ((0x3e00 == (addr & 0x1FFFF))
+						|| (0x3e02 == (addr & 0x1FFFF))))
+				{
+					/* for weirdness at offset 0x71E in ROM */
+					Data =
+						(VIA2_Access(Data, WriteMem,
+							(addr >> 9) & kVIA2_Mask) << 8)
+						| VIA2_Access(Data, WriteMem,
+							(addr >> 9) & kVIA2_Mask);
+
+				} else {
+					ReportAbnormal("access VIA2 word");
+				}
+			} else if ((addr & 1) != 0) {
+				if (0x3FFF == (addr & 0x1FFFF)) {
+					/*
+						for weirdness at offset 0x7C4 in ROM.
+						looks like bug.
+					*/
+					Data = VIA2_Access(Data, WriteMem,
+						(addr >> 9) & kVIA2_Mask);
+				} else {
+					ReportAbnormal("access VIA2 odd");
+				}
+			} else {
+				if ((addr & 0x000001FE) != 0x00000000) {
+					ReportAbnormal("access VIA2 nonstandard address");
+				}
+				Data = VIA2_Access(Data, WriteMem,
+					(addr >> 9) & kVIA2_Mask);
+			}
+			break;
+#endif
+		case kMMDV_SCC:
+
+#if (CurEmMd >= kEmMd_SE) \
+	&& ! ((CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx))
+
+			if ((addr & 0x00100000) == 0) {
+				ReportAbnormal("access SCC unassigned address");
+			} else
+#endif
+			if (! ByteSize) {
+				ReportAbnormal("Attemped Phase Adjust");
+			} else
+#if ! ((CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx))
+			if (WriteMem != ((addr & 1) != 0)) {
+				if (WriteMem) {
+#if CurEmMd >= kEmMd_512Ke
+#if CurEmMd != kEmMd_PB100
+					ReportAbnormal("access SCC even/odd");
+					/*
+						This happens on boot with 64k ROM.
+					*/
+#endif
+#endif
+				} else {
+					SCC_Reset();
+				}
+			} else
+#endif
+#if (CurEmMd != kEmMd_PB100) \
+	&& ! ((CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx))
+
+			if (WriteMem != (addr >= kSCCWr_Block_Base)) {
+				ReportAbnormal("access SCC wr/rd base wrong");
+			} else
+#endif
+			{
+#if CurEmMd != kEmMd_PB100
+#if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
+				if ((addr & 0x1FF9) != 0x00000000)
+#else
+				if ((addr & 0x001FFFF8) != 0x001FFFF8)
+#endif
+				{
+					ReportAbnormal("access SCC nonstandard address");
+				}
+#endif
+				Data = SCC_Access(Data, WriteMem,
+					(addr >> 1) & kSCC_Mask);
+			}
+			break;
+		case kMMDV_Extn:
+			if (ByteSize) {
+				ReportAbnormal("access Sony byte");
+			} else if ((addr & 1) != 0) {
+				ReportAbnormal("access Sony odd");
+			} else if (! WriteMem) {
+				ReportAbnormal("access Sony read");
+			} else {
+				Extn_Access(Data, (addr >> 1) & 0x0F);
+			}
+			break;
+#if EmASC
+		case kMMDV_ASC:
+			if (! ByteSize) {
+#if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
+				if (WriteMem) {
+					(void) ASC_Access((Data >> 8) & 0x00FF,
+						WriteMem, addr & kASC_Mask);
+					Data = ASC_Access((Data) & 0x00FF,
+						WriteMem, (addr + 1) & kASC_Mask);
+				} else {
+					Data =
+						(ASC_Access((Data >> 8) & 0x00FF,
+							WriteMem, addr & kASC_Mask) << 8)
+						| ASC_Access((Data) & 0x00FF,
+							WriteMem, (addr + 1) & kASC_Mask);
+				}
+#else
+				ReportAbnormal("access ASC word");
+#endif
+			} else {
+				Data = ASC_Access(Data, WriteMem, addr & kASC_Mask);
+			}
+			break;
+#endif
+		case kMMDV_SCSI:
+			if (! ByteSize) {
+				ReportAbnormal("access SCSI word");
+			} else
+#if ! ((CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx))
+			if (WriteMem != ((addr & 1) != 0)) {
+				ReportAbnormal("access SCSI even/odd");
+			} else
+#endif
+			{
+#if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
+				if ((addr & 0x1F8F) != 0x00000000) {
+					ReportAbnormal("access SCSI nonstandard address");
+				}
+#endif
+				Data = SCSI_Access(Data, WriteMem, (addr >> 4) & 0x07);
+			}
+
+			break;
+		case kMMDV_IWM:
+#if (CurEmMd >= kEmMd_SE) \
+	&& ! ((CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx))
+
+			if ((addr & 0x00100000) == 0) {
+				ReportAbnormal("access IWM unassigned address");
+			} else
+#endif
+			if (! ByteSize) {
+#if ExtraAbnormalReports
+				ReportAbnormal("access IWM word");
+				/*
+					This happens when quitting 'Glider 3.1.2'.
+					perhaps a bad handle is being disposed of.
+				*/
+#endif
+			} else
+#if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
+			if ((addr & 1) != 0) {
+				ReportAbnormal("access IWM odd");
+			} else
+#else
+			if ((addr & 1) == 0) {
+				ReportAbnormal("access IWM even");
+			} else
+#endif
+			{
+#if (CurEmMd != kEmMd_PB100) \
+	&& ! ((CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx))
+
+				if ((addr & 0x001FE1FF) != 0x001FE1FF) {
+					ReportAbnormal("access IWM nonstandard address");
+				}
+#endif
+				Data = IWM_Access(Data, WriteMem,
+					(addr >> 9) & kIWM_Mask);
+			}
+
+			break;
+	}
+
+	return Data;
+}
+
+GLOBALFUNC blnr MemAccessNtfy(ATTep pT)
+{
+	blnr v = falseblnr;
+
+	switch (pT->Ntfy) {
+#if CurEmMd >= kEmMd_SE
+		case kMAN_OverlayOff:
+			pT->Access = kATTA_readreadymask;
+
+			MemOverlay = 0;
+			SetUpMemBanks();
+
+			v = trueblnr;
+
+			break;
+#endif
+	}
+
+	return v;
+}
+
+GLOBALPROC MemOverlay_ChangeNtfy(void)
+{
+#if CurEmMd <= kEmMd_Plus
+	SetUpMemBanks();
+#elif (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
+	SetUpMemBanks();
+#endif
+}
+
+#if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
+GLOBALPROC Addr32_ChangeNtfy(void)
+{
+	SetUpMemBanks();
+}
+#endif
+
+LOCALFUNC ATTep get_address_realblock1(blnr WriteMem, CPTR addr)
+{
+	ATTep p;
+
+Label_Retry:
+	p = FindATTel(addr);
+	if (0 != (p->Access &
+		(WriteMem ? kATTA_writereadymask : kATTA_readreadymask)))
+	{
+		/* ok */
+	} else {
+		if (0 != (p->Access & kATTA_ntfymask)) {
+			if (MemAccessNtfy(p)) {
+				goto Label_Retry;
+			}
+		}
+		p = nullpr; /* fail */
+	}
+
+	return p;
+}
+
+GLOBALFUNC ui3p get_real_address0(ui5b L, blnr WritableMem, CPTR addr,
+	ui5b *actL)
+{
+	ui5b RealSize;
+	ui5b bankleft;
+	ui3p p;
+	ATTep q;
+
+	q = get_address_realblock1(WritableMem, addr);
+	if (nullpr == q) {
+		*actL = 0;
+		p = nullpr;
+	} else {
+		ui5b bankoffset = addr & q->usemask;
+		RealSize = q->usemask + 1;
+		bankleft = RealSize - bankoffset;
+		p = bankoffset + q->usebase;
+		if (bankleft >= L) {
+			/* this block is big enough (by far the most common case) */
+			*actL = L;
+		} else {
+			/*
+				not big enough, look if following block
+				is contiguous in real memory.
+			*/
+			ui3p bankend;
+			ui5b n = L;
+label_1:
+			addr += bankleft;
+			n -= bankleft;
+			bankend = RealSize + q->usebase;
+
+			q = get_address_realblock1(WritableMem, addr);
+			if ((nullpr == q)
+				|| (q->usebase != bankend))
+			{
+				/* following block not contiguous */
+				*actL = L - n;
+			} else {
+				RealSize = q->usemask + 1;
+				if (RealSize >= n) {
+					/* following block is contiguous and big enough */
+					*actL = L; /* ok */
+				} else {
+					bankoffset = addr & q->usemask;
+					if (bankoffset != 0) {
+						ReportAbnormal(
+							"problem with get_address_realblock1");
+					}
+					bankleft = RealSize;
+					goto label_1;
+				}
+			}
+		}
+	}
+
+	return p;
+}
+
+GLOBALVAR blnr InterruptButton = falseblnr;
+
+GLOBALPROC SetInterruptButton(blnr v)
+{
+	if (InterruptButton != v) {
+		InterruptButton = v;
+		VIAorSCCinterruptChngNtfy();
+	}
+}
+
+LOCALVAR ui3b CurIPL = 0;
+
+GLOBALPROC VIAorSCCinterruptChngNtfy(void)
+{
+#if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
+	ui3b NewIPL;
+
+	if (InterruptButton) {
+		NewIPL = 7;
+	} else if (SCCInterruptRequest) {
+		NewIPL = 4;
+	} else if (VIA2_InterruptRequest) {
+		NewIPL = 2;
+	} else if (VIA1_InterruptRequest) {
+		NewIPL = 1;
+	} else {
+		NewIPL = 0;
+	}
+#else
+	ui3b VIAandNotSCC = VIA1_InterruptRequest
+		& ~ SCCInterruptRequest;
+	ui3b NewIPL = VIAandNotSCC
+		| (SCCInterruptRequest << 1)
+		| (InterruptButton << 2);
+#endif
+	if (NewIPL != CurIPL) {
+		CurIPL = NewIPL;
+		m68k_IPLchangeNtfy();
+	}
+}
+
+GLOBALFUNC blnr AddrSpac_Init(void)
+{
+	int i;
+
+	for (i = 0; i < kNumWires; i++) {
+		Wires[i] = 1;
+	}
+
+	MINEM68K_Init(
+		&CurIPL);
+	return trueblnr;
+}
+
+GLOBALPROC Memory_Reset(void)
+{
+	MemOverlay = 1;
+	SetUpMemBanks();
+}
+
+#if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
+EXPORTPROC PowerOff_ChangeNtfy(void);
+GLOBALPROC PowerOff_ChangeNtfy(void)
+{
+	if (! VIA2_iB2) {
+		ForceMacOff = trueblnr;
+	}
+}
+#endif
 
 /* user event queue utilities */
 
@@ -1535,15 +1641,6 @@ GLOBALVAR ui4r MasterMyEvtQLock = 0;
 		to prevent processing further events meanwhile.
 	*/
 #endif
-
-GLOBALFUNC MyEvtQEl * MyEvtQOutP(void)
-{
-	MyEvtQEl *p = nullpr;
-	if (MyEvtQIn != MyEvtQOut) {
-		p = &MyEvtQA[MyEvtQOut & MyEvtQIMask];
-	}
-	return p;
-}
 
 GLOBALFUNC blnr FindKeyEvent(int *VirtualKey, blnr *KeyDown)
 {
@@ -1558,7 +1655,7 @@ GLOBALFUNC blnr FindKeyEvent(int *VirtualKey, blnr *KeyDown)
 		if (MyEvtQElKindKey == p->kind) {
 			*VirtualKey = p->u.press.key;
 			*KeyDown = p->u.press.down;
-			++MyEvtQOut;
+			MyEvtQOutDone();
 			return trueblnr;
 		}
 	}
@@ -1568,80 +1665,35 @@ GLOBALFUNC blnr FindKeyEvent(int *VirtualKey, blnr *KeyDown)
 
 /* task management */
 
-LOCALPROC ICT_DoTask(int taskid)
-{
-	switch (taskid) {
-#if EmClassicKbrd
-		case kICT_Kybd_ReceiveEndCommand:
-			DoKybd_ReceiveEndCommand();
-			break;
-		case kICT_Kybd_ReceiveCommand:
-			DoKybd_ReceiveCommand();
-			break;
-#endif
-#if EmADB
-		case kICT_ADB_NewState:
-			ADB_DoNewState();
-			break;
-#endif
-#if EmPMU
-		case kICT_PMU_Task:
-			PMU_DoTask();
-			break;
-#endif
-		case kICT_VIA1_Timer1Check:
-			VIA1_DoTimer1Check();
-			break;
-		case kICT_VIA1_Timer2Check:
-			VIA1_DoTimer2Check();
-			break;
-#if EmVIA2
-		case kICT_VIA2_Timer1Check:
-			VIA2_DoTimer1Check();
-			break;
-		case kICT_VIA2_Timer2Check:
-			VIA2_DoTimer2Check();
-			break;
-#endif
-		default:
-			ReportAbnormal("unknown taskid in ICT_DoTask");
-			break;
-	}
-}
-
 #ifdef _VIA_Debug
 #include <stdio.h>
 #endif
 
-LOCALVAR blnr ICTactive[kNumICTs];
-LOCALVAR iCountt ICTwhen[kNumICTs];
+GLOBALVAR uimr ICTactive;
+GLOBALVAR iCountt ICTwhen[kNumICTs];
 
-LOCALPROC ICT_Zap(void)
+GLOBALPROC ICT_Zap(void)
 {
-	int i;
-
-	for (i = 0; i < kNumICTs; i++) {
-		ICTactive[i] = falseblnr;
-	}
+	ICTactive = 0;
 }
 
 LOCALPROC InsertICT(int taskid, iCountt when)
 {
 	ICTwhen[taskid] = when;
-	ICTactive[taskid] = trueblnr;
+	ICTactive |= (1 << taskid);
 }
 
-LOCALVAR iCountt NextiCount = 0;
+GLOBALVAR iCountt NextiCount = 0;
 
 GLOBALFUNC iCountt GetCuriCount(void)
 {
-	return NextiCount - GetInstructionsRemaining();
+	return NextiCount - GetCyclesRemaining();
 }
 
 GLOBALPROC ICT_add(int taskid, ui5b n)
 {
 	/* n must be > 0 */
-	ui5b x = GetInstructionsRemaining();
+	si5r x = GetCyclesRemaining();
 	ui5b when = NextiCount - x + n;
 
 #ifdef _VIA_Debug
@@ -1649,107 +1701,8 @@ GLOBALPROC ICT_add(int taskid, ui5b n)
 #endif
 	InsertICT(taskid, when);
 
-	if (x > n) {
-		SetInstructionsRemaining(n);
+	if (x > (si5r)n) {
+		SetCyclesRemaining(n);
 		NextiCount = when;
-	}
-}
-
-LOCALPROC ICT_DoCurrentTasks(void)
-{
-	int i;
-
-	for (i = 0; i < kNumICTs; i++) {
-		if (ICTactive[i]) {
-			if (ICTwhen[i] == NextiCount) {
-				ICTactive[i] = falseblnr;
-#ifdef _VIA_Debug
-				fprintf(stderr, "doing task %d, %d\n", NextiCount, i);
-#endif
-				ICT_DoTask(i);
-
-				/*
-					A Task may set the time of
-					any task, including itself.
-					But it cannot set any task
-					to execute immediately, so
-					one pass is sufficient.
-				*/
-			}
-		}
-	}
-}
-
-LOCALFUNC ui5b ICT_DoGetNext(ui5b maxn)
-{
-	int i;
-	ui5b v = maxn;
-
-	for (i = 0; i < kNumICTs; i++) {
-		if (ICTactive[i]) {
-			ui5b d = ICTwhen[i] - NextiCount;
-			/* at this point d must be > 0 */
-			if (d < v) {
-#ifdef _VIA_Debug
-				fprintf(stderr, "coming task %d, %d, %d\n", NextiCount, i, d);
-#endif
-				v = d;
-			}
-		}
-	}
-	return v;
-}
-
-LOCALPROC m68k_go_nInstructions_1(ui5b n)
-{
-	ui5b n2;
-	ui5b StopiCount = NextiCount + n;
-	do {
-		ICT_DoCurrentTasks();
-		n2 = ICT_DoGetNext(n);
-		NextiCount += n2;
-		m68k_go_nInstructions(n2);
-		n = StopiCount - NextiCount;
-	} while (n != 0);
-}
-
-#define InstructionsPerSubTick (InstructionsPerTick / kNumSubTicks)
-
-LOCALVAR ui5b ExtraSubTicksToDo = 0;
-
-GLOBALPROC DoEmulateOneTick(void)
-{
-	long KiloInstructionsCounter = 0;
-
-	SixtiethSecondNotify();
-
-	do {
-		m68k_go_nInstructions_1(InstructionsPerSubTick);
-		SubTickNotify(KiloInstructionsCounter);
-		++KiloInstructionsCounter;
-	} while (KiloInstructionsCounter < kNumSubTicks);
-
-	if (! SpeedLimit) {
-		ExtraSubTicksToDo = (ui5b) -1;
-	} else {
-		ui5b ExtraAdd = (kNumSubTicks << SpeedValue) - kNumSubTicks;
-		ui5b ExtraLimit = ExtraAdd << 3;
-
-		ExtraSubTicksToDo += ExtraAdd;
-		if (ExtraSubTicksToDo > ExtraLimit) {
-			ExtraSubTicksToDo = ExtraLimit;
-		}
-	}
-}
-
-GLOBALPROC DoEmulateExtraTime(void)
-{
-	if (ExtraTimeNotOver() && (ExtraSubTicksToDo > 0)) {
-		ExtraTimeBeginNotify();
-		do {
-			m68k_go_nInstructions_1(InstructionsPerSubTick);
-			--ExtraSubTicksToDo;
-		} while (ExtraTimeNotOver() && (ExtraSubTicksToDo > 0));
-		ExtraTimeEndNotify();
 	}
 }

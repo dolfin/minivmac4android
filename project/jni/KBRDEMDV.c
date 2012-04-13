@@ -121,8 +121,12 @@ GLOBALPROC DoKybd_ReceiveCommand(void)
 				InstantCommandData = 0x7B;
 				break;
 			case 0x16 : /* Model Command */
-				GotKeyBoardData(0x0b /*0x01*/); /* Test value, means Model 0, no extra devices */
-				/* Fixed by Hoshi Takanori - it uses the proper keyboard type now */
+				GotKeyBoardData(0x0b /* 0x01 */);
+					/* Test value, means Model 0, no extra devices */
+				/*
+					Fixed by Hoshi Takanori -
+						it uses the proper keyboard type now
+				*/
 				break;
 			case 0x36 : /* Test Command */
 				GotKeyBoardData(0x7D);
@@ -167,7 +171,8 @@ GLOBALPROC Kybd_DataLineChngNtfy(void)
 #ifdef _VIA_Debug
 				fprintf(stderr, "posting kICT_Kybd_ReceiveCommand\n");
 #endif
-				ICT_add(kICT_Kybd_ReceiveCommand, 10);
+				ICT_add(kICT_Kybd_ReceiveCommand,
+					6800UL * kCycleScale / 64 * kMyClockMult);
 
 				if (InquiryCommandTimer != 0) {
 					InquiryCommandTimer = 0; /* abort Inquiry */
@@ -178,9 +183,11 @@ GLOBALPROC Kybd_DataLineChngNtfy(void)
 			if (VIA1_iCB2 == 1) {
 				KybdState = kKybdStateRecievingEndCommand;
 #ifdef _VIA_Debug
-				fprintf(stderr, "posting kICT_Kybd_ReceiveEndCommand\n");
+				fprintf(stderr,
+					"posting kICT_Kybd_ReceiveEndCommand\n");
 #endif
-				ICT_add(kICT_Kybd_ReceiveEndCommand, 10);
+				ICT_add(kICT_Kybd_ReceiveEndCommand,
+					6800UL * kCycleScale / 64 * kMyClockMult);
 			}
 			break;
 	}

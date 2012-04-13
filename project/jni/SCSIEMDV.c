@@ -94,31 +94,45 @@ LOCALPROC SCSI_BusReset(void)
 
 LOCALPROC SCSI_Check(void)
 {
-	/* The arbitration select/reselect scenario [stub.. doesn't really work...] */
-	if ((SCSI[scsiWr + sODR] >> 7) == 1) {  /* Check if the Mac tries to be an initiator */
-		if ((SCSI[scsiWr + sMR] & 1) == 1) { /* the Mac set arbitration in progress */
-			/* stub! tell the mac that there is arbitration in progress... */
+	/*
+		The arbitration select/reselect scenario
+		[stub.. doesn't really work...]
+	*/
+	if ((SCSI[scsiWr + sODR] >> 7) == 1) {
+		/* Check if the Mac tries to be an initiator */
+		if ((SCSI[scsiWr + sMR] & 1) == 1) {
+			/* the Mac set arbitration in progress */
+			/*
+				stub! tell the mac that there
+				is arbitration in progress...
+			*/
 			SCSI[scsiRd + sICR] |= 0x40;
 			/* ... that we didn't lose arbitration ... */
 			SCSI[scsiRd + sICR] &= ~ 0x20;
-			/* ... and that there isn't a higher priority ID present... */
+			/*
+				... and that there isn't a higher priority ID present...
+			*/
 			SCSI[scsiRd + sCDR] = 0x00;
 
-			/* ... the arbitration and selection/reselection is complete. */
-			/* the initiator tries to connect to the SCSI device, fails */
-			/* and returns after timeout. */
+			/*
+				... the arbitration and selection/reselection is
+				complete. the initiator tries to connect to the SCSI
+				device, fails and returns after timeout.
+			*/
 		}
 	}
 
 	/* check the chip registers, AS SET BY THE CPU */
-	if ((SCSI[scsiWr + sICR] >> 7) == 1) {  /* Check Assert RST */
+	if ((SCSI[scsiWr + sICR] >> 7) == 1) {
+		/* Check Assert RST */
 		SCSI_BusReset();
 	} else {
 		SCSI[scsiRd + sICR] &= ~ 0x80;
 		SCSI[scsiRd + sCSR] &= ~ 0x80;
 	}
 
-	if ((SCSI[scsiWr + sICR] >> 2) == 1) { /* Check Assert SEL */
+	if ((SCSI[scsiWr + sICR] >> 2) == 1) {
+		/* Check Assert SEL */
 		SCSI[scsiRd + sCSR] |= 0x02;
 		SCSI[scsiRd + sBSR] = 0x10;
 	} else {

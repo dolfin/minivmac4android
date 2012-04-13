@@ -1,7 +1,8 @@
 /*
 	MYOSGLUE.h
 
-	Copyright (C) 2006 Philip Cummins, Richard F. Bannister, Paul C. Pratt
+	Copyright (C) 2006 Philip Cummins, Richard F. Bannister,
+		Paul C. Pratt
 
 	You can redistribute this file and/or modify it under the terms
 	of version 2 of the GNU General Public License as published by
@@ -35,21 +36,19 @@
 
 EXPORTPROC WarnMsgCorruptedROM(void);
 EXPORTPROC WarnMsgUnsupportedROM(void);
-
-#if DetailedAbnormalReport
-EXPORTPROC WarnMsgAbnormal(char *s);
-#else
 EXPORTPROC WarnMsgAbnormal(void);
+
+#if dbglog_HAVE
+EXPORTPROC dbglog_writeCStr(char *s);
+EXPORTPROC dbglog_writeReturn(void);
+EXPORTPROC dbglog_writeHex(ui5r x);
+EXPORTPROC dbglog_writeNum(ui5r x);
+EXPORTPROC dbglog_writeln(char *s);
+EXPORTPROC dbglog_writelnNum(char *s, simr v);
 #endif
 
-#if MakeDumpFile
-EXPORTPROC DumpACStr(char *s);
-EXPORTPROC DumpANewLine(void);
-EXPORTPROC DumpAHex(ui5r x);
-EXPORTPROC DumpANum(ui5r x);
-#endif
-
-EXPORTPROC ReserveAllocOneBlock(ui3p *p, uimr n, ui3r align, blnr FillOnes);
+EXPORTPROC ReserveAllocOneBlock(ui3p *p, uimr n, ui3r align,
+	blnr FillOnes);
 
 EXPORTPROC MyMoveBytes(anyp srcPtr, anyp destPtr, si5b byteCount);
 
@@ -63,34 +62,51 @@ EXPORTVAR(ui3p, ROM)
 
 #define tMacErr ui4r
 
-#define mnvm_noErr      ((tMacErr) 0x0000) /* (ui4b)    0 - No Error */
-#define mnvm_miscErr    ((tMacErr) 0xFFFF) /* (ui4b) -  1 - Should probably replace these */
-#define mnvm_controlErr ((tMacErr) 0xFFEF) /* (ui4b) - 17 - I/O System Errors */
-#define mnvm_statusErr  ((tMacErr) 0xFFEE) /* (ui4b) - 18 - Driver can't respond to Status call */
-#define mnvm_closErr    ((tMacErr) 0xFFE8) /* (ui4b) - 24 - I/O System Errors*/
-#define mnvm_eofErr     ((tMacErr) 0xFFD9) /* (ui4b) - 39 - End of file */
-#define mnvm_tmfoErr    ((tMacErr) 0xFFD6) /* (ui4b) - 42 - too many files open */
-#define mnvm_fnfErr     ((tMacErr) 0xFFD5) /* (ui4b) - 43 - File not found */
-#define mnvm_wPrErr     ((tMacErr) 0xFFD4) /* (ui4b) - 44 - diskette is write protected */
-#define mnvm_vLckdErr   ((tMacErr) 0xFFD2) /* (ui4b) - 46 - volume is locked */
-#define mnvm_opWrErr    ((tMacErr) 0xFFCF) /* (ui4b) - 49 - file already open with with write permission */
-#define mnvm_paramErr   ((tMacErr) 0xFFCE) /* (ui4b) - 50 - error in parameter list */
-#define mnvm_permErr    ((tMacErr) 0xFFCA) /* (ui4b) - 54 - permissions error (on file open) */
-#define mnvm_nsDrvErr   ((tMacErr) 0xFFC8) /* (ui4b) - 56 - No Such Drive */
-#define mnvm_wrPermErr  ((tMacErr) 0xFFC3) /* (ui4b) - 61 - write permissions error */
-#define mnvm_offLinErr  ((tMacErr) 0xFFBF) /* (ui4b) - 65 - off-line drive */
-#define mnvm_afpAccessDenied  ((tMacErr) 0xEC78) /* (ui4b) - 5000 - Insufficient access privileges for operation */
+#define mnvm_noErr      ((tMacErr) 0x0000)
+	/* (ui4b)    0 - No Error */
+#define mnvm_miscErr    ((tMacErr) 0xFFFF)
+	/* (ui4b) -  1 - Should probably replace these */
+#define mnvm_controlErr ((tMacErr) 0xFFEF)
+	/* (ui4b) - 17 - I/O System Errors */
+#define mnvm_statusErr  ((tMacErr) 0xFFEE)
+	/* (ui4b) - 18 - Driver can't respond to Status call */
+#define mnvm_closErr    ((tMacErr) 0xFFE8)
+	/* (ui4b) - 24 - I/O System Errors */
+#define mnvm_eofErr     ((tMacErr) 0xFFD9)
+	/* (ui4b) - 39 - End of file */
+#define mnvm_tmfoErr    ((tMacErr) 0xFFD6)
+	/* (ui4b) - 42 - too many files open */
+#define mnvm_fnfErr     ((tMacErr) 0xFFD5)
+	/* (ui4b) - 43 - File not found */
+#define mnvm_wPrErr     ((tMacErr) 0xFFD4)
+	/* (ui4b) - 44 - diskette is write protected */
+#define mnvm_vLckdErr   ((tMacErr) 0xFFD2)
+	/* (ui4b) - 46 - volume is locked */
+#define mnvm_dupFNErr   ((tMacErr) 0xFFD0)
+	/* (ui4b) - 48 - duplicate filename */
+#define mnvm_opWrErr    ((tMacErr) 0xFFCF)
+	/* (ui4b) - 49 - file already open with with write permission */
+#define mnvm_paramErr   ((tMacErr) 0xFFCE)
+	/* (ui4b) - 50 - error in parameter list */
+#define mnvm_permErr    ((tMacErr) 0xFFCA)
+	/* (ui4b) - 54 - permissions error (on file open) */
+#define mnvm_nsDrvErr   ((tMacErr) 0xFFC8)
+	/* (ui4b) - 56 - No Such Drive */
+#define mnvm_wrPermErr  ((tMacErr) 0xFFC3)
+	/* (ui4b) - 61 - write permissions error */
+#define mnvm_offLinErr  ((tMacErr) 0xFFBF)
+	/* (ui4b) - 65 - off-line drive */
+#define mnvm_afpAccessDenied  ((tMacErr) 0xEC78)
+	/* (ui4b) - 5000 - Insufficient access privileges for operation */
 
 #if IncludePbufs
 
 #define tPbuf ui4r
 
-#define NotAPbuf ((tPbuf)(-1))
+#define NotAPbuf ((tPbuf)0xFFFF)
 
-EXPORTVAR(ui5b, PbufAllocatedMask)
-EXPORTVAR(ui5b, PbufSize[NumPbufs])
-
-#define PbufIsAllocated(i) ((PbufAllocatedMask & ((ui5b)1 << (i))) != 0)
+EXPORTFUNC tMacErr CheckPbuf(tPbuf Pbuf_No);
+EXPORTFUNC tMacErr PbufGetSize(tPbuf Pbuf_No, ui5r *Count);
 
 EXPORTFUNC tMacErr PbufNew(ui5b count, tPbuf *r);
 EXPORTPROC PbufDispose(tPbuf i);
@@ -104,14 +120,17 @@ EXPORTPROC PbufTransfer(ui3p Buffer,
 EXPORTVAR(ui5b, vSonyWritableMask)
 EXPORTVAR(ui5b, vSonyInsertedMask)
 
-#define vSonyIsInserted(Drive_No) ((vSonyInsertedMask & ((ui5b)1 << (Drive_No))) != 0)
+#define vSonyIsInserted(Drive_No) \
+	((vSonyInsertedMask & ((ui5b)1 << (Drive_No))) != 0)
 
-EXPORTFUNC tMacErr vSonyRead(ui3p Buffer, tDrive Drive_No, ui5r Sony_Start, ui5r *Sony_Count);
-EXPORTFUNC tMacErr vSonyWrite(ui3p Buffer, tDrive Drive_No, ui5r Sony_Start, ui5r *Sony_Count);
+EXPORTFUNC tMacErr vSonyTransfer(blnr IsWrite, ui3p Buffer,
+	tDrive Drive_No, ui5r Sony_Start, ui5r Sony_Count,
+	ui5r *Sony_ActCount);
 EXPORTFUNC tMacErr vSonyEject(tDrive Drive_No);
 EXPORTFUNC tMacErr vSonyGetSize(tDrive Drive_No, ui5r *Sony_Count);
 
 EXPORTFUNC blnr AnyDiskInserted(void);
+EXPORTPROC DiskRevokeWritable(tDrive Drive_No);
 
 #if IncludeSonyRawMode
 EXPORTVAR(blnr, vSonyRawMode)
@@ -131,13 +150,20 @@ EXPORTVAR(tPbuf, vSonyNewDiskName)
 EXPORTFUNC tMacErr vSonyGetName(tDrive Drive_No, tPbuf *r);
 #endif
 
+#if IncludeHostTextClipExchange
+EXPORTFUNC tMacErr HTCEexport(tPbuf i);
+EXPORTFUNC tMacErr HTCEimport(tPbuf *r);
+#endif
+
 EXPORTVAR(ui5b, CurMacDateInSeconds)
 EXPORTVAR(ui5b, CurMacLatitude)
 EXPORTVAR(ui5b, CurMacLongitude)
-EXPORTVAR(ui5b, CurMacDelta) /* (dlsDelta << 24) | (gmtDelta & 0x00FFFFFF) */
+EXPORTVAR(ui5b, CurMacDelta)
+	/* (dlsDelta << 24) | (gmtDelta & 0x00FFFFFF) */
 
 
-#define vMacScreenNumPixels ((long)vMacScreenHeight * (long)vMacScreenWidth)
+#define vMacScreenNumPixels \
+	((long)vMacScreenHeight * (long)vMacScreenWidth)
 #define vMacScreenNumBits (vMacScreenNumPixels << vMacScreenDepth)
 #define vMacScreenNumBytes (vMacScreenNumBits / 8)
 #define vMacScreenBitWidth ((long)vMacScreenWidth << vMacScreenDepth)
@@ -145,8 +171,6 @@ EXPORTVAR(ui5b, CurMacDelta) /* (dlsDelta << 24) | (gmtDelta & 0x00FFFFFF) */
 
 #define vMacScreenMonoNumBytes (vMacScreenNumPixels / 8)
 #define vMacScreenMonoByteWidth ((long)vMacScreenWidth / 8)
-
-EXPORTVAR(char, *screencomparebuff)
 
 #if 0 != vMacScreenDepth
 EXPORTVAR(blnr, UseColorMode)
@@ -162,6 +186,62 @@ EXPORTVAR(blnr, ColorMappingChanged)
 EXPORTVAR(ui4r, CLUT_reds[CLUT_size])
 EXPORTVAR(ui4r, CLUT_greens[CLUT_size])
 EXPORTVAR(ui4r, CLUT_blues[CLUT_size])
+#endif
+
+EXPORTPROC Screen_OutputFrame(ui3p screencurrentbuff);
+
+
+EXPORTVAR(blnr, ForceMacOff)
+
+EXPORTVAR(blnr, WantMacInterrupt)
+
+EXPORTVAR(blnr, WantMacReset)
+
+EXPORTFUNC blnr ExtraTimeNotOver(void);
+
+EXPORTVAR(ui3b, SpeedValue)
+
+#if EnableAutoSlow
+EXPORTVAR(blnr, WantNotAutoSlow)
+#endif
+
+/* where emulated machine thinks mouse is */
+EXPORTVAR(ui4b, CurMouseV)
+EXPORTVAR(ui4b, CurMouseH)
+
+#if EnableAutoSlow
+EXPORTVAR(ui5r, QuietTime)
+EXPORTVAR(ui5r, QuietSubTicks)
+
+#define QuietEnds() \
+{ \
+	QuietTime = 0; \
+	QuietSubTicks = 0; \
+}
+#else
+#define QuietEnds()
+#endif
+
+#if 3 == kLn2SoundSampSz
+#define trSoundSamp ui3r
+#define tbSoundSamp ui3b
+#define tpSoundSamp ui3p
+#define kCenterSound 0x80
+#elif 4 == kLn2SoundSampSz
+#define trSoundSamp ui4r
+#define tbSoundSamp ui4b
+#define tpSoundSamp ui4p
+#define kCenterSound 0x8000
+#else
+#error "unsupported kLn2SoundSampSz"
+#endif
+
+#if MySoundEnabled
+
+EXPORTFUNC tpSoundSamp MySound_BeginWrite(ui4r n, ui4r *actL);
+EXPORTPROC MySound_EndWrite(ui4r actL);
+
+/* 370 samples per tick = 22,254.54 per second */
 #endif
 
 #define MyEvtQElKindKey 0
@@ -186,57 +266,8 @@ struct MyEvtQEl {
 };
 typedef struct MyEvtQEl MyEvtQEl;
 
-#define MyEvtQLg2Sz 4
-#define MyEvtQSz (1 << MyEvtQLg2Sz)
-#define MyEvtQIMask (MyEvtQSz - 1)
-
-EXPORTVAR(MyEvtQEl, MyEvtQA[MyEvtQSz])
-EXPORTVAR(ui4r, MyEvtQIn)
-EXPORTVAR(ui4r, MyEvtQOut)
-
-
-EXPORTVAR(blnr, ForceMacOff)
-
-EXPORTVAR(blnr, WantMacInterrupt)
-
-EXPORTVAR(blnr, WantMacReset)
-
-EXPORTFUNC blnr ExtraTimeNotOver(void);
-
-EXPORTVAR(blnr, SpeedLimit)
-
-EXPORTVAR(ui3b, SpeedValue)
-
-/* where emulated machine thinks mouse is */
-EXPORTVAR(ui4b, CurMouseV)
-EXPORTVAR(ui4b, CurMouseH)
-
-#if MySoundEnabled
-
-#if 3 == kLn2SoundSampSz
-#define trSoundSamp ui3r
-#define tbSoundSamp ui3b
-#define tpSoundSamp ui3p
-#define kCenterSound 0x80
-#elif 4 == kLn2SoundSampSz
-#define trSoundSamp ui4r
-#define tbSoundSamp ui4b
-#define tpSoundSamp ui4p
-#define kCenterSound 0x8000
-#else
-#error "unsupported kLn2SoundSampSz"
-#endif
-
-EXPORTFUNC tpSoundSamp MySound_BeginWrite(ui4r n, ui4r *actL);
-EXPORTPROC MySound_EndWrite(ui4r actL);
-
-/* 370 samples per tick = 22,254.54 per second */
-#endif
-
-#if IncludeHostTextClipExchange
-EXPORTFUNC tMacErr HTCEexport(tPbuf i);
-EXPORTFUNC tMacErr HTCEimport(tPbuf *r);
-#endif
+EXPORTFUNC MyEvtQEl * MyEvtQOutP(void);
+EXPORTPROC MyEvtQOutDone(void);
 
 #define MKC_A 0x00
 #define MKC_B 0x0B

@@ -27,8 +27,18 @@ EXPORTFUNC ui5b VIA1_Access(ui5b Data, blnr WriteMem, CPTR addr);
 
 EXPORTPROC VIA1_ExtraTimeBegin(void);
 EXPORTPROC VIA1_ExtraTimeEnd(void);
+#ifdef VIA1_iCA1_PulseNtfy
 EXPORTPROC VIA1_iCA1_PulseNtfy(void);
+#endif
+#ifdef VIA1_iCA2_PulseNtfy
 EXPORTPROC VIA1_iCA2_PulseNtfy(void);
+#endif
+#ifdef VIA1_iCB1_PulseNtfy
+EXPORTPROC VIA1_iCB1_PulseNtfy(void);
+#endif
+#ifdef VIA1_iCB2_PulseNtfy
+EXPORTPROC VIA1_iCB2_PulseNtfy(void);
+#endif
 EXPORTPROC VIA1_DoTimer1Check(void);
 EXPORTPROC VIA1_DoTimer2Check(void);
 

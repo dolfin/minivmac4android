@@ -75,12 +75,12 @@
 #define kStrStoppedOff kStrOff
 
 /* About Screen */
-#define kStrProgramInfo "^v, ^e, Copyright ^y"
-#define kStrWorkOfMany "^p contains the work of many people."
-#define kStrMaintainerIs "This version is maintained by:"
+#define kStrProgramInfo "^v"
+#define kStrSponsorIs "^v. This variation is sponsored by:"
+#define kStrWorkOfMany "Copyright ^y. ^p contains the work of many people. This version is maintained by:"
 #define kStrForMoreInfo "For more information, see:"
 #define kStrLicense "^p is distributed under the terms of the GNU Public License, version 2."
-#define kStrDisclaimer "^p is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;ls without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
+#define kStrDisclaimer " ^p is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;ls without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
 
 /* Help Screen */
 #define kStrHowToLeaveControl "To leave the Control Mode, release the ;]control;} key."
@@ -101,6 +101,7 @@
 #define kStrSpeedAllOut "All out"
 #define kStrSpeedStopped "stopped toggle (^h)"
 #define kStrSpeedBackToggle "run in Background toggle (^b)"
+#define kStrSpeedAutoSlowToggle "autosloW toggle (^l)"
 #define kStrSpeedExit "Exit speed control"
 
 #define kStrNewSpeed "Speed: ^s"
@@ -108,6 +109,7 @@
 
 #define kStrNewStopped "Stopped is ^h."
 #define kStrNewRunInBack "Run in background is ^b."
+#define kStrNewAutoSlow "AutoSlow is ^l."
 
 #define kStrNewMagnify "Magnify is ^g."
 

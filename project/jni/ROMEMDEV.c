@@ -33,7 +33,17 @@
 
 #include "ROMEMDEV.h"
 
-#if (CurEmMd <= kEmMd_Classic) || (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
+#define UseSonyPatch \
+	((CurEmMd <= kEmMd_Classic) || (CurEmMd == kEmMd_II) \
+		|| (CurEmMd == kEmMd_IIx))
+
+#define UseLargeScreenHack \
+	(IncludeVidMem \
+	&& (CurEmMd != kEmMd_PB100) \
+	&& (CurEmMd != kEmMd_II) \
+	&& (CurEmMd != kEmMd_IIx))
+
+#if UseSonyPatch
 LOCALVAR const ui3b sony_driver[] = {
 /*
 	Replacement for .Sony driver
@@ -97,7 +107,7 @@ LOCALVAR const ui3b sony_driver[] = {
 };
 #endif
 
-#if (CurEmMd <= kEmMd_Classic) || (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
+#if UseSonyPatch
 LOCALVAR const ui3b my_disk_icon[] = {
 	0x7F, 0xFF, 0xFF, 0xF0,
 	0x81, 0x00, 0x01, 0x08,
@@ -184,7 +194,7 @@ LOCALVAR const ui3b my_disk_icon[] = {
 
 #define kVidMem_Base 0x00540000
 
-#if (CurEmMd <= kEmMd_Classic) || (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
+#if UseSonyPatch
 LOCALPROC Sony_Install(void)
 {
 	ui3p pto = Sony_DriverBase + ROM;
@@ -203,7 +213,7 @@ LOCALPROC Sony_Install(void)
 	MyMoveBytes((anyp)my_disk_icon, (anyp)pto, sizeof(my_disk_icon));
 	pto += sizeof(my_disk_icon);
 
-#if IncludeVidMem && (CurEmMd != kEmMd_PB100) && (CurEmMd != kEmMd_II) && (CurEmMd != kEmMd_IIx)
+#if UseLargeScreenHack
 	{
 		ui3p patchp = pto;
 
@@ -291,8 +301,10 @@ GLOBALFUNC blnr ROM_Init(void)
 
 #if CurEmMd <= kEmMd_128K
 #elif CurEmMd <= kEmMd_Plus
-	do_put_mem_word(3752 + ROM, 0x4E71); /* shorten the ram check read */
-	do_put_mem_word(3728 + ROM, 0x4E71); /* shorten the ram check write*/
+	do_put_mem_word(3752 + ROM, 0x4E71);
+		/* shorten the ram check read */
+	do_put_mem_word(3728 + ROM, 0x4E71);
+		/* shorten the ram check write */
 #elif CurEmMd <= kEmMd_Classic
 	do_put_mem_word(134 + ROM, 0x6002);
 	do_put_mem_word(286 + ROM, 0x6002);
@@ -301,14 +313,10 @@ GLOBALFUNC blnr ROM_Init(void)
 	do_put_mem_word(0x1AA + ROM, 0x6002);
 #endif
 
-	/* do_put_mem_word(862 + ROM, 0x4E71); */ /* shorten set memory*/
+	/* do_put_mem_word(862 + ROM, 0x4E71); */ /* shorten set memory */
 
-#if (CurEmMd <= kEmMd_Classic) || (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
+#if UseSonyPatch
 	Sony_Install();
-#endif
-
-#if CurEmMd <= kEmMd_128K
-	MyMoveBytes(ROM, kTrueROM_Size + ROM, kTrueROM_Size);
 #endif
 
 	return trueblnr;

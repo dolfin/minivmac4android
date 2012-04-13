@@ -68,7 +68,7 @@ public class Key extends Button implements View.OnTouchListener {
 	}
 	
 	protected boolean isStickyKey() {
-		return (mScanCode == 55 || mScanCode == 56 || mScanCode == 58); // Command, Options, Shift
+		return (mScanCode == 55 || mScanCode == 56 || mScanCode == 58 || mScanCode == 59); // Command, Options, Shift, Control
 	}
 
 }

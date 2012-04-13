@@ -64,30 +64,39 @@ LOCALVAR const trSoundSamp vol_offset[] = {
 };
 
 LOCALVAR const ui4b SubTick_offset[kNumSubTicks] = {
-	0,    23,  46,  69,  92, 115, 138, 161,
+	0,    25,  50,  90, 102, 115, 138, 161,
 	185, 208, 231, 254, 277, 300, 323, 346
 };
 
 LOCALVAR const ui3r SubTick_n[kNumSubTicks] = {
-	23,  23,  23,  23,  23,  23,  23,  24,
-	23,  23,  23,  23,  23,  23,  23,  24
+	25,   25,  40,  12,  13,  23,  23,  24,
+	23,   23,  23,  23,  23,  23,  23,  24
 };
 
-#if 0
 /*
-	This is probably more correct, but makes it more
-	timing sensitive. Wait for cycle accurate emulation.
+	One version of free form sound driver
+	spends around 18000 cycles writing
+	offsets 50 to 370, then around another 3000
+	cycles writing 0 to 50. So be done
+	with 0 to 50 at end of second sixtieth.
 */
-LOCALVAR const ui4b SubTick_offset[kNumSubTicks] = {
-	342,   0,  19,  42,  65,  88, 111, 134,
-	157, 181, 204, 227, 250, 273, 296, 319
-};
 
-LOCALVAR const ui3r SubTick_n[kNumSubTicks] = {
-	28,  19,  23,  23,  23,  23,  23,  23,
-	24,  23,  23,  23,  23,  23,  23,  23
-};
-#endif
+/*
+	Different in system 6.0.4:
+	spends around 23500 cycles writing
+	offsets 90 to 370, then around another 7500
+	cycles writing 0 to 90. This is nastier,
+	because gets to be a very small gap
+	between where is being read and
+	where written. So read a bit in
+	advance for third subtick.
+*/
+
+/*
+	startup sound spends around 19500 cycles
+	writing offsets 0 to 370. presumably
+	writing offset 0 before it is read.
+*/
 
 LOCALVAR ui5b SoundInvertPhase = 0;
 LOCALVAR ui4b SoundInvertState = 0;
@@ -111,6 +120,15 @@ GLOBALPROC MacSound_SubTick(int SubTick)
 	ui3b SoundVolume = SoundVolb0
 		| (SoundVolb1 << 1)
 		| (SoundVolb2 << 2);
+
+#if dbglog_HAVE && 0
+	dbglog_StartLine();
+	dbglog_writeCStr("reading sound buffer ");
+	dbglog_writeHex(StartOffset);
+	dbglog_writeCStr(" to ");
+	dbglog_writeHex(StartOffset + n);
+	dbglog_writeReturn();
+#endif
 
 label_retry:
 	p = MySound_BeginWrite(n, &actL);
@@ -147,7 +165,8 @@ label_retry:
 						ui5b LastPhase = 0;
 						do {
 							if (! SoundInvertState) {
-								OnPortion += (SoundInvertPhase - LastPhase);
+								OnPortion +=
+									(SoundInvertPhase - LastPhase);
 							}
 							SoundInvertState = ! SoundInvertState;
 							LastPhase = SoundInvertPhase;

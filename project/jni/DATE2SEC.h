@@ -49,7 +49,7 @@
 	copies of this or derived software.
 */
 
-/*****************************************************************/
+/* ************************************************************* */
 /*                                                               */
 /* JDATE  - Julian date calculator                               */
 /*                                                               */
@@ -72,7 +72,7 @@
 /* day of the week the date is.  (ie: dow = days % 7) where      */
 /* dow will return 0=Sunday, 1=Monday, 2=Tuesday, etc...         */
 /*                                                               */
-/*****************************************************************/
+/* ************************************************************* */
 
 LOCALFUNC ui5b jdate(int day, int month, int year)
 {
@@ -82,7 +82,10 @@ LOCALFUNC ui5b jdate(int day, int month, int year)
 		181, 212, 243, 273, 304, 334
 	};
 
-	/* First, calculate base number including leap and Centenial year stuff */
+	/*
+		First, calculate base number including leap
+		and Centenial year stuff
+	*/
 
 	days = (((ui5b)year * 365) + day + mtable[month - 1]
 		+ ((year + 4) / 4) - ((year / 100) - (year / 400)));
@@ -98,11 +101,11 @@ LOCALFUNC ui5b jdate(int day, int month, int year)
 
 	/* done, return with calculated value */
 
-	return(days + 5);
+	return (days + 5);
 }
 
 LOCALFUNC ui5b Date2MacSeconds(int second, int minute, int hour,
-		int day, int month, int year)
+	int day, int month, int year)
 {
 	ui5b curjdate;
 	ui5b basejdate;
@@ -110,5 +113,5 @@ LOCALFUNC ui5b Date2MacSeconds(int second, int minute, int hour,
 	curjdate = jdate(day, month, year);
 	basejdate = jdate(1, 1, 1904);
 	return (((curjdate - basejdate) * 24 + hour) * 60
-			+ minute) * 60 + second;
+		+ minute) * 60 + second;
 }

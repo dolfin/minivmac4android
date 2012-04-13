@@ -1,7 +1,8 @@
 /*
 	SCRNEMDV.h
 
-	Copyright (C) 2006 Philip Cummins, Richard F. Bannister, Paul C. Pratt
+	Copyright (C) 2006 Philip Cummins, Richard F. Bannister,
+		Paul C. Pratt
 
 	You can redistribute this file and/or modify it under the terms
 	of version 2 of the GNU General Public License as published by
@@ -20,5 +21,4 @@
 #define SCRNEMDV_H
 #endif
 
-EXPORTFUNC blnr ScreenFindChanges(si3b TimeAdjust,
-	si4b *top, si4b *left, si4b *bottom, si4b *right);
+EXPORTPROC Screen_EndTickNotify(void);

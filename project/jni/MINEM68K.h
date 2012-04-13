@@ -20,7 +20,7 @@
 #define MINEM68K_H
 #endif
 
-EXPORTPROC MINEM68K_Init(ui3b **BankReadAddr, ui3b **BankWritAddr,
+EXPORTPROC MINEM68K_Init(
 	ui3b *fIPL);
 #if SmallGlobals
 EXPORTPROC MINEM68K_ReserveAlloc(void);
@@ -30,7 +30,24 @@ EXPORTPROC m68k_IPLchangeNtfy(void);
 EXPORTPROC DiskInsertedPsuedoException(CPTR newpc, ui5b data);
 EXPORTPROC m68k_reset(void);
 
-EXPORTFUNC ui5b GetInstructionsRemaining(void);
-EXPORTPROC SetInstructionsRemaining(ui5b n);
+EXPORTFUNC si5r GetCyclesRemaining(void);
+EXPORTPROC SetCyclesRemaining(si5r n);
 
-EXPORTPROC m68k_go_nInstructions(ui5b n);
+EXPORTPROC m68k_go_nCycles(ui5b n);
+
+/*
+	general purpose access of address space
+	of emulated computer. (memory and
+	memory mapped hardware.)
+*/
+
+EXPORTFUNC ui3r get_vm_byte(CPTR addr);
+EXPORTFUNC ui4r get_vm_word(CPTR addr);
+EXPORTFUNC ui5r get_vm_long(CPTR addr);
+
+EXPORTPROC put_vm_byte(CPTR addr, ui3r b);
+EXPORTPROC put_vm_word(CPTR addr, ui4r w);
+EXPORTPROC put_vm_long(CPTR addr, ui5r l);
+
+EXPORTPROC SetHeadATTel(ATTep p);
+EXPORTFUNC ATTep FindATTel(CPTR addr);

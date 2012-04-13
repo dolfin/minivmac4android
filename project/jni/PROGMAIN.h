@@ -1,7 +1,8 @@
 /*
-	MOUSEMDV.h
+	PROGMAIN.h
 
-	Copyright (C) 2003 Philip Cummins, Paul C. Pratt
+	Copyright (C) 2009 Philip Cummins, Richard F. Bannister,
+		Paul C. Pratt
 
 	You can redistribute this file and/or modify it under the terms
 	of version 2 of the GNU General Public License as published by
@@ -14,11 +15,13 @@
 	license for more details.
 */
 
-#ifdef MOUSEMDV_H
+#ifdef PROGMAIN_H
 #error "header already included"
 #else
-#define MOUSEMDV_H
+#define PROGMAIN_H
 #endif
 
-EXPORTPROC Mouse_Update(void);
-EXPORTPROC Mouse_EndTickNotify(void);
+EXPORTPROC EmulationReserveAlloc(void);
+EXPORTFUNC blnr InitEmulation(void);
+EXPORTPROC DoEmulateOneTick(void);
+EXPORTPROC DoEmulateExtraTime(void);

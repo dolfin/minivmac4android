@@ -111,7 +111,10 @@ public class MiniVMac extends Activity {
     public void onPause () {
     	Core.pauseEmulation();
     	super.onPause();
-    	if (!Core.hasDisksInserted() && !onActivity) System.exit(0);
+    	if (!Core.hasDisksInserted() && !onActivity) {
+    		Core.uninit();
+    		System.exit(0);
+    	}
     }
     
     public void onResume () {

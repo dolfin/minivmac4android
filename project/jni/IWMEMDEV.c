@@ -22,9 +22,12 @@
 	This code is adapted from "IWM.c" in vMac by Philip Cummins.
 */
 
-/* This is the emulation for the IWM, the Integrated Woz Machine. It's basically */
-/* a serial to parallel converter with some timing in-built into it to perform */
-/* handshaking. Emulation so far just includes Status and Mode Register Accesses. */
+/*
+	This is the emulation for the IWM, the Integrated Woz Machine.
+	It's basically a serial to parallel converter with some timing
+	in-built into it to perform handshaking. Emulation so far just
+	includes Status and Mode Register Accesses.
+*/
 
 #ifndef AllFiles
 #include "SYSDEPNS.h"
@@ -78,7 +81,8 @@ IWM_Ty IWM;
 
 GLOBALPROC IWM_Reset(void)
 {
-	IWM.DataIn = IWM.Handshake = IWM.Status = IWM.Mode = IWM.DataOut = IWM.Lines = 0;
+	IWM.DataIn = IWM.Handshake = IWM.Status = IWM.Mode =
+		IWM.DataOut = IWM.Lines = 0;
 }
 
 typedef enum {On, Off} Mode_Ty;
@@ -120,7 +124,11 @@ LOCALFUNC ui3b IWM_Read_Reg(void)
 			return IWM.Handshake;
 			break;
 		case 3 :
-		default : /* should alway be in 0-3, but compiler warnings don't know that */
+		default :
+			/*
+				should alway be in 0-3,
+				but compiler warnings don't know that
+			*/
 			return 0;
 			break;
 	}
@@ -197,5 +205,6 @@ GLOBALFUNC ui5b IWM_Access(ui5b Data, blnr WriteMem, CPTR addr)
 			IWM_Set_Lines(kq7, On);
 			break;
 	}
+
 	return Data;
 }

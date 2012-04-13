@@ -1,7 +1,7 @@
 /*
 	JNIGLUE.c
 
-	Copyright (C) 2009 Jesus A. Alvarez
+	Copyright (C) 2012 Gil Osher
 
 	You can redistribute this file and/or modify it under the terms
 	of version 2 of the GNU General Public License as published by
@@ -27,17 +27,14 @@
 #include <ctype.h>
 #include <signal.h>
 
-#include <sys/time.h>
+#include <time.h>
 #include <stdlib.h>
 #include "CNFGRAPI.h"
 #include "SYSDEPNS.h"
 
 #include "MYOSGLUE.h"
-
-#define kMacEpoch 2082844800
-#define MyTickDuration (1/60.14742)
-#define UsecPerSec 1000000
-#define MyInvTimeStep 16626 /* UsecPerSec / 60.14742 */
+#include "STRCONST.h"
+#include "COMOSGLU.h"
 
 #define BLACK 0xFF000000
 #define WHITE 0xFFFFFFFF
@@ -49,181 +46,143 @@
 
 IMPORTFUNC blnr InitEmulation(void);
 IMPORTPROC DoEmulateOneTick(void);
-IMPORTFUNC blnr ScreenFindChanges(si3b TimeAdjust,
-	si4b *top, si4b *left, si4b *bottom, si4b *right);
+IMPORTFUNC blnr ScreenFindChanges(ui3p screencurrentbuff,
+		si3b TimeAdjust, si4b *top, si4b *left, si4b *bottom, si4b *right);
 IMPORTPROC DoEmulateExtraTime(void);
 
-GLOBALVAR char *screencomparebuff = nullpr;
-GLOBALVAR ui3p RAM = nullpr;
-GLOBALVAR ui3p ROM = nullpr;
-GLOBALVAR ui4b CurMouseV = 0;
-GLOBALVAR ui4b CurMouseH = 0;
+LOCALVAR blnr CurSpeedStopped = trueblnr;
+
 GLOBALVAR ui3b CurMouseButton = falseblnr;
 
-#if EnableMouseMotion
-LOCALVAR blnr HaveMouseMotion = falseblnr;
-#endif
-
-LOCALVAR blnr RequestMacOff = falseblnr;
-GLOBALVAR blnr ForceMacOff = falseblnr;
-GLOBALVAR blnr WantMacInterrupt = falseblnr;
-GLOBALVAR blnr WantMacReset = falseblnr;
-GLOBALVAR ui5b vSonyWritableMask = 0;
-GLOBALVAR ui5b vSonyInsertedMask = 0;
-GLOBALVAR ui5b vSonyMountedMask = 0;
-
-#if IncludeSonyRawMode
-GLOBALVAR blnr vSonyRawMode = falseblnr;
-#endif
-
-#if IncludePbufs
-GLOBALVAR ui5b PbufAllocatedMask;
-GLOBALVAR ui5b PbufSize[NumPbufs];
-#endif
-
-#if IncludeSonyNew
-GLOBALVAR blnr vSonyNewDiskWanted = falseblnr;
-GLOBALVAR ui5b vSonyNewDiskSize;
-#endif
-
-#if IncludeSonyNameNew
-GLOBALVAR ui4b vSonyNewDiskName = NotAPbuf;
-#endif
-
-GLOBALVAR ui5b CurMacDateInSeconds = 0;
-GLOBALVAR ui5b CurMacLatitude = 0;
-GLOBALVAR ui5b CurMacLongitude = 0;
-GLOBALVAR ui5b CurMacDelta = 0;
-LOCALVAR blnr SpeedStopped = 1;
-
-ui5b MacDateDiff;
-LOCALVAR ui5b TrueEmulatedTime = 0;
-ui5b CurEmulatedTime = 0;
-LOCALVAR ui5b OnTrueTime = 0;
-LOCALVAR ui5b LastTimeSec, NextTimeSec;
-LOCALVAR ui5b LastTimeUsec, NextTimeUsec;
 LOCALVAR blnr initDone = falseblnr;
-
-
-GLOBALVAR MyEvtQEl MyEvtQA[MyEvtQSz];
-GLOBALVAR ui4r MyEvtQIn;
-GLOBALVAR ui4r MyEvtQOut;
-
-GLOBALVAR blnr SpeedLimit = trueblnr;
-GLOBALVAR ui3b SpeedValue = 1;
 
 // java
 JNIEnv * jEnv;
 jclass jClass;
-jmethodID jSonyRead, jSonyWrite, jSonyGetSize, jSonyEject;
+jmethodID jSonyTransfer, jSonyGetSize, jSonyEject;
 jmethodID jWarnMsg;
 
 static jmethodID nativeCrashed, playSound;
 
-#if IncludePbufs
-LOCALFUNC blnr FirstFreePbuf(ui4b *r)
-{
-	si4b i;
-
-	for (i = 0; i < NumPbufs; ++i) {
-		if (! PbufIsAllocated(i)) {
-			*r = i;
-			return trueblnr;
-		}
-	}
-	return falseblnr;
-}
-#endif
-
-#if IncludePbufs
-LOCALPROC PbufNewNotify(ui4b Pbuf_No, ui5b count)
-{
-	PbufSize[Pbuf_No] = count;
-	PbufAllocatedMask |= ((ui5b)1 << Pbuf_No);
-}
-#endif
-
-#if IncludePbufs
-LOCALPROC PbufDisposeNotify(ui4b Pbuf_No)
-{
-	PbufAllocatedMask &= ~ ((ui5b)1 << Pbuf_No);
-}
-#endif
-
-LOCALFUNC blnr FirstFreeDisk(tDrive *Drive_No)
-{
-	tDrive i;
-
-	for (i = 0; i < NumDrives; ++i) {
-		if (! vSonyIsInserted(i)) {
-			*Drive_No = i;
-			return trueblnr;
-		}
-	}
-	return falseblnr;
-}
-
-GLOBALFUNC blnr AnyDiskInserted(void)
-{
-	tDrive i;
-
-	for (i = 0; i < NumDrives; ++i) {
-		if (vSonyIsInserted(i)) {
-			return trueblnr;
-		}
-	}
-	return falseblnr;
-}
-
-LOCALPROC DiskInsertNotify(tDrive Drive_No, blnr locked)
-{
-	vSonyInsertedMask |= ((ui5b)1 << Drive_No);
-	if (! locked) {
-		vSonyWritableMask |= ((ui5b)1 << Drive_No);
-	}
-}
-
-LOCALPROC DiskEjectedNotify(tDrive Drive_No)
-{
-	vSonyWritableMask &= ~ ((ui5b)1 << Drive_No);
-	vSonyInsertedMask &= ~ ((ui5b)1 << Drive_No);
-}
-
-LOCALPROC SetLongs(ui5b *p, long n)
-{
-	long i;
-
-	for (i = n; --i >= 0; ) {
-		*p++ = (ui5b) -1;
-	}
-}
-
-LOCALVAR uimr ReserveAllocOffset;
-LOCALVAR ui3p ReserveAllocBigBlock = nullpr;
-
-#define PowOf2(p) ((uimr)1 << (p))
-#define Pow2Mask(p) (PowOf2(p) - 1)
-#define FloorPow2Mult(i, p) ((i) & (~ Pow2Mask(p)))
-#define CeilPow2Mult(i, p) FloorPow2Mult((i) + Pow2Mask(p), (p))
-	/* warning - CeilPow2Mult evaluates p twice */
-
-GLOBALPROC ReserveAllocOneBlock(ui3p *p, uimr n, ui3r align, blnr FillOnes)
-{
-	ReserveAllocOffset = CeilPow2Mult(ReserveAllocOffset, align);
-	if (nullpr == ReserveAllocBigBlock) {
-		*p = nullpr;
-	} else {
-		*p = ReserveAllocBigBlock + ReserveAllocOffset;
-		if (FillOnes) {
-			SetLongs((ui5b *)*p, n / 4);
-		}
-	}
-	ReserveAllocOffset += n;
-}
-
 GLOBALPROC MyMoveBytes(anyp srcPtr, anyp destPtr, si5b byteCount)
 {
     memcpy((char *)destPtr, (char *)srcPtr, byteCount);
+}
+
+/* --- control mode and internationalization --- */
+
+#define NeedCell2PlainAsciiMap 1
+
+#include "INTLCHAR.h"
+
+#if 0
+#pragma mark -
+#pragma mark Time, Date, Location
+#endif
+
+LOCALVAR ui5b TrueEmulatedTime = 0;
+LOCALVAR ui5b CurEmulatedTime = 0;
+
+#include "DATE2SEC.h"
+
+#define TicksPerSecond 1000000
+
+LOCALVAR blnr HaveTimeDelta = falseblnr;
+LOCALVAR ui5b TimeDelta;
+
+LOCALVAR ui5b NewMacDateInSeconds;
+
+LOCALVAR ui5b LastTimeSec;
+LOCALVAR ui5b LastTimeUsec;
+
+LOCALPROC GetCurrentTicks(void)
+{
+	struct timeval t;
+
+	gettimeofday(&t, NULL);
+	if (! HaveTimeDelta) {
+		time_t Current_Time;
+		struct tm *s;
+
+		(void) time(&Current_Time);
+		s = localtime(&Current_Time);
+		TimeDelta = Date2MacSeconds(s->tm_sec, s->tm_min, s->tm_hour,
+			s->tm_mday, 1 + s->tm_mon, 1900 + s->tm_year) - t.tv_sec;
+
+		HaveTimeDelta = trueblnr;
+	}
+
+	NewMacDateInSeconds = t.tv_sec + TimeDelta;
+	LastTimeSec = (ui5b)t.tv_sec;
+	LastTimeUsec = (ui5b)t.tv_usec;
+}
+
+#define MyInvTimeStep 16626 /* TicksPerSecond / 60.14742 */
+
+LOCALVAR ui5b NextTimeSec;
+LOCALVAR ui5b NextTimeUsec;
+
+LOCALPROC IncrNextTime(void)
+{
+	NextTimeUsec += MyInvTimeStep;
+	if (NextTimeUsec >= TicksPerSecond) {
+		NextTimeUsec -= TicksPerSecond;
+		NextTimeSec += 1;
+	}
+}
+
+LOCALPROC InitNextTime(void)
+{
+	NextTimeSec = LastTimeSec;
+	NextTimeUsec = LastTimeUsec;
+	IncrNextTime();
+}
+
+LOCALPROC StartUpTimeAdjust(void)
+{
+	GetCurrentTicks();
+	InitNextTime();
+}
+
+LOCALFUNC si5b GetTimeDiff(void)
+{
+	return ((si5b)(LastTimeSec - NextTimeSec)) * TicksPerSecond
+		+ ((si5b)(LastTimeUsec - NextTimeUsec));
+}
+
+LOCALPROC UpdateTrueEmulatedTime(void)
+{
+	si5b TimeDiff;
+
+	GetCurrentTicks();
+
+	TimeDiff = GetTimeDiff();
+	if (TimeDiff >= 0) {
+		if (TimeDiff > 4 * MyInvTimeStep) {
+			/* emulation interrupted, forget it */
+			++TrueEmulatedTime;
+			InitNextTime();
+		} else {
+			do {
+				++TrueEmulatedTime;
+				IncrNextTime();
+				TimeDiff -= TicksPerSecond;
+			} while (TimeDiff >= 0);
+		}
+	} else if (TimeDiff < - 2 * MyInvTimeStep) {
+		/* clock goofed if ever get here, reset */
+		InitNextTime();
+	}
+}
+
+LOCALFUNC blnr CheckDateTime(void)
+{
+	if (CurMacDateInSeconds != NewMacDateInSeconds) {
+		CurMacDateInSeconds = NewMacDateInSeconds;
+		return trueblnr;
+	} else {
+		return falseblnr;
+	}
 }
 
 #if 0
@@ -312,178 +271,232 @@ LOCALPROC MySound_SecondNotify(void)
 
 #endif
 
+#if 0
+#pragma mark -
+#pragma mark Paramter buffers
+#endif
+
+#include "CONTROLM.h"
+
+/* --- parameter buffers --- */
+
+#if IncludePbufs
+LOCALVAR void *PbufDat[NumPbufs];
+#endif
+
+#if IncludePbufs
+LOCALFUNC tMacErr PbufNewFromPtr(void *p, ui5b count, tPbuf *r)
+{
+	tPbuf i;
+	tMacErr err;
+
+	if (! FirstFreePbuf(&i)) {
+		free(p);
+		err = mnvm_miscErr;
+	} else {
+		*r = i;
+		PbufDat[i] = p;
+		PbufNewNotify(i, count);
+		err = mnvm_noErr;
+	}
+
+	return err;
+}
+#endif
+
+#if IncludePbufs
+GLOBALFUNC tMacErr PbufNew(ui5b count, tPbuf *r)
+{
+	tMacErr err = mnvm_miscErr;
+
+	void *p = calloc(1, count);
+	if (NULL != p) {
+		err = PbufNewFromPtr(p, count, r);
+	}
+
+	return err;
+}
+#endif
+
+#if IncludePbufs
+GLOBALPROC PbufDispose(tPbuf i)
+{
+	free(PbufDat[i]);
+	PbufDisposeNotify(i);
+}
+#endif
+
+#if IncludePbufs
+LOCALPROC UnInitPbufs(void)
+{
+	tPbuf i;
+
+	for (i = 0; i < NumPbufs; ++i) {
+		if (PbufIsAllocated(i)) {
+			PbufDispose(i);
+		}
+	}
+}
+#endif
+
+#if IncludePbufs
+GLOBALPROC PbufTransfer(ui3p Buffer,
+	tPbuf i, ui5r offset, ui5r count, blnr IsWrite)
+{
+	void *p = ((ui3p)PbufDat[i]) + offset;
+	if (IsWrite) {
+		(void) memcpy(p, Buffer, count);
+	} else {
+		(void) memcpy(Buffer, p, count);
+	}
+}
+#endif
 
 #if 0
 #pragma mark -
-#pragma mark Event Queue
+#pragma mark Text translation
 #endif
 
-LOCALVAR blnr MyEvtQNeedRecover = falseblnr; /* events lost because of full queue */
+/* this is table for Windows, any changes needed for X? */
+LOCALVAR const ui3b Native2MacRomanTab[] = {
+	0xAD, 0xB0, 0xE2, 0xC4, 0xE3, 0xC9, 0xA0, 0xE0,
+	0xF6, 0xE4, 0xB6, 0xDC, 0xCE, 0xB2, 0xB3, 0xB7,
+	0xB8, 0xD4, 0xD5, 0xD2, 0xD3, 0xA5, 0xD0, 0xD1,
+	0xF7, 0xAA, 0xC5, 0xDD, 0xCF, 0xB9, 0xC3, 0xD9,
+	0xCA, 0xC1, 0xA2, 0xA3, 0xDB, 0xB4, 0xBA, 0xA4,
+	0xAC, 0xA9, 0xBB, 0xC7, 0xC2, 0xBD, 0xA8, 0xF8,
+	0xA1, 0xB1, 0xC6, 0xD7, 0xAB, 0xB5, 0xA6, 0xE1,
+	0xFC, 0xDA, 0xBC, 0xC8, 0xDE, 0xDF, 0xF0, 0xC0,
+	0xCB, 0xE7, 0xE5, 0xCC, 0x80, 0x81, 0xAE, 0x82,
+	0xE9, 0x83, 0xE6, 0xE8, 0xED, 0xEA, 0xEB, 0xEC,
+	0xF5, 0x84, 0xF1, 0xEE, 0xEF, 0xCD, 0x85, 0xF9,
+	0xAF, 0xF4, 0xF2, 0xF3, 0x86, 0xFA, 0xFB, 0xA7,
+	0x88, 0x87, 0x89, 0x8B, 0x8A, 0x8C, 0xBE, 0x8D,
+	0x8F, 0x8E, 0x90, 0x91, 0x93, 0x92, 0x94, 0x95,
+	0xFD, 0x96, 0x98, 0x97, 0x99, 0x9B, 0x9A, 0xD6,
+	0xBF, 0x9D, 0x9C, 0x9E, 0x9F, 0xFE, 0xFF, 0xD8
+};
 
-LOCALFUNC MyEvtQEl * MyEvtQElPreviousIn(void)
+LOCALFUNC tMacErr NativeTextToMacRomanPbuf(char *x, tPbuf *r)
 {
-	MyEvtQEl *p = NULL;
-	if (MyEvtQIn - MyEvtQOut != 0) {
-		p = &MyEvtQA[(MyEvtQIn - 1) & MyEvtQIMask];
-	}
-
-	return p;
-}
-
-LOCALFUNC MyEvtQEl * MyEvtQElAlloc(void)
-{
-	MyEvtQEl *p = NULL;
-	if (MyEvtQIn - MyEvtQOut >= MyEvtQSz) {
-		MyEvtQNeedRecover = trueblnr;
+	if (NULL == x) {
+		return mnvm_miscErr;
 	} else {
-		p = &MyEvtQA[MyEvtQIn & MyEvtQIMask];
+		ui3p p;
+		ui5b L = strlen(x);
 
-		++MyEvtQIn;
-	}
-
-	return p;
-}
-
-LOCALVAR ui5b theKeys[4];
-
-LOCALPROC Keyboard_UpdateKeyMap(int key, blnr down)
-{
-	int k = key & 127; /* just for safety */
-	int bit = 1 << (k & 7);
-	ui3b *kp = (ui3b *)theKeys;
-	ui3b *kpi = &kp[k / 8];
-	blnr CurDown = ((*kpi & bit) != 0);
-	if (CurDown != down) {
-		MyEvtQEl *p = MyEvtQElAlloc();
-		if (NULL != p) {
-			p->kind = MyEvtQElKindKey;
-			p->u.press.key = k;
-			p->u.press.down = down;
-
-			if (down) {
-				*kpi |= bit;
-			} else {
-				*kpi &= ~ bit;
-			}
-		}
-	}
-}
-
-LOCALVAR blnr MyMouseButtonState = falseblnr;
-
-LOCALPROC MyMouseButtonSet(blnr down)
-{
-	if (MyMouseButtonState != down) {
-		MyEvtQEl *p = MyEvtQElAlloc();
-		if (NULL != p) {
-			p->kind = MyEvtQElKindMouseButton;
-			p->u.press.down = down;
-
-			MyMouseButtonState = down;
-		}
-	}
-}
-
-LOCALPROC MyMousePositionSetDelta(ui4r dh, ui4r dv)
-{
-	if ((dh != 0) || (dv != 0)) {
-		MyEvtQEl *p = MyEvtQElPreviousIn();
-		if ((NULL != p) && (MyEvtQElKindMouseDelta == p->kind)) {
-			p->u.pos.h += dh;
-			p->u.pos.v += dv;
+		p = (ui3p)malloc(L);
+		if (NULL == p) {
+			return mnvm_miscErr;
 		} else {
-			p = MyEvtQElAlloc();
-			if (NULL != p) {
-				p->kind = MyEvtQElKindMouseDelta;
-				p->u.pos.h = dh;
-				p->u.pos.v = dv;
+			ui3b *p0 = (ui3b *)x;
+			ui3b *p1 = (ui3b *)p;
+			int i;
+
+			for (i = L; --i >= 0; ) {
+				ui3b v = *p0++;
+				if (v >= 128) {
+					v = Native2MacRomanTab[v - 128];
+				} else if (10 == v) {
+					v = 13;
+				}
+				*p1++ = v;
 			}
+
+			return PbufNewFromPtr(p, L, r);
 		}
 	}
 }
 
-LOCALVAR ui4b MyMousePosCurV = 0;
-LOCALVAR ui4b MyMousePosCurH = 0;
+/* this is table for Windows, any changes needed for X? */
+LOCALVAR const ui3b MacRoman2NativeTab[] = {
+	0xC4, 0xC5, 0xC7, 0xC9, 0xD1, 0xD6, 0xDC, 0xE1,
+	0xE0, 0xE2, 0xE4, 0xE3, 0xE5, 0xE7, 0xE9, 0xE8,
+	0xEA, 0xEB, 0xED, 0xEC, 0xEE, 0xEF, 0xF1, 0xF3,
+	0xF2, 0xF4, 0xF6, 0xF5, 0xFA, 0xF9, 0xFB, 0xFC,
+	0x86, 0xB0, 0xA2, 0xA3, 0xA7, 0x95, 0xB6, 0xDF,
+	0xAE, 0xA9, 0x99, 0xB4, 0xA8, 0x80, 0xC6, 0xD8,
+	0x81, 0xB1, 0x8D, 0x8E, 0xA5, 0xB5, 0x8A, 0x8F,
+	0x90, 0x9D, 0xA6, 0xAA, 0xBA, 0xAD, 0xE6, 0xF8,
+	0xBF, 0xA1, 0xAC, 0x9E, 0x83, 0x9A, 0xB2, 0xAB,
+	0xBB, 0x85, 0xA0, 0xC0, 0xC3, 0xD5, 0x8C, 0x9C,
+	0x96, 0x97, 0x93, 0x94, 0x91, 0x92, 0xF7, 0xB3,
+	0xFF, 0x9F, 0xB9, 0xA4, 0x8B, 0x9B, 0xBC, 0xBD,
+	0x87, 0xB7, 0x82, 0x84, 0x89, 0xC2, 0xCA, 0xC1,
+	0xCB, 0xC8, 0xCD, 0xCE, 0xCF, 0xCC, 0xD3, 0xD4,
+	0xBE, 0xD2, 0xDA, 0xDB, 0xD9, 0xD0, 0x88, 0x98,
+	0xAF, 0xD7, 0xDD, 0xDE, 0xB8, 0xF0, 0xFD, 0xFE
+};
 
-LOCALPROC MyMousePositionSet(ui4r h, ui4r v)
+LOCALFUNC blnr MacRomanTextToNativePtr(tPbuf i, blnr IsFileName,
+	ui3p *r)
 {
-	if ((h != MyMousePosCurH) || (v != MyMousePosCurV)) {
-		MyEvtQEl *p = MyEvtQElPreviousIn();
-		if ((NULL == p) || (MyEvtQElKindMousePos != p->kind)) {
-			p = MyEvtQElAlloc();
-		}
-		if (NULL != p) {
-			p->kind = MyEvtQElKindMousePos;
-			p->u.pos.h = h;
-			p->u.pos.v = v;
+	ui3p p;
+	void *Buffer = PbufDat[i];
+	ui5b L = PbufSize[i];
 
-			MyMousePosCurH = h;
-			MyMousePosCurV = v;
-		}
-	}
-}
+	p = (ui3p)malloc(L + 1);
+	if (p != NULL) {
+		ui3b *p0 = (ui3b *)Buffer;
+		ui3b *p1 = (ui3b *)p;
+		int j;
 
-#if 0
-#define Keyboard_TestKeyMap(key) ((((ui3b *)theKeys)[(key) / 8] & (1 << ((key) & 7))) != 0)
-#endif
-
-LOCALPROC InitKeyCodes(void)
-{
-	theKeys[0] = 0;
-	theKeys[1] = 0;
-	theKeys[2] = 0;
-	theKeys[3] = 0;
-}
-
-#define kKeepMaskControl  (1 << 0)
-#define kKeepMaskCapsLock (1 << 1)
-#define kKeepMaskCommand  (1 << 2)
-#define kKeepMaskOption   (1 << 3)
-#define kKeepMaskShift    (1 << 4)
-
-LOCALPROC DisconnectKeyCodes(ui5b KeepMask)
-{
-	/*
-		Called when may miss key ups,
-		so act is if all pressed keys have been released,
-		except maybe for control, caps lock, command,
-		option and shift.
-	*/
-
-	int j;
-	int b;
-	int key;
-	ui5b m;
-
-	for (j = 0; j < 16; ++j) {
-		ui3b k1 = ((ui3b *)theKeys)[j];
-		if (0 != k1) {
-			ui3b bit = 1;
-			for (b = 0; b < 8; ++b) {
-				if (0 != (k1 & bit)) {
-					key = j * 8 + b;
-					switch (key) {
-						case MKC_Control: m = kKeepMaskControl; break;
-						case MKC_CapsLock: m = kKeepMaskCapsLock; break;
-						case MKC_Command: m = kKeepMaskCommand; break;
-						case MKC_Option: m = kKeepMaskOption; break;
-						case MKC_Shift: m = kKeepMaskShift; break;
-						default: m = 0; break;
-					}
-					if (0 == (KeepMask & m)) {
-						Keyboard_UpdateKeyMap(key, falseblnr);
+		if (IsFileName) {
+			for (j = L; --j >= 0; ) {
+				ui3b x = *p0++;
+				if (x < 32) {
+					x = '-';
+				} else if (x >= 128) {
+					x = MacRoman2NativeTab[x - 128];
+				} else {
+					switch (x) {
+						case '/':
+						case '<':
+						case '>':
+						case '|':
+						case ':':
+							x = '-';
+						default:
+							break;
 					}
 				}
-				bit <<= 1;
+				*p1++ = x;
+			}
+			if ('.' == p[0]) {
+				p[0] = '-';
+			}
+		} else {
+			for (j = L; --j >= 0; ) {
+				ui3b x = *p0++;
+				if (x >= 128) {
+					x = MacRoman2NativeTab[x - 128];
+				} else if (13 == x) {
+					x = '\n';
+				}
+				*p1++ = x;
 			}
 		}
+		*p1 = 0;
+
+		*r = p;
+		return trueblnr;
 	}
+	return falseblnr;
 }
 
-LOCALPROC MyEvtQTryRecoverFromFull(void)
+LOCALPROC NativeStrFromCStr(char *r, char *s)
 {
-	MyMouseButtonSet(falseblnr);
-	DisconnectKeyCodes(0);
+	ui3b ps[ClStrMaxLength];
+	int i;
+	int L;
+
+	ClStrFromSubstCStr(&L, ps, s);
+
+	for (i = 0; i < L; ++i) {
+		r[i] = Cell2PlainAsciiMap[ps[i]];
+	}
+
+	r[L] = 0;
 }
 
 #if 0
@@ -525,18 +538,17 @@ JNIEXPORT jint JNICALL Java_name_osher_gil_minivmac_Core_getNumDrives (JNIEnv * 
 }
 
 // callbacks
-GLOBALFUNC tMacErr vSonyRead(ui3p Buffer, tDrive Drive_No, ui5r Sony_Start, ui5r *Sony_Count)
+GLOBALFUNC tMacErr vSonyTransfer(blnr IsWrite, ui3p Buffer,	tDrive Drive_No, ui5r Sony_Start, ui5r Sony_Count, ui5r *Sony_ActCount)
 {
 	jobject jBuffer;
-	jBuffer = (*jEnv)->NewDirectByteBuffer(jEnv, Buffer, (jlong)*Sony_Count);
-	return (*jEnv)->CallStaticIntMethod(jEnv, jClass, jSonyRead, jBuffer, (jint)Drive_No, (jint)Sony_Start, (jint)*Sony_Count);
-}
+	jBuffer = (*jEnv)->NewDirectByteBuffer(jEnv, Buffer, (jlong)Sony_Count);
+	ui5r actCount = (*jEnv)->CallStaticIntMethod(jEnv, jClass, jSonyTransfer, (jboolean)IsWrite, jBuffer, (jint)Drive_No, (jint)Sony_Start, (jint)Sony_Count);
 
-GLOBALFUNC tMacErr vSonyWrite(ui3p Buffer, tDrive Drive_No, ui5r Sony_Start, ui5r *Sony_Count)
-{
-	jobject jBuffer;
-	jBuffer = (*jEnv)->NewDirectByteBuffer(jEnv, Buffer, (jlong)*Sony_Count);
-	return (*jEnv)->CallStaticIntMethod(jEnv, jClass, jSonyWrite, jBuffer, (jint)Drive_No, (jint)Sony_Start, (jint)*Sony_Count);
+	if (nullpr != Sony_ActCount) {
+		*Sony_ActCount = actCount;
+	}
+
+	return (actCount >= 0 ? mnvm_noErr : -1);
 }
 
 GLOBALFUNC tMacErr vSonyGetSize(tDrive Drive_No, ui5r *Sony_Count)
@@ -604,6 +616,8 @@ JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_setPlayOffset (JNIEnv *
 #pragma mark Screen
 #endif
 
+LOCALVAR blnr WasInSpecialMode = falseblnr;
+
 #if 0 != vMacScreenDepth
 GLOBALVAR blnr UseColorMode = falseblnr;
 #endif
@@ -637,37 +651,63 @@ JNIEXPORT jint JNICALL Java_name_osher_gil_minivmac_Core_screenHeight (JNIEnv * 
  */
 JNIEXPORT jintArray JNICALL Java_name_osher_gil_minivmac_Core_getScreenUpdate (JNIEnv * env, jclass class) {
 	si4b top, left, bottom, right;
-	
-	if (!ScreenFindChanges(0, &top, &left, &bottom, &right)) return NULL;
+
+	if (0 != SpecialModes) {
+		top = 0;
+		left = 0;
+		bottom = vMacScreenHeight;
+		right = vMacScreenWidth;
+		WasInSpecialMode = trueblnr;
+	} else if (WasInSpecialMode) {
+		top = 0;
+		left = 0;
+		bottom = vMacScreenHeight;
+		right = vMacScreenWidth;
+		WasInSpecialMode = falseblnr;
+	} else if (ScreenChangedBottom > ScreenChangedTop) {
+		top = ScreenChangedTop;
+		left = ScreenChangedLeft;
+		bottom = ScreenChangedBottom;
+		right = ScreenChangedRight;
+	} else {
+		// No change - return empty array.
+		jintArray jArray = (*jEnv)->NewIntArray(jEnv, 0);
+		return jArray;
+	}
+
 	int changesWidth = right - left;
 	int changesHeight = bottom - top;
 	int changesSize = changesWidth * changesHeight;
 	int i,x,y;
-	
+
 	// create java array of changes: top, left, bottom, right, pixels...
 	jintArray jArray = (*jEnv)->NewIntArray(jEnv, changesSize+4);
 	jboolean arrayCopy = JNI_FALSE;
 	jint *arr = (jint*)(*jEnv)->GetPrimitiveArrayCritical(jEnv, (jarray)jArray, &arrayCopy);
 	jint *px = &arr[4];
-	
+
 	// add coordinates
 	arr[0] = (jint)top;
 	arr[1] = (jint)left;
 	arr[2] = (jint)bottom;
 	arr[3] = (jint)right;
-	
+
+	ui3p curdrawbuff = GetCurDrawBuff();
+
 	// convert pixels
 	x = left;
 	y = top*vMacScreenByteWidth;
 	for(i=0; i < changesSize; i++) {
-		int pixel = ((((unsigned char*)screencomparebuff)[y+(x/8)]) << (x%8)) & 0x80;
+		int pixel = ((((unsigned char*)curdrawbuff)[y+(x/8)]) << (x%8)) & 0x80;
 		px[i] = pixel?BLACK:WHITE;
 		if (++x >= right) {
 			x = left;
 			y += vMacScreenByteWidth;
 		}
 	}
-	
+
+	ScreenClearChanges();
+
 	(*jEnv)->ReleasePrimitiveArrayCritical(jEnv, (jarray)jArray, (void*)px, 0);
 	return jArray;
 }
@@ -748,7 +788,7 @@ JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_getMouseButton (JNI
  * Signature: (I)V
  */
 JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_setKeyDown (JNIEnv * env, jclass class, jint key) {
-	Keyboard_UpdateKeyMap(key, trueblnr);
+	Keyboard_UpdateKeyMap2(key, trueblnr);
 }
 
 /*
@@ -757,71 +797,29 @@ JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_setKeyDown (JNIEnv * en
  * Signature: (I)V
  */
 JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_setKeyUp (JNIEnv * env, jclass class, jint key) {
-	Keyboard_UpdateKeyMap(key, falseblnr);
-}
-
-/*
- * Class:     name_osher_gil_minivmac_Core
- * Method:    isKeyDown
- * Signature: (I)Z
- */
-JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_isKeyDown (JNIEnv * env, jclass class, jint key) {
-	ui3b *kp = (ui3b *)theKeys;
-	
-	if (key < 0 || key >= 128) return JNI_FALSE;
-	int bit = 1 << (key & 7);
-	return (kp[key / 8] & bit)?JNI_TRUE:JNI_FALSE;
-}
-
-/*
- * Class:     name_osher_gil_minivmac_Core
- * Method:    keysDown
- * Signature: ()[I
- */
-JNIEXPORT jintArray JNICALL Java_name_osher_gil_minivmac_Core_keysDown (JNIEnv * env, jclass class) {
-	ui3b *kp = (ui3b *)theKeys;
-	unsigned char keys[128];
-	int key;
-	jsize numKeys = 0;
-	
-	// get array of keys that are down
-	for(key = 0; key < 128; key++) {
-		int bit = 1 << (key & 7);
-		if (kp[key / 8] & bit)
-			keys[numKeys++] = key;
-	}
-	
-	// convert to java array
-	jbyteArray jArray = (*env)->NewByteArray(env, numKeys);
-	(*env)->SetByteArrayRegion(env, jArray, 0, numKeys, keys);
-	return jArray;
+	Keyboard_UpdateKeyMap2(key, falseblnr);
 }
 
 #if 0
 #pragma mark -
-#pragma mark Warnings
+#pragma mark Basic Dialogs
 #endif
 
-GLOBALPROC WarnMsgUnsupportedROM(void) {
-	(*jEnv)->CallStaticVoidMethod(jEnv, jClass, jWarnMsg, (jint)1, NULL);
-}
+LOCALPROC CheckSavedMacMsg(void)
+{
+	/* called only on quit, if error saved but not yet reported */
 
-#if DetailedAbormalReport
-GLOBALPROC WarnMsgAbnormal(char *s)
-{
-	jstring msg = (*jEnv)->NewStringUTF(jEnv, s);
-	(*jEnv)->CallStaticVoidMethod(jEnv, jClass, jWarnMsg, (jint)3, msg);
-}
-#else
-GLOBALPROC WarnMsgAbnormal(void)
-{
-	(*jEnv)->CallStaticVoidMethod(jEnv, jClass, jWarnMsg, (jint)3, NULL);
-}
-#endif
+	if (nullpr != SavedBriefMsg) {
+		char briefMsg0[ClStrMaxLength + 1];
+		char longMsg0[ClStrMaxLength + 1];
 
-GLOBALPROC WarnMsgCorruptedROM(void)
-{
-	(*jEnv)->CallStaticVoidMethod(jEnv, jClass, jWarnMsg, (jint)2, NULL);
+		NativeStrFromCStr(briefMsg0, SavedBriefMsg);
+		NativeStrFromCStr(longMsg0, SavedLongMsg);
+
+		(*jEnv)->CallStaticVoidMethod(jEnv, jClass, jWarnMsg, SavedBriefMsg, SavedLongMsg);
+
+		SavedBriefMsg = nullpr;
+	}
 }
 
 #if 0
@@ -829,107 +827,129 @@ GLOBALPROC WarnMsgCorruptedROM(void)
 #pragma mark Emulation
 #endif
 
-LOCALPROC IncrNextTime(void)
-{
-    /* increment NextTime by one tick */
-    NextTimeUsec += MyInvTimeStep;
-    if (NextTimeUsec >= UsecPerSec) {
-        NextTimeUsec -= UsecPerSec;
-        NextTimeSec += 1;
-    }
-}
-
-LOCALPROC InitNextTime(void)
-{
-    NextTimeSec = LastTimeSec;
-    NextTimeUsec = LastTimeUsec;
-    IncrNextTime();
-}
-
-LOCALPROC GetCurrentTicks(void)
-{
-    struct timeval t;
-    gettimeofday(&t, NULL);
-    LastTimeSec = (ui5b)t.tv_sec;
-    LastTimeUsec = (ui5b)t.tv_usec;
-}
-
-void StartUpTimeAdjust (void)
-{
-    GetCurrentTicks();
-    InitNextTime();
-}
-
-LOCALFUNC si5b GetTimeDiff(void)
-{
-    return ((si5b)(LastTimeSec - NextTimeSec)) * UsecPerSec
-        + ((si5b)(LastTimeUsec - NextTimeUsec));
-}
-
-LOCALFUNC blnr CheckDateTime (void)
-{
-    ui5b NewMacDate = time(NULL) + MacDateDiff;
-    if (NewMacDate != CurMacDateInSeconds) {
-        CurMacDateInSeconds = NewMacDate;
-        return trueblnr;
-    }
-    return falseblnr;
-}
-
-LOCALPROC UpdateTrueEmulatedTime(void)
-{
-    si5b TimeDiff;
-    
-    GetCurrentTicks();
-    
-    TimeDiff = GetTimeDiff();
-    if (TimeDiff >= 0) {
-        if (TimeDiff > 4 * MyInvTimeStep) {
-            /* emulation interrupted, forget it */
-            ++TrueEmulatedTime;
-            InitNextTime();
-        } else {
-            do {
-                ++TrueEmulatedTime;
-                IncrNextTime();
-                TimeDiff -= UsecPerSec;
-            } while (TimeDiff >= 0);
-        }
-    } else if (TimeDiff < - 2 * MyInvTimeStep) {
-        /* clock goofed if ever get here, reset */
-        InitNextTime();
-    }
-}
+LOCALVAR ui5b OnTrueTime = 0;
 
 GLOBALFUNC blnr ExtraTimeNotOver(void)
 {
-    UpdateTrueEmulatedTime();
-    return TrueEmulatedTime == OnTrueTime;
+	UpdateTrueEmulatedTime();
+	return TrueEmulatedTime == OnTrueTime;
 }
+
+/* --- platform independent code can be thought of as going here --- */
+
+#include "PROGMAIN.h"
 
 LOCALPROC RunEmulatedTicksToTrueTime(void)
 {
-	si3b n;
+	si3b n = OnTrueTime - CurEmulatedTime;
 
-	if (CheckDateTime()) {
+	if (n > 0) {
+		if (CheckDateTime()) {
 #if MySoundEnabled
-		MySound_SecondNotify();
+			MySound_SecondNotify();
 #endif
+		}
+
+#if UseMotionEvents
+		if (! CaughtMouse)
+#endif
+		{
+			//CheckMouseState();
+		}
+
+		DoEmulateOneTick();
+		++CurEmulatedTime;
+
+#if EnableMouseMotion && MayFullScreen
+		if (HaveMouseMotion) {
+			AutoScrollScreen();
+		}
+#endif
+		//MyDrawChangesAndClear();
+
+		if (ExtraTimeNotOver() && (--n > 0)) {
+			/* lagging, catch up */
+
+			if (n > 8) {
+				/* emulation not fast enough */
+				n = 8;
+				CurEmulatedTime = OnTrueTime - n;
+			}
+
+			EmVideoDisable = trueblnr;
+
+			do {
+				DoEmulateOneTick();
+				++CurEmulatedTime;
+			} while (ExtraTimeNotOver()
+				&& (--n > 0));
+
+			EmVideoDisable = falseblnr;
+		}
+
+		EmLagTime = n;
 	}
-    
-    n = OnTrueTime - CurEmulatedTime;
-    if (n > 0) {
-        if (n > 8) {
-            /* emulation not fast enough */
-            n = 8;
-            CurEmulatedTime = OnTrueTime - n;
-        }
-        
-        do {
-            DoEmulateOneTick();
-            ++CurEmulatedTime;
-        } while (ExtraTimeNotOver() && (--n > 0));
-    }
+}
+
+LOCALPROC RunOnEndOfSixtieth(void)
+{
+	while (ExtraTimeNotOver()) {
+		struct timespec rqt;
+		struct timespec rmt;
+
+		si5b TimeDiff = GetTimeDiff();
+		if (TimeDiff < 0) {
+			rqt.tv_sec = 0;
+			rqt.tv_nsec = (- TimeDiff) * 1000;
+			(void) nanosleep(&rqt, &rmt);
+		}
+	}
+
+	OnTrueTime = TrueEmulatedTime;
+	RunEmulatedTicksToTrueTime();
+}
+
+LOCALPROC ReserveAllocAll(void)
+{
+	ReserveAllocOneBlock(&ROM, kROM_Size, 5, falseblnr);
+#if MySoundEnabled
+	ReserveAllocOneBlock((ui3p *)&TheSoundBuffer,
+		dbhBufferSize, 5, falseblnr);
+#endif
+
+	EmulationReserveAlloc();
+}
+
+LOCALFUNC blnr AllocMyMemory(void)
+{
+	uimr n;
+	blnr IsOk = falseblnr;
+
+	ReserveAllocOffset = 0;
+	ReserveAllocBigBlock = nullpr;
+	ReserveAllocAll();
+	n = ReserveAllocOffset;
+	ReserveAllocBigBlock = (ui3p)calloc(1, n);
+	if (NULL == ReserveAllocBigBlock) {
+		MacMsg(kStrOutOfMemTitle, kStrOutOfMemMessage, trueblnr);
+	} else {
+		ReserveAllocOffset = 0;
+		ReserveAllocAll();
+		if (n != ReserveAllocOffset) {
+			/* oops, program error */
+		} else {
+			IsOk = trueblnr;
+		}
+	}
+
+	return IsOk;
+}
+
+LOCALPROC UnallocMyMemory(void)
+{
+	if (nullpr != ReserveAllocBigBlock) {
+		free((char *)ReserveAllocBigBlock);
+	}
 }
 
 /*
@@ -958,11 +978,18 @@ JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_setWantMacInterrupt (JN
 JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_runTick (JNIEnv * env, jclass class) {
 	jEnv = env;
 	jClass = class;
-	
-	if (SpeedStopped) return;
-	UpdateTrueEmulatedTime();
-	OnTrueTime = TrueEmulatedTime;
-	RunEmulatedTicksToTrueTime();
+
+	//CheckForSavedTasks();
+	if (ForceMacOff) {
+		return;
+	}
+
+	if (CurSpeedStopped) {
+		return;
+	} else {
+		DoEmulateExtraTime();
+		RunOnEndOfSixtieth();
+	}
 }
 
 /*
@@ -971,8 +998,7 @@ JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_runTick (JNIEnv * env, 
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core__1resumeEmulation (JNIEnv * env, jclass class) {
-	StartUpTimeAdjust();
-	SpeedStopped = 0;
+	CurSpeedStopped = 0;
 }
 
 /*
@@ -981,7 +1007,7 @@ JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core__1resumeEmulation (JNIE
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core__1pauseEmulation (JNIEnv * env, jclass class) {
-	SpeedStopped = 1;
+	CurSpeedStopped = 1;
 }
 
 /*
@@ -990,7 +1016,7 @@ JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core__1pauseEmulation (JNIEn
  * Signature: ()Z
  */
 JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_isPaused (JNIEnv * env, jclass class) {
-	return SpeedStopped?JNI_TRUE:JNI_FALSE;
+	return CurSpeedStopped?JNI_TRUE:JNI_FALSE;
 }
 
 #if 0
@@ -998,77 +1024,103 @@ JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_isPaused (JNIEnv * 
 #pragma mark Misc
 #endif
 
+LOCALFUNC blnr LoadMacRom(void * romData, size_t romSize)
+{
+	if (romSize < kROM_Size) {
+		MacMsg(kStrShortROMTitle, kStrShortROMMessage, trueblnr);
+		SpeedStopped = trueblnr;
+		return falseblnr;
+	} else {
+		memcpy(ROM, romData, kROM_Size);
+		return trueblnr;
+	}
+}
+
+LOCALFUNC blnr Screen_Init(void) {
+	screencomparebuff = malloc(vMacScreenNumBytes);
+	if (screencomparebuff == NULL)
+		return falseblnr;
+
+#if UseControlKeys
+	CntrlDisplayBuff = malloc(vMacScreenNumBytes);
+	if (CntrlDisplayBuff == NULL)
+		return falseblnr;
+#endif
+	return trueblnr;
+}
+
 /*
  * Class:     name_osher_gil_minivmac_Core
  * Method:    init
  * Signature: (Ljava/nio/ByteBuffer;)V
  */
 JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_init (JNIEnv * env, jclass this, jobject romBuffer) {
-	void *romData;
-	size_t romSize;
-	struct timeval tv;
-	struct timezone tz;
-	
 	if (initDone) return JNI_FALSE;
 	
-	// load ROM
-	romData = (*env)->GetDirectBufferAddress(env, romBuffer);
-	romSize = (*env)->GetDirectBufferCapacity(env, romBuffer);
-	ROM = malloc(romSize);
-	if (ROM == NULL) goto fail;
-	memcpy(ROM, romData, romSize);
-	
-	// alocate RAM, screen buffer and sound buffer
-	RAM = malloc(0x00400004);
-	if (RAM == NULL) goto fail;
-	screencomparebuff = malloc(vMacScreenNumBytes);
-	if (screencomparebuff == NULL) goto fail;
-#if MySoundEnabled
-	TheSoundBuffer = malloc(dbhBufferSize);
-	if (TheSoundBuffer == NULL) goto fail;
-#endif
-	
-	// init location
-	gettimeofday(&tv, &tz);
-	CurMacDelta = tz.tz_minuteswest / 60;
-	MacDateDiff = kMacEpoch + (tz.tz_minuteswest*60);
-	CurMacDateInSeconds = tv.tv_sec + MacDateDiff;
-	
-	// get java method IDs
-	jSonyRead = (*env)->GetStaticMethodID(env, this, "sonyRead", "(Ljava/nio/ByteBuffer;III)I");
-	jSonyWrite = (*env)->GetStaticMethodID(env, this, "sonyWrite", "(Ljava/nio/ByteBuffer;III)I");
-	jSonyGetSize = (*env)->GetStaticMethodID(env, this, "sonyGetSize", "(I)I");
-	jSonyEject = (*env)->GetStaticMethodID(env, this, "sonyEject", "(I)I");
-	jWarnMsg = (*env)->GetStaticMethodID(env, this, "warnMsg", "(ILjava/lang/String;)V");
-	
-	if (!InitEmulation()) goto fail;
-	
-	// initialize fields
-	jfieldID sDiskPath, sDiskFile, sNumInsertedDisks, sInitOk;
-	sDiskPath = (*env)->GetStaticFieldID(env, this, "diskPath", "[Ljava/lang/String;");
-	sDiskFile = (*env)->GetStaticFieldID(env, this, "diskFile", "[Ljava/io/RandomAccessFile;");
-	sNumInsertedDisks = (*env)->GetStaticFieldID(env, this, "numInsertedDisks", "I");
-	sInitOk = (*env)->GetStaticFieldID(env, this, "initOk", "Z");
-	
-	// init drives
-	jobjectArray diskPath = (*env)->NewObjectArray(env, NumDrives, (*env)->FindClass(env, "java/lang/String"), NULL);
-	jobjectArray diskFile = (*env)->NewObjectArray(env, NumDrives, (*env)->FindClass(env, "java/io/RandomAccessFile"), NULL);
-	(*env)->SetStaticIntField(env, this, sNumInsertedDisks, 0);
-	(*env)->SetStaticObjectField(env, this, sDiskPath, diskPath);
-	(*env)->SetStaticObjectField(env, this, sDiskFile, diskFile);
-	
-	// init ok
-	(*env)->SetStaticBooleanField(env, this, sInitOk, JNI_TRUE);
-	initDone = trueblnr;
-	return JNI_TRUE;
-fail:
-	if (ROM) free(ROM);
-	if (RAM) free(RAM);
-	if (screencomparebuff) free(screencomparebuff);
-#if MySoundEnabled
-	if (TheSoundBuffer) free(TheSoundBuffer);
-#endif
+	void * romData = (*env)->GetDirectBufferAddress(env, romBuffer);
+	size_t romSize = (*env)->GetDirectBufferCapacity(env, romBuffer);
+
+	if (AllocMyMemory())
+	if (LoadMacRom(romData, romSize))
+	if (Screen_Init())
+	if (InitEmulation())
+	{
+		// get java method IDs
+		jSonyTransfer = (*env)->GetStaticMethodID(env, this, "sonyTransfer", "(ZLjava/nio/ByteBuffer;III)I");
+		jSonyGetSize = (*env)->GetStaticMethodID(env, this, "sonyGetSize", "(I)I");
+		jSonyEject = (*env)->GetStaticMethodID(env, this, "sonyEject", "(I)I");
+		jWarnMsg = (*env)->GetStaticMethodID(env, this, "warnMsg", "(Ljava/lang/String;Ljava/lang/String;)V");
+
+		// initialize fields
+		jfieldID sDiskPath, sDiskFile, sNumInsertedDisks, sInitOk;
+		sDiskPath = (*env)->GetStaticFieldID(env, this, "diskPath", "[Ljava/lang/String;");
+		sDiskFile = (*env)->GetStaticFieldID(env, this, "diskFile", "[Ljava/io/RandomAccessFile;");
+		sNumInsertedDisks = (*env)->GetStaticFieldID(env, this, "numInsertedDisks", "I");
+		sInitOk = (*env)->GetStaticFieldID(env, this, "initOk", "Z");
+
+		// init drives
+		jobjectArray diskPath = (*env)->NewObjectArray(env, NumDrives, (*env)->FindClass(env, "java/lang/String"), NULL);
+		jobjectArray diskFile = (*env)->NewObjectArray(env, NumDrives, (*env)->FindClass(env, "java/io/RandomAccessFile"), NULL);
+		(*env)->SetStaticIntField(env, this, sNumInsertedDisks, 0);
+		(*env)->SetStaticObjectField(env, this, sDiskPath, diskPath);
+		(*env)->SetStaticObjectField(env, this, sDiskFile, diskFile);
+
+		// init ok
+		(*env)->SetStaticBooleanField(env, this, sInitOk, JNI_TRUE);
+		initDone = trueblnr;
+
+		return JNI_TRUE;
+	}
 	return JNI_FALSE;
+}
+
+/*
+ * Class:     name_osher_gil_minivmac_Core
+ * Method:    uninit
+ * Signature: ()V
+ */
+JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_uninit (JNIEnv * env, jclass this) {
+
+	if (MacMsgDisplayed) {
+		MacMsgDisplayOff();
+	}
+
+#if MySoundEnabled
+	//MySound_Stop();
+#endif
+#if MySoundEnabled
+	//MySound_UnInit();
+#endif
+#if IncludeHostTextClipExchange
+	FreeMyClipBuffer();
+#endif
+#if IncludePbufs
+	UnInitPbufs();
+#endif
+
+	UnallocMyMemory();
+
+	CheckSavedMacMsg();
 }
 
 static struct sigaction old_sa[NSIG];

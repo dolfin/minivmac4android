@@ -31,6 +31,20 @@
 #define ENDIANAC_H
 #endif
 
+#if 0
+/* works in GCC from Apple. others? */
+static inline ui5r MySwapUi5r(ui5r _data)
+{
+	__asm__ ("bswap   %0" : "+r" (_data));
+	return _data;
+}
+#define HaveMySwapUi5r 1
+#endif
+
+#ifndef HaveMySwapUi5r
+#define HaveMySwapUi5r 0
+#endif
+
 #define do_get_mem_byte(a) ((ui3r)*((ui3b *)(a)))
 
 #if BigEndianUnaligned
@@ -50,6 +64,8 @@ static MayInline ui4r do_get_mem_word(ui3p a)
 
 #if BigEndianUnaligned
 #define do_get_mem_long(a) ((ui5r)*((ui5b *)(a)))
+#elif HaveMySwapUi5r && LittleEndianUnaligned
+#define do_get_mem_long(a) (MySwapUi5r((ui5r)*((ui5b *)(a))))
 #else
 static MayInline ui5r do_get_mem_long(ui3p a)
 {
@@ -102,6 +118,8 @@ static MayInline void do_put_mem_word(ui3p a, ui4r v)
 
 #if BigEndianUnaligned
 #define do_put_mem_long(a, v) ((*((ui5b *)(a))) = (v))
+#elif HaveMySwapUi5r && LittleEndianUnaligned
+#define do_put_mem_long(a, v) ((*((ui5b *)(a))) = MySwapUi5r(v))
 #else
 static MayInline void do_put_mem_long(ui3p a, ui5r v)
 {

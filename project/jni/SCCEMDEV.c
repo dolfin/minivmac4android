@@ -69,8 +69,10 @@ typedef struct {
 	blnr SyncHunt;
 	blnr TxIP; /* Transmit Interrupt Pending */
 #if 0 /* TxBufferEmpty always true */
-	/* though should behave as went false
-	for an instant when write to transmit buffer */
+	/*
+		though should behave as went false
+		for an instant when write to transmit buffer
+	*/
 	blnr TxBufferEmpty;
 #endif
 #if 0 /* AllSent always true */
@@ -81,8 +83,10 @@ typedef struct {
 #endif
 #if 0 /* DCD always false */
 	blnr DCD; /* Data Carrier Detect */
-		/* input pin for mouse interrupts. but since
-		not emulating mouse this way, leave false. */
+		/*
+			input pin for mouse interrupts. but since
+			not emulating mouse this way, leave false.
+		*/
 #endif
 #if 0 /* RxChrAvail always false */
 	blnr RxChrAvail;
@@ -381,44 +385,61 @@ LOCALPROC SCC_Int(void)
 			ReadModem = ModemBytes = ModemCount = 0;
 		}
 
-		if (ReadModem)
-		{
+		if (ReadModem) {
 			ReadModem = 2;
 
 			SCC.a[0].RxChrAvail = trueblnr;
 
-			if (SCC.a[0].WR[0] & Bit5 && ! (SCC.a[0].WR[0] & (Bit4 | Bit3))) /* Int on next Rx char */
+			if (SCC.a[0].WR[0] & Bit5
+				&& ! (SCC.a[0].WR[0] & (Bit4 | Bit3)))
+			{
+				/* Int on next Rx char */
 				SCC_Interrupt(SCC_A_Rx);
-			else if (SCC.a[0].WR[1] & Bit3 && ! (SCC.a[0].WR[1] & Bit4)) /* Int on first Rx char */
+			} else if (SCC.a[0].WR[1] & Bit3
+				&& ! (SCC.a[0].WR[1] & Bit4))
+			{
+				/* Int on first Rx char */
 				SCC_Interrupt(SCC_A_Rx);
-			else if (SCC.a[0].WR[1] & Bit4 && ! (SCC.a[0].WR[1] & Bit3)) /* Int on all Rx chars */
+			} else if (SCC.a[0].WR[1] & Bit4
+				&& ! (SCC.a[0].WR[1] & Bit3))
+			{
+				/* Int on all Rx chars */
 				SCC_Interrupt(SCC_A_Rx);
+			}
 		}
 	}
-	if (PrintPort)
-	{
-		if (! SCC.a[1].RxEnable) { /* Rx Disabled */
+	if (PrintPort) {
+		if (! SCC.a[1].RxEnable) {
+			/* Rx Disabled */
 			ReadPrint = 0;
 		}
 
-		if ((PrintBytes > 0) && (PrintCount > PrintBytes - 1))
-		{
+		if ((PrintBytes > 0) && (PrintCount > PrintBytes - 1)) {
 			SCC.a[1].RxChrAvail = falseblnr;
 			ReadPrint = PrintBytes = PrintCount = 0;
 		}
 
-		if (ReadPrint)
-		{
+		if (ReadPrint) {
 			ReadPrint = 2;
 
 			SCC.a[1].RxChrAvail = trueblnr;
 
-			if (SCC.a[1].WR[0] & Bit5 && ! (SCC.a[1].WR[0] & (Bit4 | Bit3))) /* Int on next Rx char */
+			if (SCC.a[1].WR[0] & Bit5
+				&& ! (SCC.a[1].WR[0] & (Bit4 | Bit3)))
+			{
+				/* Int on next Rx char */
 				SCC_Interrupt(SCC_B_Rx);
-			else if (SCC.a[1].WR[1] & Bit3 && ! (SCC.a[1].WR[1] & Bit4)) /* Int on first Rx char */
+			} else if (SCC.a[1].WR[1] & Bit3
+				&& ! (SCC.a[1].WR[1] & Bit4))
+			{
+				/* Int on first Rx char */
 				SCC_Interrupt(SCC_B_Rx);
-			else if (SCC.a[1].WR[1] & Bit4 && ! (SCC.a[1].WR[1] & Bit3)) /* Int on all Rx chars */
+			} else if (SCC.a[1].WR[1] & Bit4
+				&& ! (SCC.a[1].WR[1] & Bit3))
+			{
+				/* Int on all Rx chars */
 				SCC_Interrupt(SCC_B_Rx);
+			}
 		}
 	}
 #endif
@@ -497,7 +518,8 @@ LOCALFUNC ui3b SCC_GetReg(int chan, ui3b SCC_Reg)
 #if 0 /* StatusHiLo always false */
 					if (SCC.StatusHiLo) {
 						/* Status High */
-						TempData = TempData & (Bit0 | Bit1 | Bit2 | Bit3 | Bit7);
+						TempData = TempData
+							& (Bit0 | Bit1 | Bit2 | Bit3 | Bit7);
 
 						switch (SCC.SCC_Interrupt_Type) {
 							case SCC_A_Rx:
@@ -540,7 +562,8 @@ LOCALFUNC ui3b SCC_GetReg(int chan, ui3b SCC_Reg)
 #endif
 					{
 						/* Status Low */
-						TempData = TempData & (Bit0 | Bit4 | Bit5 | Bit6 | Bit7);
+						TempData = TempData
+							& (Bit0 | Bit4 | Bit5 | Bit6 | Bit7);
 
 						switch (SCC.SCC_Interrupt_Type) {
 							case SCC_A_Rx:
@@ -607,7 +630,8 @@ LOCALFUNC ui3b SCC_GetReg(int chan, ui3b SCC_Reg)
 
 		case 8: /* Receive Buffer */
 			/* happens on boot with appletalk on */
-			if (SCC.a[chan].RxEnable) { /* Rx Enable */
+			if (SCC.a[chan].RxEnable) {
+				/* Rx Enable */
 #if (CurEmMd >= kEmMd_SE) && (CurEmMd <= kEmMd_IIx)
 				/* don't report */
 #else
@@ -687,12 +711,12 @@ LOCALPROC SCC_PutReg(int Data, int chan, ui3b SCC_Reg)
 				case 3: /* Reset Tx Underrun/EOM Latch */
 					/* happens on boot with appletalk on */
 #if 0 /* It seems to work better without this */
-					if (SCC.a[chan].TxEnable) /* Tx Enabled */
-					{
+					if (SCC.a[chan].TxEnable) {
+						/* Tx Enabled */
 						SCC.a[chan].TxUnderrun = falseblnr;
 
-						if (SCC.a[chan].WR[10] & Bit2) /* Abort/Flag on Underrun */
-						{
+						if (SCC.a[chan].WR[10] & Bit2) {
+							/* Abort/Flag on Underrun */
 							/* Send Abort */
 							SCC.a[chan].TxUnderrun = trueblnr;
 #if 0 /* TxBufferEmpty always true */
@@ -801,13 +825,16 @@ LOCALPROC SCC_PutReg(int Data, int chan, ui3b SCC_Reg)
 					ReportAbnormal("Rx INT on special condition only");
 					break;
 			}
-			if ((Data & Bit5) != 0) { /* Wait/DMA request on receive/transmit */
+			if ((Data & Bit5) != 0) {
+				/* Wait/DMA request on receive/transmit */
 				/* happens in MacCheck */
 			}
-			if ((Data & Bit6) != 0) { /* Wait/DMA request function */
+			if ((Data & Bit6) != 0) {
+				/* Wait/DMA request function */
 				/* happens in MacCheck */
 			}
-			if ((Data & Bit7) != 0) { /* Wait/DMA request enable */
+			if ((Data & Bit7) != 0) {
+				/* Wait/DMA request enable */
 				/* happens in MacCheck */
 			}
 			break;
@@ -854,8 +881,10 @@ LOCALPROC SCC_PutReg(int Data, int chan, ui3b SCC_Reg)
 				/* 3: Rx 8 Bits/Character */
 #endif
 			if ((Data & Bit5) != 0) { /* Auto Enables */
-				/* use DCD input as receiver enable,
-				and set RTS output when transmit buffer empty */
+				/*
+					use DCD input as receiver enable,
+					and set RTS output when transmit buffer empty
+				*/
 				ReportAbnormal("Auto Enables");
 			}
 			if ((Data & Bit4) != 0) { /* Enter Hunt Mode */
@@ -865,7 +894,9 @@ LOCALPROC SCC_PutReg(int Data, int chan, ui3b SCC_Reg)
 
 #if 0 /* SyncHuntIE usually false */
 					if (SCC.a[chan].SyncHuntIE) {
-						SCC_Interrupt((chan == 0) ? SCC_A_Ext : SCC_B_Ext);
+						SCC_Interrupt((chan == 0)
+							? SCC_A_Ext
+							: SCC_B_Ext);
 					}
 #endif
 				}
@@ -939,8 +970,10 @@ LOCALPROC SCC_PutReg(int Data, int chan, ui3b SCC_Reg)
 			}
 			if ((Data & Bit1) == 0) { /* RTS */
 				/* both values on boot with appletalk on */
-				/* value of Request To Send output pin, when
-				Auto Enable is off */
+				/*
+					value of Request To Send output pin, when
+					Auto Enable is off
+				*/
 			}
 			if ((Data & Bit2) != 0) { /* SDLC/CRC-16 */
 				ReportAbnormal("SDLC/CRC-16");
@@ -972,8 +1005,10 @@ LOCALPROC SCC_PutReg(int Data, int chan, ui3b SCC_Reg)
 			}
 			if ((Data & Bit7) == 0) { /* DTR */
 				/* happens in MacCheck */
-				/* value of Data Terminal Ready output pin,
-				when WR14 D2 = 0 (DTR/request function)  */
+				/*
+					value of Data Terminal Ready output pin,
+					when WR14 D2 = 0 (DTR/request function)
+				*/
 			}
 			break;
 		case 6:
@@ -997,7 +1032,8 @@ LOCALPROC SCC_PutReg(int Data, int chan, ui3b SCC_Reg)
 				SCC.a[chan].TxIP = trueblnr;
 				CheckSCCInterruptFlag();
 			} else {
-				ReportAbnormal("write when Transmit Buffer not Enabled");
+				ReportAbnormal(
+					"write when Transmit Buffer not Enabled");
 #if 0 /* TxBufferEmpty always true */
 				SCC.a[chan].TxBufferEmpty = falseblnr;
 #endif
@@ -1163,7 +1199,8 @@ LOCALPROC SCC_PutReg(int Data, int chan, ui3b SCC_Reg)
 #if 0 /* don't care about Baud */
 			SCC.a[chan].BaudLo = Data;
 #if 0
-			SCC_SetBaud(chan, SCC.a[chan].BaudLo + (SCC.a[chan].BaudHi << 8));
+			SCC_SetBaud(chan,
+				SCC.a[chan].BaudLo + (SCC.a[chan].BaudHi << 8));
 				/* 380: BaudRate = 300   */
 				/*  94: BaudRate = 1200  */
 				/*  46: BaudRate = 2400  */
@@ -1181,7 +1218,8 @@ LOCALPROC SCC_PutReg(int Data, int chan, ui3b SCC_Reg)
 #if 0 /* don't care about Baud */
 			SCC.a[chan].BaudHi = Data;
 #if 0
-			SCC_SetBaud(chan, SCC.a[chan].BaudLo + (SCC.a[chan].BaudHi << 8));
+			SCC_SetBaud(chan,
+				SCC.a[chan].BaudLo + (SCC.a[chan].BaudHi << 8));
 #endif
 #endif
 			break;
@@ -1267,7 +1305,8 @@ LOCALPROC SCC_PutReg(int Data, int chan, ui3b SCC_Reg)
 #if 0 /* SyncHuntIE usually false */
 			SCC.a[chan].SyncHuntIE = (Data & Bit4) != 0;
 #else
-			if ((Data & Bit4) != 0) { /* SYNC/HUNT IE */
+			if ((Data & Bit4) != 0) {
+				/* SYNC/HUNT IE */
 				ReportAbnormal("SYNC/HUNT IE");
 			}
 #endif

@@ -2,7 +2,9 @@ package name.osher.gil.minivmac;
 
 import java.io.File;
 import java.io.RandomAccessFile;
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
+import java.nio.ReadOnlyBufferException;
 
 import org.apache.http.util.ByteArrayBuffer;
 
@@ -10,8 +12,11 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.os.Handler;
+import android.util.Log;
 
 public class Core {
+	private static final String TAG = "name.osher.gil.minivmac.Core";
+	
 	private static int numInsertedDisks = 0;
 	private static int frameSkip = 4;
 	private static String[] diskPath;
@@ -27,10 +32,12 @@ public class Core {
 	public static void nativeCrashed()
 	{
 		// TODO: Add Error handeling here.
+		Log.wtf(TAG, "Native crashed!");
 	}
 	
 	// initialization
 	public native static boolean init(ByteBuffer rom);
+	public native static boolean uninit();
 	
 	// emulation
 	public native static void runTick();
@@ -93,8 +100,6 @@ public class Core {
 	// keyboard
 	public native static void setKeyDown(int scancode);
 	public native static void setKeyUp(int scancode);
-	public native static boolean isKeyDown(int scancode);
-	public native static int[] keysDown();
 	
 	// screen
 	public native static int screenWidth();
@@ -115,9 +120,10 @@ public class Core {
 		mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, SOUND_SAMPLERATE, AudioFormat.CHANNEL_CONFIGURATION_MONO, AudioFormat.ENCODING_PCM_8BIT, mMinBufferSize, AudioTrack.MODE_STREAM);
 		
 	    if (mAudioTrack != null) {
-	    	mAudioTrack.play();
+	    	mAudioTrack.pause();
 	    	return true;
 	    } else {
+	    	Log.e(TAG, "MySound_Init() can't init sound.");
 	    	return false;
 	    }
 	}
@@ -126,9 +132,21 @@ public class Core {
 		for (int i = 0 ; i < 32 ; i++) {
 			byte[] buf = soundBuf();
 			if (buf == null) break;
+			if (mAudioTrack.getPlayState() != AudioTrack.PLAYSTATE_PLAYING)
+			{
+				mAudioTrack.play();
+			}
 			int err = mAudioTrack.write(buf, 0, buf.length);
-			setPlayOffset(err);
+			if (err > 0) {
+				setPlayOffset(err);
+			} else {
+				Log.w(TAG, "playSound() mAudioTrack.write() got error " + err);
+				break;
+			}
 		}
+		
+		//mAudioTrack.flush();
+		//mAudioTrack.pause();
 	}
 
 	public static void MySound_Start () {
@@ -151,30 +169,30 @@ public class Core {
 	public native static int getNumDrives();
 	
 	// disk driver callbacks
-	public static int sonyRead(ByteBuffer buf, int driveNum, int start, int length) {
+	public static int sonyTransfer(boolean isWrite, ByteBuffer buf, int driveNum, int start, int length) {
 		if (diskFile[driveNum] == null) return -1;
 		try {
-			byte[] bytes = new byte[length];
-			diskFile[driveNum].seek(start);
-			diskFile[driveNum].read(bytes);
-			buf.rewind();
-			buf.put(bytes);
-			return 0;
+			if (isWrite)
+			{
+				byte[] bytes = new byte[length];
+				buf.rewind();
+				buf.get(bytes);
+				diskFile[driveNum].seek(start);
+				diskFile[driveNum].write(bytes);
+				return length;
+			}
+			else
+			{
+				byte[] bytes = new byte[length];
+				diskFile[driveNum].seek(start);
+				int actualLength = diskFile[driveNum].read(bytes);
+				buf.rewind();
+				buf.put(bytes);
+				//Log.v(TAG, "Read " + actualLength + " bytrs from drive number " + driveNum + ".");
+				return actualLength;
+			}
 		} catch (Exception x) {
-			return -1;
-		}
-	}
-	
-	public static int sonyWrite(ByteBuffer buf, int driveNum, int start, int length) {
-		if (diskFile[driveNum] == null) return -1;
-		try {
-			byte[] bytes = new byte[length];
-			buf.rewind();
-			buf.get(bytes);
-			diskFile[driveNum].seek(start);
-			diskFile[driveNum].write(bytes);
-			return 0;
-		} catch (Exception x) {
+			Log.e(TAG, "Failed to read " + length + " bytes from drive number " + driveNum + ".");
 			return -1;
 		}
 	}
@@ -184,6 +202,7 @@ public class Core {
 		try {
 			return (int)diskFile[driveNum].length();
 		} catch (Exception x) {
+			Log.e(TAG, "Failed to get disk size from drive number " + driveNum + ".");
 			return -1;
 		}
 	}
@@ -256,18 +275,8 @@ public class Core {
 	}
 	
 	// warnings
-	public static void warnMsg(int type, String msg) {
-		switch (type) {
-		case 1: // unsupported ROM
-			MiniVMac.showWarnMessage("Unsupported ROM", "The ROM image file loaded successfully, but I don't support this ROM version.", false);
-			break;
-		case 2: // corrupted ROM
-			MiniVMac.showWarnMessage("ROM checksum failed", "The ROM image file may be corrupted.", false);
-			break;
-		case 3: // abnormal situation
-			MiniVMac.showWarnMessage("Abnormal Situation", msg, false);
-			break;
-		}
+	public static void warnMsg(String shortMsg, String longMsg) {
+		MiniVMac.showWarnMessage(shortMsg, longMsg, false);
 	}
 	
 }
