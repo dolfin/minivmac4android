@@ -1,4 +1,4 @@
-package name.osher.gil.minivmac;
+package name.osher.gil.minivmac.ii;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -11,7 +11,7 @@ import android.view.*;
 
 public class ScreenView extends View {
 	private Bitmap screenBits;
-	private int screenWidth, screenHeight;
+	private int screenWidth, screenHeight, screenDepth;
 	private Paint screenPaint;
 	private Rect srcRect, dstRect;
 	private boolean scaled;
@@ -19,7 +19,8 @@ public class ScreenView extends View {
 	private void init() {
 		screenWidth = Core.screenWidth();
 		screenHeight = Core.screenHeight();
-		screenBits = Bitmap.createBitmap(screenWidth, screenHeight, Bitmap.Config.RGB_565);
+		screenDepth = Core.screenDepth();
+		screenBits = Bitmap.createBitmap(screenWidth, screenHeight, Bitmap.Config.ARGB_8888);
 		screenPaint = new Paint();
 		setScaled(false);
 	}

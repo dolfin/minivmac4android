@@ -7,7 +7,7 @@
 	you know what you're doing.
 */
 
-#define RomFileName "vMac.ROM"
+#define RomFileName "MacII.ROM"
 #define EnableDragDrop 0
 #define EnableAltKeysMode 0
 #define SwapCommandControl 0
@@ -29,7 +29,7 @@
 
 #define NeedIntlChars 0
 #define kStrAppName "Mini vMac"
-#define kAppVariationStr "minivmac-3.2.3-android"
+#define kAppVariationStr "minivmac-3.2.3-android (Mac II)"
 #define kStrCopyrightYear "2012"
 #define kMaintainerName "Gil Osher"
 #define kStrHomePage "http://gil.theoshers.com/"

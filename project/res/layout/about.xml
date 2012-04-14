@@ -14,7 +14,7 @@
 		android:orientation="vertical"
 		android:paddingLeft="4px"
 		android:paddingRight="4px">
-			<TextView android:text="Mini vMac for Android"
+			<TextView android:text="Mini vMac II for Android"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:textSize="16px" />

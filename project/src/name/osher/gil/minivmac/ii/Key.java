@@ -1,13 +1,12 @@
-package name.osher.gil.minivmac;
+package name.osher.gil.minivmac.ii;
 
-import name.osher.gil.minivmac.R;
+import name.osher.gil.minivmac.ii.R;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
 
 public class Key extends Button implements View.OnTouchListener {

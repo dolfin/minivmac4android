@@ -1,15 +1,13 @@
-package name.osher.gil.minivmac;
+package name.osher.gil.minivmac.ii;
 
-import name.osher.gil.minivmac.R;
+import name.osher.gil.minivmac.ii.R;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.TableLayout;
 
 public class Keyboard extends LinearLayout implements View.OnClickListener {
 

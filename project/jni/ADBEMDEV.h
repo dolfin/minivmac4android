@@ -1,7 +1,7 @@
 /*
-	KBRDEMDV.h
+	ADBEMDEV.h
 
-	Copyright (C) 2003 Philip Cummins, Paul C. Pratt
+	Copyright (C) 2008 Paul C. Pratt
 
 	You can redistribute this file and/or modify it under the terms
 	of version 2 of the GNU General Public License as published by
@@ -14,14 +14,14 @@
 	license for more details.
 */
 
-#ifdef KBRDEMDV_H
+#ifdef ADBEMDEV_H
 #error "header already included"
 #else
-#define KBRDEMDV_H
+#define ADBEMDEV_H
 #endif
 
 
-EXPORTPROC Kybd_DataLineChngNtfy(void);
-EXPORTPROC DoKybd_ReceiveEndCommand(void);
-EXPORTPROC DoKybd_ReceiveCommand(void);
-EXPORTPROC KeyBoard_Update(void);
+EXPORTPROC ADBstate_ChangeNtfy(void);
+EXPORTPROC ADB_DoNewState(void);
+EXPORTPROC ADB_DataLineChngNtfy(void);
+EXPORTPROC ADB_Update(void);

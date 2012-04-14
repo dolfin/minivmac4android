@@ -505,35 +505,35 @@ LOCALPROC NativeStrFromCStr(char *r, char *s)
 #endif
 
 /*
- * Class:     name_osher_gil_minivmac_Core
+ * Class:     name_osher_gil_minivmac_ii_Core
  * Method:    notifyDiskInserted
  * Signature: (IZ)V
  */
-JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_notifyDiskInserted (JNIEnv * env, jclass class, jint drive, jboolean locked) {
+JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_ii_Core_notifyDiskInserted (JNIEnv * env, jclass class, jint drive, jboolean locked) {
 	DiskInsertNotify((ui4b)drive, locked?trueblnr:falseblnr);
 }
 
 /*
- * Class:     name_osher_gil_minivmac_Core
+ * Class:     name_osher_gil_minivmac_ii_Core
  * Method:    notifyDiskEjected
  * Signature: (I)V
  */
-JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_notifyDiskEjected (JNIEnv * env, jclass class, jint drive) {
+JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_ii_Core_notifyDiskEjected (JNIEnv * env, jclass class, jint drive) {
 	DiskEjectedNotify((ui4b)drive);
 }
 
 /*
- * Class:     name_osher_gil_minivmac_Core
+ * Class:     name_osher_gil_minivmac_ii_Core
  * Method:    getFirstFreeDisk
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_name_osher_gil_minivmac_Core_getFirstFreeDisk (JNIEnv * env, jclass class) {
+JNIEXPORT jint JNICALL Java_name_osher_gil_minivmac_ii_Core_getFirstFreeDisk (JNIEnv * env, jclass class) {
 	ui4b drive;
 	if (!FirstFreeDisk(&drive)) return -1;
 	return (jint)drive;
 }
 
-JNIEXPORT jint JNICALL Java_name_osher_gil_minivmac_Core_getNumDrives (JNIEnv * env, jclass class) {
+JNIEXPORT jint JNICALL Java_name_osher_gil_minivmac_ii_Core_getNumDrives (JNIEnv * env, jclass class) {
 	return (jint)NumDrives;
 }
 
@@ -568,11 +568,11 @@ GLOBALFUNC tMacErr vSonyEject(tDrive Drive_No) {
 #endif
 
 /*
- * Class:     name_osher_gil_minivmac_Core
+ * Class:     name_osher_gil_minivmac_ii_Core
  * Method:    soundBuf
  * Signature: ()[B
  */
-JNIEXPORT jbyteArray JNICALL Java_name_osher_gil_minivmac_Core_soundBuf (JNIEnv * env, jclass class) {
+JNIEXPORT jbyteArray JNICALL Java_name_osher_gil_minivmac_ii_Core_soundBuf (JNIEnv * env, jclass class) {
 #if MySoundEnabled
 	ui3p NextPlayPtr;
 	ui4b PlayNowSize = 0;
@@ -600,11 +600,11 @@ JNIEXPORT jbyteArray JNICALL Java_name_osher_gil_minivmac_Core_soundBuf (JNIEnv 
 }
 
 /*
- * Class:     name_osher_gil_minivmac_Core
+ * Class:     name_osher_gil_minivmac_ii_Core
  * Method:    setPlayOffset
  * Signature: (I)V
  */
-JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_setPlayOffset (JNIEnv * env, jclass class, jint newValue) {
+JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_ii_Core_setPlayOffset (JNIEnv * env, jclass class, jint newValue) {
 #if MySoundEnabled
 	ThePlayOffset += newValue;
 #endif
@@ -618,38 +618,39 @@ JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_setPlayOffset (JNIEnv *
 
 LOCALVAR blnr WasInSpecialMode = falseblnr;
 
-#if 0 != vMacScreenDepth
-GLOBALVAR blnr UseColorMode = falseblnr;
-#endif
-
-#if 0 != vMacScreenDepth
-GLOBALVAR blnr ColorMappingChanged = falseblnr;
-#endif
-
 /*
- * Class:     name_osher_gil_minivmac_Core
+ * Class:     name_osher_gil_minivmac_ii_Core
  * Method:    screenWidth
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_name_osher_gil_minivmac_Core_screenWidth (JNIEnv * env, jclass class) {
+JNIEXPORT jint JNICALL Java_name_osher_gil_minivmac_ii_Core_screenWidth (JNIEnv * env, jclass class) {
 	return (jint)vMacScreenWidth;
 }
 
 /*
- * Class:     name_osher_gil_minivmac_Core
+ * Class:     name_osher_gil_minivmac_ii_Core
  * Method:    screenHeight
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_name_osher_gil_minivmac_Core_screenHeight (JNIEnv * env, jclass class) {
+JNIEXPORT jint JNICALL Java_name_osher_gil_minivmac_ii_Core_screenHeight (JNIEnv * env, jclass class) {
 	return (jint)vMacScreenHeight;
 }
 
 /*
- * Class:     name_osher_gil_minivmac_Core
+ * Class:     name_osher_gil_minivmac_ii_Core
+ * Method:    screenDepth
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_name_osher_gil_minivmac_ii_Core_screenDepth (JNIEnv * env, jclass class) {
+	return (jint)vMacScreenDepth;
+}
+
+/*
+ * Class:     name_osher_gil_minivmac_ii_Core
  * Method:    getScreenUpdate
  * Signature: ()[I
  */
-JNIEXPORT jintArray JNICALL Java_name_osher_gil_minivmac_Core_getScreenUpdate (JNIEnv * env, jclass class) {
+JNIEXPORT jintArray JNICALL Java_name_osher_gil_minivmac_ii_Core_getScreenUpdate (JNIEnv * env, jclass class) {
 	si4b top, left, bottom, right;
 
 	if (0 != SpecialModes) {
@@ -695,14 +696,46 @@ JNIEXPORT jintArray JNICALL Java_name_osher_gil_minivmac_Core_getScreenUpdate (J
 	ui3p curdrawbuff = GetCurDrawBuff();
 
 	// convert pixels
-	x = left;
-	y = top*vMacScreenByteWidth;
-	for(i=0; i < changesSize; i++) {
-		int pixel = ((((unsigned char*)curdrawbuff)[y+(x/8)]) << (x%8)) & 0x80;
-		px[i] = pixel?BLACK:WHITE;
-		if (++x >= right) {
-			x = left;
-			y += vMacScreenByteWidth;
+	if (UseColorMode) {
+#if 4 > vMacScreenDepth
+		x = left;
+		y = top*vMacScreenByteWidth;
+		for(i=0; i < changesSize; i++) {
+			int pixel = (((unsigned char*)curdrawbuff)[y+x]);
+			px[i] = (0xFF000000 |
+					 ((((unsigned int)CLUT_reds[pixel]  ) >> 8) << 16) |
+					 ((((unsigned int)CLUT_greens[pixel]) >> 8) << 8 ) |
+					 ((((unsigned int)CLUT_blues[pixel] ) >> 8)		 ));
+
+			if (++x >= right) {
+				x = left;
+				y += vMacScreenByteWidth;
+			}
+		}
+#else
+		x = left;
+		y = top*vMacScreenByteWidth;
+		for(i=0; i < changesSize; i++) {
+			int pixel = ((unsigned char*)curdrawbuff)[y+x];
+			px[i] = pixel;//((pixel & 0xFF00) >> 8) | ((pixel & 0x00FF) << 8);
+
+			if (++x >= right) {
+				x = left;
+				y += vMacScreenByteWidth;
+			}
+		}
+#endif
+	} else {
+		x = left;
+		y = top*vMacScreenMonoByteWidth;
+		for(i=0; i < changesSize; i++) {
+			int pixel = ((((unsigned char*)curdrawbuff)[y+(x/8)]) << (x%8)) & 0x80;
+			px[i] = pixel?BLACK:WHITE;
+
+			if (++x >= right) {
+				x = left;
+				y += vMacScreenMonoByteWidth;
+			}
 		}
 	}
 
@@ -718,21 +751,21 @@ JNIEXPORT jintArray JNICALL Java_name_osher_gil_minivmac_Core_getScreenUpdate (J
 #endif
 
 /*
- * Class:     name_osher_gil_minivmac_Core
+ * Class:     name_osher_gil_minivmac_ii_Core
  * Method:    moveMouse
  * Signature: (II)V
  */
-JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_moveMouse (JNIEnv * env, jclass class, jint dx, jint dy) {
+JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_ii_Core_moveMouse (JNIEnv * env, jclass class, jint dx, jint dy) {
 	HaveMouseMotion = trueblnr;
 	MyMousePositionSetDelta(dx, dy);
 }
 
 /*
- * Class:     name_osher_gil_minivmac_Core
+ * Class:     name_osher_gil_minivmac_ii_Core
  * Method:    setMousePos
  * Signature: (II)V
  */
-JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_setMousePos (JNIEnv * env, jclass class, jint x, jint y) {
+JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_ii_Core_setMousePos (JNIEnv * env, jclass class, jint x, jint y) {
 	HaveMouseMotion = falseblnr;
 	CurMouseH = CLAMP(x, 0, vMacScreenWidth);
 	CurMouseV = CLAMP(y, 0, vMacScreenHeight);
@@ -741,39 +774,39 @@ JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_setMousePos (JNIEnv * e
 }
 
 /*
- * Class:     name_osher_gil_minivmac_Core
+ * Class:     name_osher_gil_minivmac_ii_Core
  * Method:    setMouseButton
  * Signature: (Z)V
  */
-JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_setMouseButton (JNIEnv * env, jclass class, jboolean down) {
+JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_ii_Core_setMouseButton (JNIEnv * env, jclass class, jboolean down) {
 	CurMouseButton = down?trueblnr:falseblnr;
 	MyMouseButtonSet(CurMouseButton);
 }
 
 /*
- * Class:     name_osher_gil_minivmac_Core
+ * Class:     name_osher_gil_minivmac_ii_Core
  * Method:    getMouseX
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_name_osher_gil_minivmac_Core_getMouseX (JNIEnv * env, jclass class) {
+JNIEXPORT jint JNICALL Java_name_osher_gil_minivmac_ii_Core_getMouseX (JNIEnv * env, jclass class) {
 	return (jint)CurMouseH;
 }
 
 /*
- * Class:     name_osher_gil_minivmac_Core
+ * Class:     name_osher_gil_minivmac_ii_Core
  * Method:    getMouseY
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_name_osher_gil_minivmac_Core_getMouseY (JNIEnv * env, jclass class) {
+JNIEXPORT jint JNICALL Java_name_osher_gil_minivmac_ii_Core_getMouseY (JNIEnv * env, jclass class) {
 	return (jint)CurMouseV;
 }
 
 /*
- * Class:     name_osher_gil_minivmac_Core
+ * Class:     name_osher_gil_minivmac_ii_Core
  * Method:    getMouseButton
  * Signature: ()Z
  */
-JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_getMouseButton (JNIEnv * env, jclass class) {
+JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_ii_Core_getMouseButton (JNIEnv * env, jclass class) {
 	return CurMouseButton?JNI_TRUE:JNI_FALSE;
 }
 
@@ -783,20 +816,20 @@ JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_getMouseButton (JNI
 #endif
 
 /*
- * Class:     name_osher_gil_minivmac_Core
+ * Class:     name_osher_gil_minivmac_ii_Core
  * Method:    setKeyDown
  * Signature: (I)V
  */
-JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_setKeyDown (JNIEnv * env, jclass class, jint key) {
+JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_ii_Core_setKeyDown (JNIEnv * env, jclass class, jint key) {
 	Keyboard_UpdateKeyMap2(key, trueblnr);
 }
 
 /*
- * Class:     name_osher_gil_minivmac_Core
+ * Class:     name_osher_gil_minivmac_ii_Core
  * Method:    setKeyUp
  * Signature: (I)V
  */
-JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_setKeyUp (JNIEnv * env, jclass class, jint key) {
+JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_ii_Core_setKeyUp (JNIEnv * env, jclass class, jint key) {
 	Keyboard_UpdateKeyMap2(key, falseblnr);
 }
 
@@ -953,29 +986,29 @@ LOCALPROC UnallocMyMemory(void)
 }
 
 /*
- * Class:     name_osher_gil_minivmac_Core
+ * Class:     name_osher_gil_minivmac_ii_Core
  * Method:    setWantMacReset
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_setWantMacReset (JNIEnv * env, jclass class) {
+JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_ii_Core_setWantMacReset (JNIEnv * env, jclass class) {
 	WantMacReset = trueblnr;
 }
 
 /*
- * Class:     name_osher_gil_minivmac_Core
+ * Class:     name_osher_gil_minivmac_ii_Core
  * Method:    setWantMacReset
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_setWantMacInterrupt (JNIEnv * env, jclass class) {
+JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_ii_Core_setWantMacInterrupt (JNIEnv * env, jclass class) {
 	WantMacInterrupt = trueblnr;
 }
 
 /*
- * Class:     name_osher_gil_minivmac_Core
+ * Class:     name_osher_gil_minivmac_ii_Core
  * Method:    runTick
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_runTick (JNIEnv * env, jclass class) {
+JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_ii_Core_runTick (JNIEnv * env, jclass class) {
 	jEnv = env;
 	jClass = class;
 
@@ -993,29 +1026,29 @@ JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_runTick (JNIEnv * env, 
 }
 
 /*
- * Class:     name_osher_gil_minivmac_Core
+ * Class:     name_osher_gil_minivmac_ii_Core
  * Method:    _resumeEmulation
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core__1resumeEmulation (JNIEnv * env, jclass class) {
+JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_ii_Core__1resumeEmulation (JNIEnv * env, jclass class) {
 	CurSpeedStopped = 0;
 }
 
 /*
- * Class:     name_osher_gil_minivmac_Core
+ * Class:     name_osher_gil_minivmac_ii_Core
  * Method:    _pauseEmulation
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core__1pauseEmulation (JNIEnv * env, jclass class) {
+JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_ii_Core__1pauseEmulation (JNIEnv * env, jclass class) {
 	CurSpeedStopped = 1;
 }
 
 /*
- * Class:     name_osher_gil_minivmac_Core
+ * Class:     name_osher_gil_minivmac_ii_Core
  * Method:    isPaused
  * Signature: ()Z
  */
-JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_isPaused (JNIEnv * env, jclass class) {
+JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_ii_Core_isPaused (JNIEnv * env, jclass class) {
 	return CurSpeedStopped?JNI_TRUE:JNI_FALSE;
 }
 
@@ -1050,11 +1083,11 @@ LOCALFUNC blnr Screen_Init(void) {
 }
 
 /*
- * Class:     name_osher_gil_minivmac_Core
+ * Class:     name_osher_gil_minivmac_ii_Core
  * Method:    init
  * Signature: (Ljava/nio/ByteBuffer;)V
  */
-JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_init (JNIEnv * env, jclass this, jobject romBuffer) {
+JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_ii_Core_init (JNIEnv * env, jclass this, jobject romBuffer) {
 	if (initDone) return JNI_FALSE;
 	
 	void * romData = (*env)->GetDirectBufferAddress(env, romBuffer);
@@ -1095,11 +1128,11 @@ JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_init (JNIEnv * env,
 }
 
 /*
- * Class:     name_osher_gil_minivmac_Core
+ * Class:     name_osher_gil_minivmac_ii_Core
  * Method:    uninit
  * Signature: ()V
  */
-JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_uninit (JNIEnv * env, jclass this) {
+JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_ii_Core_uninit (JNIEnv * env, jclass this) {
 
 	if (MacMsgDisplayed) {
 		MacMsgDisplayOff();
@@ -1134,7 +1167,7 @@ void android_sigaction(int signal, siginfo_t *info, void *reserved)
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
 {
 	if ((*jvm)->GetEnv(jvm, (void **)&jEnv, JNI_VERSION_1_2)) return JNI_ERR;
-	jClass = (*jEnv)->FindClass(jEnv, "name/osher/gil/minivmac/Core");
+	jClass = (*jEnv)->FindClass(jEnv, "name/osher/gil/minivmac/ii/Core");
 
 	nativeCrashed = (*jEnv)->GetStaticMethodID(jEnv, jClass, "nativeCrashed", "()V");
 	playSound = (*jEnv)->GetStaticMethodID(jEnv, jClass, "playSound", "()V");

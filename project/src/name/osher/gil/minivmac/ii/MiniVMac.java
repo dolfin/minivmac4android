@@ -1,9 +1,11 @@
-package name.osher.gil.minivmac;
+package name.osher.gil.minivmac.ii;
 
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.nio.ByteBuffer;
+
+import name.osher.gil.minivmac.ii.R;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -85,7 +87,7 @@ public class MiniVMac extends Activity {
         }
 
         // load ROM
-        File romFile = new File(dataDir, "vMac.ROM");
+        File romFile = new File(dataDir, "MacII.ROM");
         ByteBuffer rom = ByteBuffer.allocateDirect((int)romFile.length());
         try {
         	FileInputStream romReader = new FileInputStream(romFile);

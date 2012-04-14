@@ -5,7 +5,7 @@
  * should not be modified by hand.
  */
 
-package name.osher.gil.minivmac;
+package name.osher.gil.minivmac.ii;
 
 public final class R {
     public static final class attr {
@@ -78,9 +78,10 @@ containing a value of this type.
         public static final int kb_toggle_up=0x7f020020;
         public static final int keyboard=0x7f020021;
         public static final int magnifier=0x7f020022;
-        public static final int ps_interrupt=0x7f020023;
-        public static final int ps_reset=0x7f020024;
-        public static final int toggle_button=0x7f020025;
+        public static final int minivmacii48=0x7f020023;
+        public static final int ps_interrupt=0x7f020024;
+        public static final int ps_reset=0x7f020025;
+        public static final int toggle_button=0x7f020026;
     }
     public static final class id {
         public static final int btnHide=0x7f050008;
@@ -139,10 +140,10 @@ containing a value of this type.
            <colgroup align="left" />
            <colgroup align="left" />
            <tr><th>Attribute</th><th>Description</th></tr>
-           <tr><td><code>{@link #Key_downImage name.osher.gil.minivmac:downImage}</code></td><td></td></tr>
-           <tr><td><code>{@link #Key_holdImage name.osher.gil.minivmac:holdImage}</code></td><td></td></tr>
-           <tr><td><code>{@link #Key_scanCode name.osher.gil.minivmac:scanCode}</code></td><td></td></tr>
-           <tr><td><code>{@link #Key_upImage name.osher.gil.minivmac:upImage}</code></td><td></td></tr>
+           <tr><td><code>{@link #Key_downImage name.osher.gil.minivmac.ii:downImage}</code></td><td></td></tr>
+           <tr><td><code>{@link #Key_holdImage name.osher.gil.minivmac.ii:holdImage}</code></td><td></td></tr>
+           <tr><td><code>{@link #Key_scanCode name.osher.gil.minivmac.ii:scanCode}</code></td><td></td></tr>
+           <tr><td><code>{@link #Key_upImage name.osher.gil.minivmac.ii:upImage}</code></td><td></td></tr>
            </table>
            @see #Key_downImage
            @see #Key_holdImage
@@ -153,7 +154,7 @@ containing a value of this type.
             0x7f010000, 0x7f010001, 0x7f010002, 0x7f010003
         };
         /**
-          <p>This symbol is the offset where the {@link name.osher.gil.minivmac.R.attr#downImage}
+          <p>This symbol is the offset where the {@link name.osher.gil.minivmac.ii.R.attr#downImage}
           attribute's value can be found in the {@link #Key} array.
 
 
@@ -167,7 +168,7 @@ containing a value of this type.
         */
         public static final int Key_downImage = 1;
         /**
-          <p>This symbol is the offset where the {@link name.osher.gil.minivmac.R.attr#holdImage}
+          <p>This symbol is the offset where the {@link name.osher.gil.minivmac.ii.R.attr#holdImage}
           attribute's value can be found in the {@link #Key} array.
 
 
@@ -181,7 +182,7 @@ containing a value of this type.
         */
         public static final int Key_holdImage = 3;
         /**
-          <p>This symbol is the offset where the {@link name.osher.gil.minivmac.R.attr#scanCode}
+          <p>This symbol is the offset where the {@link name.osher.gil.minivmac.ii.R.attr#scanCode}
           attribute's value can be found in the {@link #Key} array.
 
 
@@ -195,7 +196,7 @@ containing a value of this type.
         */
         public static final int Key_scanCode = 0;
         /**
-          <p>This symbol is the offset where the {@link name.osher.gil.minivmac.R.attr#upImage}
+          <p>This symbol is the offset where the {@link name.osher.gil.minivmac.ii.R.attr#upImage}
           attribute's value can be found in the {@link #Key} array.
 
 

@@ -1,6 +1,6 @@
-package name.osher.gil.minivmac;
+package name.osher.gil.minivmac.ii;
 
-import name.osher.gil.minivmac.R;
+import name.osher.gil.minivmac.ii.R;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.pm.PackageInfo;
@@ -14,7 +14,7 @@ public class AboutDialog extends Dialog implements View.OnClickListener {
 	public AboutDialog(Context context) {
 		super(context);
         setContentView(R.layout.about); 
-        setTitle("About Mini vMac");
+        setTitle("About Mini vMac II");
         findViewById(R.id.buttonOK).setOnClickListener(this);
         findViewById(R.id.versionText).setOnClickListener(this);
         setBuildDisplay(false);

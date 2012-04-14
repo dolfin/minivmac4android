@@ -1,12 +1,8 @@
-package name.osher.gil.minivmac;
+package name.osher.gil.minivmac.ii;
 
 import java.io.File;
 import java.io.RandomAccessFile;
-import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
-import java.nio.ReadOnlyBufferException;
-
-import org.apache.http.util.ByteArrayBuffer;
 
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -15,7 +11,7 @@ import android.os.Handler;
 import android.util.Log;
 
 public class Core {
-	private static final String TAG = "name.osher.gil.minivmac.Core";
+	private static final String TAG = "name.osher.gil.minivmac.ii.Core";
 	
 	private static int numInsertedDisks = 0;
 	private static int frameSkip = 4;
@@ -104,6 +100,7 @@ public class Core {
 	// screen
 	public native static int screenWidth();
 	public native static int screenHeight();
+	public native static int screenDepth();
 	public native static int[] getScreenUpdate();
 	
 	// sound

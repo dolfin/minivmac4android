@@ -1,14 +1,15 @@
-package name.osher.gil.minivmac;
+package name.osher.gil.minivmac.ii;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import name.osher.gil.minivmac.ii.R;
+
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
@@ -138,7 +139,6 @@ public class CreateDisk extends Activity {
         final static int STATE_DONE = 0;
         final static int STATE_RUNNING = 1;
         int mState;
-        int total;
        
         ProgressThread(Handler h) {
             mHandler = h;
