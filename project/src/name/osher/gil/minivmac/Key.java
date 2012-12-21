@@ -34,7 +34,6 @@ public class Key extends Button implements View.OnTouchListener {
 		this.setOnTouchListener(this);
 	}
 
-	@Override
 	public boolean onTouch(View v, MotionEvent event) {
 		if (mScanCode == -1) return false;
 		

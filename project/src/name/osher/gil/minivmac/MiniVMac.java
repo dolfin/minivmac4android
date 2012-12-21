@@ -9,9 +9,10 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
-import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
+import android.content.DialogInterface.OnClickListener;
 import android.content.pm.ActivityInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.text.SpannableString;
@@ -59,19 +60,23 @@ public class MiniVMac extends Activity {
 	public static void updateScreen(int[] update) {
 		instance.screenView.updateScreen(update);
 	}
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-    	super.onCreate(savedInstanceState);
-    	
-    	if (instance != null) throw new RuntimeException("There should be one instance to rule them all.");
+	
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+
+		if (instance != null) throw new RuntimeException("There should be one instance to rule them all.");
     	
         instance = this;
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         
         // set screen orientation
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        if (Build.VERSION.SDK_INT <= 10)
+        {
+        	setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        }
 
-        setContentView(R.layout.screen);
+        setContentView(R.layout.activity_mini_vmac);
         screenView = (ScreenView)findViewById(R.id.screen);
         
         onActivity = false;
@@ -106,7 +111,7 @@ public class MiniVMac extends Activity {
         }
 
         Core.startEmulation();
-    }
+	}
     
     public void onPause () {
     	Core.pauseEmulation();
@@ -236,7 +241,7 @@ public class MiniVMac extends Activity {
 		dm.add(0, MENU_CREATEDISK, 0, R.string.menu_create_disk);
 		// add disks
 		File[] disks = getAvailableDisks();
-		for(int i=0; i < disks.length; i++) {
+		for(int i=0; disks != null && i < disks.length; i++) {
 			String diskName = disks[i].getName();
 			MenuItem m = dm.add(MENU_INSERTDISK, diskName.hashCode(), 0, diskName.substring(0, diskName.lastIndexOf(".")));
 			m.setEnabled(!Core.isDiskInserted(disks[i]));
@@ -343,6 +348,4 @@ public class MiniVMac extends Activity {
 	    	}
 		}
 	}
-	
 }
-

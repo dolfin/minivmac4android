@@ -48,19 +48,16 @@ public class CreateDisk extends Activity {
         
         size.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 			
-			@Override
 			public void onStopTrackingTouch(SeekBar seekBar) {
 				// TODO Auto-generated method stub
 				
 			}
 			
-			@Override
 			public void onStartTrackingTouch(SeekBar seekBar) {
 				// TODO Auto-generated method stub
 				
 			}
 			
-			@Override
 			public void onProgressChanged(SeekBar seekBar, int progress,
 					boolean fromUser) {
 				String s;
@@ -75,7 +72,6 @@ public class CreateDisk extends Activity {
         
         create.setOnClickListener(new OnClickListener() {
 			
-			@Override
 			public void onClick(View v) {
 				showDialog(PROGRESS_DIALOG);
 			}

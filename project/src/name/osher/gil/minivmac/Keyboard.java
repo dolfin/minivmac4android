@@ -29,7 +29,6 @@ public class Keyboard extends LinearLayout implements View.OnClickListener {
 		mToggleButton.setOnClickListener(this);
 	}
 
-	@Override
 	public void onClick(View v) {
 		this.removeAllViews();
 		
