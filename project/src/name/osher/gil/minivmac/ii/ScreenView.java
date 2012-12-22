@@ -1,4 +1,4 @@
-package name.osher.gil.minivmac.ii;
+package name.osher.gil.minivmac;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -11,16 +11,15 @@ import android.view.*;
 
 public class ScreenView extends View {
 	private Bitmap screenBits;
-	private int screenWidth, screenHeight, screenDepth;
+	private int targetScreenWidth, targetScreenHeight;
 	private Paint screenPaint;
 	private Rect srcRect, dstRect;
 	private boolean scaled;
 	
 	private void init() {
-		screenWidth = Core.screenWidth();
-		screenHeight = Core.screenHeight();
-		screenDepth = Core.screenDepth();
-		screenBits = Bitmap.createBitmap(screenWidth, screenHeight, Bitmap.Config.ARGB_8888);
+		targetScreenWidth = Core.screenWidth();
+		targetScreenHeight = Core.screenHeight();
+		screenBits = Bitmap.createBitmap(targetScreenWidth, targetScreenHeight, Bitmap.Config.RGB_565);
 		screenPaint = new Paint();
 		setScaled(false);
 	}
@@ -41,7 +40,8 @@ public class ScreenView extends View {
 	}
 	
 	protected void onMeasure (int widthMeasureSpec, int heightMeasureSpec) {
-		setMeasuredDimension(dstRect.width(), dstRect.height());
+		setMeasuredDimension(widthMeasureSpec, heightMeasureSpec);
+		setScaled(isScaled());
 	}
 	
 	public void updateScreen(int[] update) {
@@ -53,7 +53,7 @@ public class ScreenView extends View {
 	}
 	
 	protected void onDraw (Canvas canvas) {
-		canvas.drawBitmap(screenBits, srcRect, dstRect, screenPaint);
+		canvas.drawBitmap(screenBits, null, dstRect, screenPaint);
 	}
 	
 	public boolean onTouchEvent (MotionEvent event) {
@@ -80,50 +80,47 @@ public class ScreenView extends View {
 
 	private int[] translateMouseCoords(int x, int y) {
 		int[] coords = new int[2];
-		if (scaled) {
-			coords[0] = (x * srcRect.right) / dstRect.right;
-			coords[1] = (y * srcRect.bottom) / dstRect.bottom;
-		} else {
-			coords[0] = x + srcRect.left;
-			coords[1] = y + srcRect.top;
-		}
+		coords[0] = (int)((x - dstRect.left) * (srcRect.right / (double)dstRect.width()));
+		coords[1] = (int)((y - dstRect.top) * (srcRect.bottom / (double)dstRect.height()));
 		return coords;
 	}
 
 	public void setScaled(boolean scaled) {
+		this.scaled = scaled;
+		screenPaint.setFilterBitmap(scaled);
+		
 		DisplayMetrics dm = new DisplayMetrics();
 		WindowManager wm = (WindowManager)this.getContext().getSystemService(Context.WINDOW_SERVICE);
 		wm.getDefaultDisplay().getMetrics(dm);
 		
-		int realHeight = dm.heightPixels;
-		int realWidth = dm.widthPixels;
-		
-		if (dm.heightPixels > dm.widthPixels) {
-			realHeight = dm.widthPixels;
-			realWidth = dm.heightPixels;
-		}
+		int hostScreenWidth = dm.widthPixels;
+		int hostScreenHeight = dm.heightPixels;
 		
 		Boolean perfectScale = false;
-		if (((screenWidth * 2) <= realWidth) && ((screenHeight * 2) <= realHeight)) {
+		if (((targetScreenWidth * 2) <= hostScreenWidth) && ((targetScreenHeight * 2) <= hostScreenHeight)) {
 			perfectScale = true;
-		} else if (scaled) {
-			double aspectRatio = (double)screenWidth / screenHeight;
-			realWidth = (int) (realHeight * aspectRatio);
 		}
 		
-		this.scaled = scaled;
-		screenPaint.setFilterBitmap(scaled);
+		double scaleFactor = 1.0;
 		if (scaled) {
-			if (perfectScale) {
-				srcRect = new Rect(0, 0, realWidth/2, realHeight/2);
+			if (perfectScale)
+			{
+				scaleFactor = 2.0;
 			} else {
-				srcRect = new Rect(0, 0, screenWidth, screenHeight);
+				scaleFactor = Math.min( (double)hostScreenWidth/(double)targetScreenWidth, (double)hostScreenHeight/(double)targetScreenHeight);
 			}
-			dstRect = new Rect(0, 0, realWidth, realHeight);
-		} else {
-			srcRect = new Rect(0, 0, realWidth, realHeight);
-			dstRect = new Rect(0, 0, realWidth, realHeight);
 		}
+		
+		int surfaceHeight = (int)(targetScreenHeight * scaleFactor);
+		int surfaceWidth = (int)(targetScreenWidth * scaleFactor);
+		
+		int left = (hostScreenWidth - surfaceWidth)/2;
+		int top = (hostScreenHeight - surfaceHeight)/2;
+		if (left < 0) left = 0;
+		if (top < 0) top = 0;
+		dstRect = new Rect(left, top, left + surfaceWidth, top + surfaceHeight);
+		srcRect = new Rect(0, 0, targetScreenWidth, targetScreenHeight);
+		
 		invalidate();
 	}
 	
@@ -134,8 +131,8 @@ public class ScreenView extends View {
 	public void scrollScreen(int keyCode, int increment) {
 		int top,left;
 		if (scaled) return;
-		top = srcRect.top;
-		left = srcRect.left;
+		top = dstRect.top;
+		left = dstRect.left;
 		switch(keyCode) {
 		case KeyEvent.KEYCODE_DPAD_RIGHT:
 			left += increment;
@@ -150,11 +147,19 @@ public class ScreenView extends View {
 			top += increment;
 			break;
 		}
+		
+		DisplayMetrics dm = new DisplayMetrics();
+		WindowManager wm = (WindowManager)this.getContext().getSystemService(Context.WINDOW_SERVICE);
+		wm.getDefaultDisplay().getMetrics(dm);
+		
+		int hostScreenWidth = dm.widthPixels;
+		int hostScreenHeight = dm.heightPixels;
+		
 		if (top < 0) top = 0;
 		if (left < 0) left = 0;
-		if (top + srcRect.height() > screenHeight) top = screenHeight - srcRect.height();
-		if (left + srcRect.width() > screenWidth) left = screenWidth - srcRect.width();
-		srcRect.offsetTo(left,top);
+		if (top + dstRect.height() > hostScreenHeight) top = hostScreenHeight - dstRect.height();
+		if (left + dstRect.width() > hostScreenWidth) left = hostScreenWidth - dstRect.width();
+		dstRect.offsetTo(left,top);
 		invalidate();
 	}
 }

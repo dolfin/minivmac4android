@@ -28,7 +28,7 @@ public class Core {
 	public static void nativeCrashed()
 	{
 		// TODO: Add Error handeling here.
-		Log.wtf(TAG, "Native crashed!");
+		Log.e(TAG, "Native crashed!");
 	}
 	
 	// initialization

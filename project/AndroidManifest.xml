@@ -1,23 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="name.osher.gil.minivmac.ii"
-      android:versionCode="1" android:versionName="2.0.0">
-    <application android:icon="@drawable/minivmacii48" android:label="@string/app_name" android:theme="@android:style/Theme.NoTitleBar">
-        <activity android:name="name.osher.gil.minivmac.ii.MiniVMac"
-                  android:label="@string/app_name"
-                  android:launchMode="standard"
-                  android:allowTaskReparenting="true"
-                  android:configChanges="keyboardHidden|orientation">
+    package="name.osher.gil.minivmac.ii"
+    android:versionCode="2"
+    android:versionName="2.1.0" >
+    
+    <uses-sdk
+        android:minSdkVersion="4"
+        android:targetSdkVersion="10" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/minivmacii48"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        <activity
+            android:name="name.osher.gil.minivmac.ii.MiniVMac"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:label="@string/app_name"
+            android:theme="@style/FullscreenTheme" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity android:name="name.osher.gil.minivmac.ii.CreateDisk">
         </activity>
-
     </application>
-    <uses-sdk android:minSdkVersion="3" android:targetSdkVersion="4" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <supports-screens android:largeScreens="true" android:xlargeScreens="true" android:anyDensity="false" />
-</manifest> 
+
+</manifest>
