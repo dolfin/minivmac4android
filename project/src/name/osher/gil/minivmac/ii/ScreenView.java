@@ -1,4 +1,4 @@
-package name.osher.gil.minivmac;
+package name.osher.gil.minivmac.ii;
 
 import android.content.Context;
 import android.graphics.Bitmap;
