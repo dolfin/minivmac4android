@@ -155,10 +155,28 @@ public class ScreenView extends View {
 		int hostScreenWidth = dm.widthPixels;
 		int hostScreenHeight = dm.heightPixels;
 		
-		if (top < 0) top = 0;
-		if (left < 0) left = 0;
-		if (top + dstRect.height() > hostScreenHeight) top = hostScreenHeight - dstRect.height();
-		if (left + dstRect.width() > hostScreenWidth) left = hostScreenWidth - dstRect.width();
+		if (hostScreenHeight < targetScreenHeight) {
+			if (top > 0) top = 0;
+			if (top < (hostScreenHeight - dstRect.height()))
+				top = hostScreenHeight - dstRect.height();
+		}
+		else
+		{
+			if (top < 0) top = 0;
+			if (top + dstRect.height() > hostScreenHeight) top = hostScreenHeight - dstRect.height();
+		}
+		
+		if (hostScreenWidth < targetScreenWidth) {
+			if (left >0) left = 0;
+			if (left < (hostScreenWidth - dstRect.width())) 
+				left = hostScreenWidth - dstRect.width();
+		}
+		else
+		{
+			if (left < 0) left = 0;
+			if (left + dstRect.width() > hostScreenWidth) left = hostScreenWidth - dstRect.width();
+		}
+		
 		dstRect.offsetTo(left,top);
 		invalidate();
 	}
