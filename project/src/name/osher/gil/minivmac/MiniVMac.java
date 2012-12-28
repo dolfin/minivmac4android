@@ -175,27 +175,37 @@ public class MiniVMac extends Activity {
 	
 	@Override
 	public boolean onKeyDown (int keyCode, KeyEvent event) {
-		int macKey = translateKeyCode(keyCode);
-		if (macKey >= 0) {
-			Core.setKeyDown(macKey);
-			return true;
-		}
+		if (screenView.isScroll()) {
 		switch(keyCode) {
-		case KeyEvent.KEYCODE_DPAD_CENTER:
-			screenView.setScaled(!screenView.isScaled());
-			return true;
 		case KeyEvent.KEYCODE_DPAD_UP:
 		case KeyEvent.KEYCODE_DPAD_DOWN:
 		case KeyEvent.KEYCODE_DPAD_LEFT:
 		case KeyEvent.KEYCODE_DPAD_RIGHT:
 			screenView.scrollScreen(keyCode, 8);
 			return true;
-		case KeyEvent.KEYCODE_BACK:
+			}
+		}
+		
+		int macKey = translateKeyCode(keyCode);
+		if (macKey >= 0) {
+			Core.setKeyDown(macKey);
+			return true;
+		}
+		
+		if(keyCode == KeyEvent.KEYCODE_BACK) {
 			// letting this through will break on next launch
 			// since it will create a new instance instead of resuming
 			// this one. I thought singleInstance was for that.
+			
+			// Close the keyboard, if it is open
+			View kbd = findViewById(R.id.keyboard);
+			if (kbd.getVisibility() == View.VISIBLE) {
+				kbd.setVisibility(View.INVISIBLE);
+			}
+			
 			return true;
 		}
+		
 		return super.onKeyDown(keyCode, event);
 	}
 	
