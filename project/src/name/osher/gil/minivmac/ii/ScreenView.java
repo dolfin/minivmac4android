@@ -14,7 +14,7 @@ public class ScreenView extends View {
 	private int targetScreenWidth, targetScreenHeight;
 	private Paint screenPaint;
 	private Rect srcRect, dstRect;
-	private boolean scaled;
+	private boolean scaled, scroll;
 	
 	private void init() {
 		targetScreenWidth = Core.screenWidth();
@@ -128,8 +128,17 @@ public class ScreenView extends View {
 		return scaled;
 	}
 	
+	public void setScroll(boolean scroll) {
+		this.scroll = scroll;
+	}
+	
+	public boolean isScroll() {
+		return scroll;
+	}
+	
 	public void scrollScreen(int keyCode, int increment) {
 		int top,left;
+		if (!scroll) return;
 		if (scaled) return;
 		top = dstRect.top;
 		left = dstRect.left;

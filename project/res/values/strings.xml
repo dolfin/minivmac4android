@@ -9,7 +9,7 @@
 	<string name="menu_reset">Reset</string>
 	<string name="menu_interrupt">Interrupt</string>
 	<string name="menu_scale">Scale</string>
-	<string name="menu_create_disk">Create a new disk...</string>
+	<string name="menu_create_disk">Create a new disk&#8230;</string>
 	<string name="btn_quit">Quit</string>
 	<string name="btn_continue">Continue</string>
 	<string name="btn_ok">OK</string>
@@ -28,5 +28,19 @@
 	<string name="size">Size:</string>
 	<string name="create">Create</string>
 	<string name="sizeTextStub">125.00 MiB</string>
-	<string name="creatingDisk">Creating disk. Please wait...</string>
+	<string name="creatingDisk">Creating disk. Please wait&#8230;</string>
+	
+	<!-- Settings view -->
+	<string name="pref_view_title">View</string>
+	<string name="pref_scale">Scale</string>
+	<string name="pref_scale_summ">Fit target screen to host screen</string>
+	<string name="pref_scroll">Scroll</string>
+	<string name="pref_scroll_summ">Use the arrow keys to scroll the screen</string>
+	<string name="pref_control_title">Control</string>
+	<string name="prefs_reset">Reset</string>
+	<string name="prefs_interrupt">Interrupt</string>
+	<string name="pref_learn_title">Learn</string>
+	<string name="prefs_start">How to start&#8230;</string>
+	<string name="prefs_home">Visit our website&#8230;</string>
+	<string name="prefs_about">About</string>
 </resources>

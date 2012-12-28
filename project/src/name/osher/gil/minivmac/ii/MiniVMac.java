@@ -13,10 +13,12 @@ import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.DialogInterface.OnClickListener;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
 import android.text.util.Linkify;
@@ -33,15 +35,16 @@ public class MiniVMac extends Activity {
 	private static MiniVMac instance;
 	private final static int[] keycodeTranslationTable = {-1, -1, -1, -1, -1, -1, -1, 0x1D, 0x12, 0x13, 0x14, 0x15, 0x17, 0x16, 0x1A, 0x1C, 0x19, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0x00, 0x0B, 0x08, 0x02, 0x0E, 0x03, 0x05, 0x04, 0x22, 0x26, 0x28, 0x25, 0x2E, 0x2D, 0x1F, 0x23, 0x0C, 0x0F, 0x01, 0x11, 0x20, 0x09, 0x0D, 0x07, 0x10, 0x06, 0x2B, 0x2F, 0x37, 0x37, 0x38, 0x38, 0x30, 0x31, 0x3A, -1, -1, 0x24, 0x33, 0x32, 0x1B, 0x18, 0x21, 0x1E, 0x2A, 0x29, 0x27, 0x2C, 0x37, 0x3A, -1, -1, 0x45, -1, -1, 0x3A, -1, -1, -1, -1, -1, -1, -1};
 	private final static String[] diskExtensions = {"DSK", "dsk", "img", "IMG"};
-	private final static int MENU_ABOUT = 1;
+	//private final static int MENU_ABOUT = 1;
 	private final static int MENU_INSERTDISK = 2;
 	private final static int MENU_SETTINGS = 3;
 	private final static int MENU_KEYBOARD = 4;
-	private final static int MENU_RESET = 5;
-	private final static int MENU_INTERRUPT = 6;
-	private final static int MENU_SCALE = 7;
+	//private final static int MENU_RESET = 5;
+	//private final static int MENU_INTERRUPT = 6;
+	//private final static int MENU_SCALE = 7;
 	private final static int MENU_CREATEDISK = 8;
 	private final static int ACTIVITY_CREATE_DISK = 200;
+	private final static int ACTIVITY_SETTINGS = 201;
 	private static int TRACKBALL_SENSITIVITY = 8;
 	private File dataDir;
 	private ScreenView screenView;
@@ -83,6 +86,8 @@ public class MiniVMac extends Activity {
         
         onActivity = false;
         
+        updateByPrefs();
+        
         // find data directory
         dataDir = new File(Environment.getExternalStorageDirectory(), "minivmac");
         if (!(dataDir.isDirectory() && dataDir.canRead())) {
@@ -97,6 +102,7 @@ public class MiniVMac extends Activity {
         try {
         	FileInputStream romReader = new FileInputStream(romFile);
         	romReader.getChannel().read(rom);
+        	romReader.close();
         } catch (Exception x) {
         	showAlert(getString(R.string.errNoROM) + " " + romFile.getPath()
         			+ "\n\n" + getString(R.string.errNoROM2), true);	
@@ -114,6 +120,14 @@ public class MiniVMac extends Activity {
 
         Core.startEmulation();
 	}
+	
+	private void updateByPrefs() {
+		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+		Boolean scalePref = sharedPref.getBoolean(SettingsActivity.KEY_PREF_SCALE, true);
+		Boolean scrollPref = sharedPref.getBoolean(SettingsActivity.KEY_PREF_SCROLL, false);
+		screenView.setScaled(scalePref);
+		screenView.setScroll(scrollPref);
+	}
     
     public void onPause () {
     	Core.pauseEmulation();
@@ -126,6 +140,7 @@ public class MiniVMac extends Activity {
     
     public void onResume () {
     	super.onResume();
+    	
     	Core.resumeEmulation();
     }
 
@@ -176,27 +191,37 @@ public class MiniVMac extends Activity {
 	
 	@Override
 	public boolean onKeyDown (int keyCode, KeyEvent event) {
+		if (screenView.isScroll()) {
+			switch(keyCode) {
+			case KeyEvent.KEYCODE_DPAD_UP:
+			case KeyEvent.KEYCODE_DPAD_DOWN:
+			case KeyEvent.KEYCODE_DPAD_LEFT:
+			case KeyEvent.KEYCODE_DPAD_RIGHT:
+				screenView.scrollScreen(keyCode, 8);
+				return true;
+			}
+		}
+		
 		int macKey = translateKeyCode(keyCode);
 		if (macKey >= 0) {
 			Core.setKeyDown(macKey);
 			return true;
 		}
-		switch(keyCode) {
-		case KeyEvent.KEYCODE_DPAD_CENTER:
-			screenView.setScaled(!screenView.isScaled());
-			return true;
-		case KeyEvent.KEYCODE_DPAD_UP:
-		case KeyEvent.KEYCODE_DPAD_DOWN:
-		case KeyEvent.KEYCODE_DPAD_LEFT:
-		case KeyEvent.KEYCODE_DPAD_RIGHT:
-			screenView.scrollScreen(keyCode, 8);
-			return true;
-		case KeyEvent.KEYCODE_BACK:
+		
+		if(keyCode == KeyEvent.KEYCODE_BACK) {
 			// letting this through will break on next launch
 			// since it will create a new instance instead of resuming
 			// this one. I thought singleInstance was for that.
+			
+			// Close the keyboard, if it is open
+			View kbd = findViewById(R.id.keyboard);
+			if (kbd.getVisibility() == View.VISIBLE) {
+				kbd.setVisibility(View.INVISIBLE);
+			}
+			
 			return true;
 		}
+		
 		return super.onKeyDown(keyCode, event);
 	}
 	
@@ -226,12 +251,8 @@ public class MiniVMac extends Activity {
 	
 	public boolean onCreateOptionsMenu(Menu menu) {
 		menu.addSubMenu(0, MENU_INSERTDISK, 0, R.string.menu_insert_disk).setIcon(R.drawable.disk_floppy_color);
-		//menu.add(0, MENU_SETTINGS, 0, R.string.menu_settings);
 		menu.add(0, MENU_KEYBOARD, 0, R.string.menu_keyboard).setIcon(R.drawable.keyboard);
-		menu.add(0, MENU_SCALE, 0, R.string.menu_scale).setIcon(R.drawable.magnifier);
-		menu.add(0, MENU_RESET, 0, R.string.menu_reset).setIcon(R.drawable.ps_reset);
-		menu.add(0, MENU_INTERRUPT, 0, R.string.menu_interrupt).setIcon(R.drawable.ps_interrupt);
-		menu.add(0, MENU_ABOUT, 0, R.string.menu_about).setIcon(R.drawable.icon_classic);
+		menu.add(0, MENU_SETTINGS, 0, R.string.menu_settings).setIcon(R.drawable.icon_classic);
 		return true;
 	}
 	
@@ -264,26 +285,14 @@ public class MiniVMac extends Activity {
 			return true;
 		}
 		switch(item.getItemId()) {
-		case MENU_ABOUT:
-			showAbout();
-			break;
 		case MENU_KEYBOARD:
 			toggleKeyboard();
-			break;
-		case MENU_RESET:
-			reset();
-			break;
-		case MENU_INTERRUPT:
-			interrupt();
-			break;
-		case MENU_SCALE:
-			screenView.setScaled(!screenView.isScaled());
 			break;
 		case MENU_CREATEDISK:
 			showCreateDisk();
 			break;
 		case MENU_SETTINGS:
-			
+			showSettings();
 			break;
 		}
 		return true;
@@ -298,6 +307,12 @@ public class MiniVMac extends Activity {
 		onActivity = true;
 		Intent i = new Intent(MiniVMac.this, CreateDisk.class);
 		startActivityForResult(i, ACTIVITY_CREATE_DISK);
+	}
+	
+	public void showSettings() {
+		onActivity = true;
+		Intent i = new Intent(MiniVMac.this, SettingsActivity.class);
+		startActivityForResult(i, ACTIVITY_SETTINGS);
 	}
 	
 	public void toggleKeyboard() {
@@ -348,6 +363,10 @@ public class MiniVMac extends Activity {
 	    			Core.insertDisk(diskPath);
 	    		}
 	    	}
+		}
+		else if (requestCode == ACTIVITY_SETTINGS)
+		{
+			updateByPrefs();
 		}
 	}
 }
