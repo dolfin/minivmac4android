@@ -95,6 +95,7 @@ public class MiniVMac extends Activity {
         try {
         	FileInputStream romReader = new FileInputStream(romFile);
         	romReader.getChannel().read(rom);
+        	romReader.close();
         } catch (Exception x) {
         	showAlert(getString(R.string.errNoROM) + " " + romFile.getPath()
         			+ "\n\n" + getString(R.string.errNoROM2), true);	
