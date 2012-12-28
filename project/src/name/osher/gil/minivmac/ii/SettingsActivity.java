@@ -1,4 +1,4 @@
-package name.osher.gil.minivmac;
+package name.osher.gil.minivmac.ii;
 
 import android.os.Bundle;
 import android.preference.*;

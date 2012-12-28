@@ -27,7 +27,7 @@
         </activity>
         <activity android:name="name.osher.gil.minivmac.ii.CreateDisk">
         </activity>
-        <activity android:name="name.osher.gil.minivmac.SettingsActivity">
+        <activity android:name="name.osher.gil.minivmac.ii.SettingsActivity">
         </activity>
     </application>
 
