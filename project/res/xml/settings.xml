@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory 
+        android:title="@string/pref_view_title"
+        android:key="pref_key_view_settings">
+	    <CheckBoxPreference
+	        android:key="pref_scale"
+	        android:title="@string/pref_scale"
+	        android:summary="@string/pref_scale_summ"
+	        android:icon="@drawable/magnifier"
+	        android:defaultValue="true" />
+	    <CheckBoxPreference
+	        android:key="pref_scroll"
+	        android:title="@string/pref_scroll"
+	        android:summary="@string/pref_scroll_summ"
+	        android:defaultValue="false" />
+    </PreferenceCategory>
+    <PreferenceCategory 
+        android:title="@string/pref_control_title"
+        android:key="pref_key_control_settings">
+	    <Preference
+			android:key="pref_reset"
+			android:title="@string/prefs_reset"
+	    	android:icon="@drawable/ps_reset" />
+	    <Preference 
+	        android:key="pref_interrupt"
+	        android:title="@string/prefs_interrupt"
+	        android:icon="@drawable/ps_interrupt" />
+	</PreferenceCategory>
+    <PreferenceCategory 
+        android:title="@string/pref_learn_title"
+        android:key="pref_key_learn_settings">
+	    <Preference android:title="@string/prefs_start" >
+	    	<intent android:action="android.intent.action.VIEW"
+	            android:data="http://minivmac.sourceforge.net/doc/start.html" />
+		</Preference>
+		<Preference android:title="@string/prefs_home" >
+	    	<intent android:action="android.intent.action.VIEW"
+	            android:data="http://gil.theoshers.com" />
+		</Preference>
+	    <Preference 
+	        android:key="pref_about"
+	        android:title="@string/prefs_about"
+	        android:icon="@drawable/icon_classic" />
+	</PreferenceCategory>
+</PreferenceScreen>
