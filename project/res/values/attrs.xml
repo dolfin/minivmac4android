@@ -12,6 +12,7 @@
     </declare-styleable>
     
     <declare-styleable name="Key">
+        <attr name="text" format="string"/>
 		<attr name="scanCode" format="integer"/>
 		<attr name="downImage" format="integer"/>
 		<attr name="upImage" format="integer"/>
