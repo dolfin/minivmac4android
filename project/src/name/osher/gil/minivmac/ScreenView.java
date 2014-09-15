@@ -96,19 +96,14 @@ public class ScreenView extends View {
 		int hostScreenWidth = dm.widthPixels;
 		int hostScreenHeight = dm.heightPixels;
 		
-		Boolean perfectScale = false;
-		if (((targetScreenWidth * 2) <= hostScreenWidth) && ((targetScreenHeight * 2) <= hostScreenHeight)) {
-			perfectScale = true;
-		}
 		
-		double scaleFactor = 1.0;
+		double perfectWidthFactor = Math.floor((double)hostScreenWidth / (double)targetScreenWidth);
+		double perfectHeightFactor = Math.floor((double)hostScreenHeight / (double)targetScreenHeight);
+		double scaleFactor = Math.min(perfectWidthFactor, perfectHeightFactor);
+		if (scaleFactor < 1.0) scaleFactor = 1.0;
+	
 		if (scaled) {
-			if (perfectScale)
-			{
-				scaleFactor = 2.0;
-			} else {
-				scaleFactor = Math.min( (double)hostScreenWidth/(double)targetScreenWidth, (double)hostScreenHeight/(double)targetScreenHeight);
-			}
+			scaleFactor = Math.min( (double)hostScreenWidth/(double)targetScreenWidth, (double)hostScreenHeight/(double)targetScreenHeight);
 		}
 		
 		int surfaceHeight = (int)(targetScreenHeight * scaleFactor);
