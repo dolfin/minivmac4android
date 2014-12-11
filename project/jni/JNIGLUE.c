@@ -708,7 +708,7 @@ JNIEXPORT jintArray JNICALL Java_name_osher_gil_minivmac_Core_getScreenUpdate (J
 
 	ScreenClearChanges();
 
-	(*jEnv)->ReleasePrimitiveArrayCritical(jEnv, (jarray)jArray, (void*)px, 0);
+	(*jEnv)->ReleasePrimitiveArrayCritical(jEnv, (jarray)jArray, (void*)arr, 0);
 	return jArray;
 }
 
