@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Mini vMac</string>
+    <string name="romFileName">vMac.ROM</string>
+    <string name="aboutTitle">Mini vMac for Android</string>
+</resources>
