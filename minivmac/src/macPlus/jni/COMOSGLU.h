@@ -44,6 +44,7 @@ GLOBALVAR ui5b CurMacDelta = 0;
 
 #if 0 != vMacScreenDepth
 GLOBALVAR blnr UseColorMode = falseblnr;
+GLOBALVAR blnr ColorModeWorks = falseblnr;
 #endif
 
 #if 0 != vMacScreenDepth
@@ -166,6 +167,7 @@ LOCALFUNC blnr FirstFreeDisk(tDrive *Drive_No)
 
 GLOBALFUNC blnr AnyDiskInserted(void)
 {
+#if 0
 	tDrive i;
 
 	for (i = 0; i < NumDrives; ++i) {
@@ -174,6 +176,8 @@ GLOBALFUNC blnr AnyDiskInserted(void)
 		}
 	}
 	return falseblnr;
+#endif
+	return 0 != vSonyInsertedMask;
 }
 
 GLOBALPROC DiskRevokeWritable(tDrive Drive_No)
@@ -265,8 +269,8 @@ LOCALPROC FindLeftRightChangeInLMat(uibb *ptr1, uibb *ptr2,
 	uimr *LeftMin0, uibr *LeftMask0,
 	uimr *RightMax0, uibr *RightMask0)
 {
-	int i;
-	int j;
+	uimr i;
+	uimr j;
 	uibb *p1;
 	uibb *p2;
 	uibr x;
@@ -293,7 +297,7 @@ Label_3:
 		p1 = p10 + RightMax;
 		p2 = p20 + RightMax;
 		RightMask |= (*p1++ ^ *p2++);
-		for (j = (int)RightMax + 1; j < width; ++j) {
+		for (j = RightMax + 1; j < width; ++j) {
 			x = *p1++ ^ *p2++;
 			if (0 != x) {
 				RightMax = j;
@@ -326,6 +330,14 @@ LOCALVAR uimr NextDrawRow = 0;
 #endif
 
 #define FlipCheckBits (FlipCheckMonoBits >> vMacScreenDepth)
+
+#ifndef WantColorTransValid
+#define WantColorTransValid 0
+#endif
+
+#if WantColorTransValid
+LOCALVAR blnr ColorTransValid = falseblnr;
+#endif
 
 LOCALFUNC blnr ScreenFindChanges(ui3p screencurrentbuff,
 	si3b TimeAdjust, si4b *top, si4b *left, si4b *bottom, si4b *right)
@@ -363,6 +375,9 @@ LOCALFUNC blnr ScreenFindChanges(ui3p screencurrentbuff,
 			j1h = vMacScreenWidth;
 			j0v = 0;
 			j1v = vMacScreenHeight;
+#if WantColorTransValid
+			ColorTransValid = falseblnr;
+#endif
 		} else {
 			if (! FindFirstChangeInLVecs(
 				(uibb *)screencurrentbuff
@@ -459,6 +474,9 @@ Label_2c:
 			j1h = vMacScreenWidth;
 			j0v = 0;
 			j1v = vMacScreenHeight;
+#if WantColorTransValid
+			ColorTransValid = falseblnr;
+#endif
 		} else
 #endif
 		{
@@ -650,6 +668,19 @@ LOCALPROC AutoScrollScreen(void)
 	si4b Shift;
 	si4b Limit;
 
+	/*
+		Scroll in multiples of two pixels, so as to
+		work better with the common gray pattern.
+		ViewHSize and ViewVSize are constrained
+		to a multiple of two.
+
+		Mac OS (some versions at least) constrains
+		the mouse position to be less than the screen
+		height and width, not allowing equal to it.
+		Can still scroll to see last pixel because
+		scroll in multiples of two pixels.
+	*/
+
 	if (vMacScreenWidth != ViewHSize) {
 		Shift = 0;
 		Limit = ViewHStart
@@ -658,11 +689,12 @@ LOCALPROC AutoScrollScreen(void)
 #endif
 			;
 		if (CurMouseH < Limit) {
-			Shift = (CurMouseH - Limit) & (~ 1);
-			Limit = - ViewHStart;
-			if (Shift < Limit) {
+			Shift = (Limit - CurMouseH + 1) & (~ 1);
+			Limit = ViewHStart;
+			if (Shift >= Limit) {
 				Shift = Limit;
 			}
+			Shift = - Shift;
 		} else {
 			Limit = ViewHStart + ViewHSize
 #if WantAutoScrollBorder
@@ -670,9 +702,9 @@ LOCALPROC AutoScrollScreen(void)
 #endif
 				;
 			if (CurMouseH > Limit) {
-				Shift = - ((Limit - CurMouseH) & (~ 1));
+				Shift = (CurMouseH - Limit + 1) & (~ 1);
 				Limit = vMacScreenWidth - ViewHSize - ViewHStart;
-				if (Shift > Limit) {
+				if (Shift >= Limit) {
 					Shift = Limit;
 				}
 			}
@@ -693,11 +725,12 @@ LOCALPROC AutoScrollScreen(void)
 #endif
 			;
 		if (CurMouseV < Limit) {
-			Shift = (CurMouseV - Limit) & (~ 1);
-			Limit = - ViewVStart;
-			if (Shift < Limit) {
+			Shift = (Limit - CurMouseV + 1) & (~ 1);
+			Limit = ViewVStart;
+			if (Shift >= Limit) {
 				Shift = Limit;
 			}
+			Shift = - Shift;
 		} else {
 			Limit = ViewVStart + ViewVSize
 #if WantAutoScrollBorder
@@ -705,9 +738,9 @@ LOCALPROC AutoScrollScreen(void)
 #endif
 				;
 			if (CurMouseV > Limit) {
-				Shift = - ((Limit - CurMouseV) & (~ 1));
+				Shift = (CurMouseV - Limit + 1) & (~ 1);
 				Limit = vMacScreenHeight - ViewVSize - ViewVStart;
-				if (Shift > Limit) {
+				if (Shift >= Limit) {
 					Shift = Limit;
 				}
 			}
@@ -868,6 +901,19 @@ GLOBALPROC dbglog_writeNum(uimr x)
 
 	dbglog_write(p, n);
 	/* fprintf(DumpFile, "%d", (int)x); */
+}
+
+GLOBALPROC dbglog_writeMacChar(ui3r x)
+{
+	char s;
+
+	if ((x > 32) && (x < 127)) {
+		s = x;
+	} else {
+		s = '?';
+	}
+
+	dbglog_write(&s, 1);
 }
 
 LOCALPROC dbglog_writeSpace(void)

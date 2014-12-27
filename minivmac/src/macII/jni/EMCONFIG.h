@@ -32,6 +32,8 @@
 
 #define EmVidCard 1
 #define kVidROM_Size 0x000800
+
+#define MaxATTListN 20
 #define IncludeExtnPbufs 1
 #define IncludeExtnHostTextClipExchange 0
 

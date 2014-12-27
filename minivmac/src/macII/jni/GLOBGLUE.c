@@ -169,6 +169,30 @@ GLOBALPROC dbglog_Access(char *s, ui5r Data, blnr WriteMem)
 }
 #endif
 
+#if dbglog_HAVE
+GLOBALPROC dbglog_WriteNote(char *s)
+{
+	dbglog_StartLine();
+	dbglog_writeCStr(s);
+	dbglog_writeReturn();
+}
+#endif
+
+#if dbglog_HAVE
+GLOBALPROC dbglog_WriteSetBool(char *s, blnr v)
+{
+	dbglog_StartLine();
+	dbglog_writeCStr(s);
+	dbglog_writeCStr(" <- ");
+	if (v) {
+		dbglog_writeCStr("1");
+	} else {
+		dbglog_writeCStr("0");
+	}
+	dbglog_writeReturn();
+}
+#endif
+
 LOCALVAR blnr GotOneAbnormal = falseblnr;
 
 #ifndef ReportAbnormalInterrupt
@@ -648,8 +672,6 @@ enum {
 	kNumMANs
 };
 
-
-#define MaxATTListN 16
 
 LOCALVAR ATTer ATTListA[MaxATTListN];
 LOCALVAR ui4r LastATTel;

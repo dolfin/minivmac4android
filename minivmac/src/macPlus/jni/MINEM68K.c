@@ -3171,6 +3171,7 @@ LOCALPROCUSEDONCE DoCodeMoveP(void)
 	ui5r Displacement = nextiword();
 		/* shouldn't this sign extend ? */
 	CPTR memp = m68k_areg(TheReg) + Displacement;
+
 #if 0
 	if ((Displacement & 0x00008000) != 0) {
 		/* **** for testing only **** */
@@ -3184,22 +3185,25 @@ LOCALPROCUSEDONCE DoCodeMoveP(void)
 			{
 				ui4b val = ((get_byte(memp) & 0x00FF) << 8)
 					| (get_byte(memp + 2) & 0x00FF);
+
 				m68k_dreg(TheRg9) =
-					(m68k_dreg(TheRg9) & ~ 0xffff) | ((val) & 0xffff);
+					(m68k_dreg(TheRg9) & ~ 0xffff) | (val & 0xffff);
 			}
 			break;
 		case 1:
 			{
-				ui5b val = ((get_byte(memp) << 24) & 0x00FF)
-					| ((get_byte(memp + 2) << 16) & 0x00FF)
-					| ((get_byte(memp + 4) << 8) & 0x00FF)
+				ui5b val = ((get_byte(memp) & 0x00FF) << 24)
+					| ((get_byte(memp + 2) & 0x00FF) << 16)
+					| ((get_byte(memp + 4) & 0x00FF) << 8)
 					| (get_byte(memp + 6) & 0x00FF);
-				m68k_dreg(TheRg9) = (val);
+
+				m68k_dreg(TheRg9) = val;
 			}
 			break;
 		case 2:
 			{
 				si4b src = m68k_dreg(TheRg9);
+
 				put_byte(memp, src >> 8);
 				put_byte(memp + 2, src);
 			}
@@ -3207,6 +3211,7 @@ LOCALPROCUSEDONCE DoCodeMoveP(void)
 		case 3:
 			{
 				si5b src = m68k_dreg(TheRg9);
+
 				put_byte(memp, src >> 24);
 				put_byte(memp + 2, src >> 16);
 				put_byte(memp + 4, src >> 8);
@@ -3877,7 +3882,7 @@ LOCALPROC DoDivL(void)
 #endif
 		return;
 	}
-	if (extra & 0x0800) {
+	if (0 != (extra & 0x0800)) {
 		/* signed variant */
 		flagtype sr;
 		flagtype s2;
@@ -3897,8 +3902,9 @@ LOCALPROC DoDivL(void)
 		if (s1) {
 			src = - src;
 		}
-		if (div_unsigned(&v2, src, &quot, &rem) ||
-			sr ? quot > 0x80000000 : quot > 0x7fffffff) {
+		if (div_unsigned(&v2, src, &quot, &rem)
+			|| (sr ? quot > 0x80000000 : quot > 0x7fffffff))
+		{
 			VFLG = NFLG = 1;
 			CFLG = 0;
 		} else {
@@ -4250,7 +4256,7 @@ LOCALPROC DoBitField(void)
 	ui5b newtmp;
 	si5b dsta;
 	ui5b bf0;
-	ui5b bf1;
+	ui3b bf1;
 	ui5b dstreg = regs.opcode & 7;
 	ui4b extra = nextiword();
 	si5b offset = ((extra & 0x0800) != 0)
@@ -4259,6 +4265,8 @@ LOCALPROC DoBitField(void)
 	ui5b width = ((extra & 0x0020) != 0)
 		? m68k_dreg(extra & 7)
 		: extra;
+	ui3b bfa[5];
+	ui5b offwid;
 
 	/* ReportAbnormal("Bit Field operator"); */
 	/* width = ((width - 1) & 0x1f) + 1; */ /* 0 -> 32 */
@@ -4266,7 +4274,10 @@ LOCALPROC DoBitField(void)
 	if (mode == 0) {
 		bf0 = m68k_dreg(dstreg);
 		offset &= 0x1f;
-		tmp = bf0 << offset;
+		tmp = bf0;
+		if (0 != offset) {
+			tmp = (tmp << offset) | (tmp >> (32 - offset));
+		}
 	} else {
 		DecodeModeRegister(mode, reg);
 		/*
@@ -4277,10 +4288,32 @@ LOCALPROC DoBitField(void)
 		dsta +=
 			(offset >> 3) | (offset & 0x80000000 ? ~ 0x1fffffff : 0);
 		offset &= 7;
-		{
-			bf0 = get_long(dsta);
-			bf1 = get_byte(dsta + 4) & 0xff;
-			tmp = (bf0 << offset) | (bf1 >> (8 - offset));
+		offwid = offset + ((width == 0) ? 32 : width);
+
+		/* if (offwid > 0) */ {
+			bf1 = get_byte(dsta);
+			bfa[0] = bf1;
+			tmp = ((ui5b)bf1) << (24 + offset);
+		}
+		if (offwid > 8) {
+			bf1 = get_byte(dsta + 1);
+			bfa[1] = bf1;
+			tmp |= ((ui5b)bf1) << (16 + offset);
+		}
+		if (offwid > 16) {
+			bf1 = get_byte(dsta + 2);
+			bfa[2] = bf1;
+			tmp |= ((ui5r)bf1) << (8 + offset);
+		}
+		if (offwid > 24) {
+			bf1 = get_byte(dsta + 3);
+			bfa[3] = bf1;
+			tmp |= ((ui5r)bf1) << (offset);
+		}
+		if (offwid > 32) {
+			bf1 = get_byte(dsta + 4);
+			bfa[4] = bf1;
+			tmp |= ((ui5r)bf1) >> (8 - offset);
 		}
 	}
 
@@ -4322,7 +4355,8 @@ LOCALPROC DoBitField(void)
 			{
 				ui5b mask = 1 << ((width == 0) ? 31 : (width - 1));
 				si5b i = offset;
-				while (mask && ((tmp & mask) != 0)) {
+
+				while ((0 != mask) && (0 == (tmp & mask))) {
 					mask >>= 1;
 					i++;
 				}
@@ -4341,29 +4375,72 @@ LOCALPROC DoBitField(void)
 	}
 
 	if (newtmp != tmp) {
-		ui5b mask = ~ 0;
-		if (width != 0) {
-			mask <<= (32 - width);
-		}
-		mask = ~ (mask >> offset);
 
 		if (width != 0) {
 			newtmp <<= (32 - width);
 		}
-		bf0 = (bf0 & mask) | (newtmp >> offset);
+
 		if (mode == 0) {
+			ui5b mask = ~ 0;
+
+			if (width != 0) {
+				mask <<= (32 - width);
+			}
+
+			if (0 != offset) {
+				newtmp = (newtmp >> offset) | (newtmp << (32 - offset));
+				mask = (mask >> offset) | (mask << (32 - offset));
+			}
+
+			bf0 = (bf0 & ~ mask) | (newtmp);
 			m68k_dreg(dstreg) = bf0;
 		} else {
-			si5r extrabit = offset + ((width == 0) ? 32 : width) - 32;
-			put_long(dsta, bf0);
-			if (extrabit > 0) {
-				bf1 = (bf1 & (0xff >> extrabit))
-					| (newtmp << (8 - offset));
+
+			/* if (offwid > 0) */ {
+				ui3b mask = ~ (0xFF >> offset);
+
+				bf1 = newtmp >> (24 + offset);
+				if (offwid < 8) {
+					mask |= (0xFF >> offwid);
+				}
+				if (mask != 0) {
+					bf1 |= bfa[0] & mask;
+				}
+				put_byte(dsta + 0, bf1);
+			}
+			if (offwid > 8) {
+				bf1 = newtmp >> (16 + offset);
+				if (offwid < 16) {
+					bf1 |= (bfa[1] & (0xFF >> (offwid - 8)));
+				}
+				put_byte(dsta + 1, bf1);
+			}
+			if (offwid > 16) {
+				bf1 = newtmp >> (8 + offset);
+				if (offwid < 24) {
+					bf1 |= (bfa[2] & (0xFF >> (offwid - 16)));
+				}
+				put_byte(dsta + 2, bf1);
+			}
+			if (offwid > 24) {
+				bf1 = newtmp >> (offset);
+				if (offwid < 32) {
+					bf1 |= (bfa[3] & (0xFF >> (offwid - 24)));
+				}
+				put_byte(dsta + 3, bf1);
+			}
+			if (offwid > 32) {
+				bf1 = newtmp << (8 - offset);
+				bf1 |= (bfa[4] & (0xFF >> (offwid - 32)));
 				put_byte(dsta + 4, bf1);
 			}
 		}
 	}
 }
+#endif
+
+#ifndef WantDumpTable
+#define WantDumpTable 0
 #endif
 
 #if WantDumpTable
@@ -4914,7 +4991,7 @@ GLOBALPROC DiskInsertedPsuedoException(CPTR newpc, ui5b data)
 
 LOCALPROC DoCheckExternalInterruptPending(void)
 {
-	int level = *regs.fIPL;
+	ui3r level = *regs.fIPL;
 	if ((level > regs.intmask) || (level == 7)) {
 #if WantCloserCyc
 		regs.MaxCyclesToGo -=
@@ -4927,15 +5004,11 @@ LOCALPROC DoCheckExternalInterruptPending(void)
 
 GLOBALPROC m68k_IPLchangeNtfy(void)
 {
-	int level = *regs.fIPL;
+	ui3r level = *regs.fIPL;
 	if ((level > regs.intmask) || (level == 7)) {
 		SetExternalInterruptPending();
 	}
 }
-
-#ifndef WantDumpTable
-#define WantDumpTable 0
-#endif
 
 #if WantDumpTable
 FORWARDPROC InitDumpTable(void);

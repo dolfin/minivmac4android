@@ -166,6 +166,9 @@ LOCALPROC SixtiethSecondNotify(void)
 	Sixtieth_PulseNtfy(); /* Vertical Blanking Interrupt */
 	Sony_Update();
 
+#if EmLocalTalk
+	LocalTalkTick();
+#endif
 #if EmRTC
 	RTC_Interrupt();
 #endif

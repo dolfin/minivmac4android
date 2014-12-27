@@ -174,7 +174,7 @@ GLOBALFUNC blnr Vid_Init(void)
 	ui3p pTo_OneBitMode;
 	ui3p pTo_OneVidParams;
 #if 0 != vMacScreenDepth
-	ui3p pTo_ColorBitMode;
+	ui3p pTo_ColorBitMode = nullpr;
 	ui3p pTo_ColorVidParams;
 #endif
 
@@ -261,7 +261,9 @@ GLOBALFUNC blnr Vid_Init(void)
 #endif
 	pTo_OneBitMode = ReservePatchOSLstEntry();
 #if 0 != vMacScreenDepth
-	pTo_ColorBitMode = ReservePatchOSLstEntry();
+	if (ColorModeWorks) {
+		pTo_ColorBitMode = ReservePatchOSLstEntry();
+	}
 #endif
 	PatchAnEndOfLst();
 
@@ -340,42 +342,44 @@ GLOBALFUNC blnr Vid_Init(void)
 	PatchALong(0x00000000); /* bmPlaneBytes */
 
 #if 0 != vMacScreenDepth
+	if (ColorModeWorks) {
 
-	PatchAReservedOSLstEntry(pTo_ColorBitMode, 0x81);
-	pTo_ColorVidParams = ReservePatchOSLstEntry();
-	PatchADatLstEntry(0x03 /* mVidParams */, 0x00000001);
-	PatchADatLstEntry(0x04 /* mDevType */,
-		(vMacScreenDepth < 4) ? 0x00000000 : 0x00000002);
-		/* 2 for direct devices, according to Basilisk II */
-	PatchAnEndOfLst();
+		PatchAReservedOSLstEntry(pTo_ColorBitMode, 0x81);
+		pTo_ColorVidParams = ReservePatchOSLstEntry();
+		PatchADatLstEntry(0x03 /* mVidParams */, 0x00000001);
+		PatchADatLstEntry(0x04 /* mDevType */,
+			(vMacScreenDepth < 4) ? 0x00000000 : 0x00000002);
+			/* 2 for direct devices, according to Basilisk II */
+		PatchAnEndOfLst();
 
-	PatchAReservedOSLstEntry(pTo_ColorVidParams, 0x01);
-	PatchALong(0x0000002E); /* physical Block Size */
-	PatchALong(0x00000000); /* defmBaseOffset */
-	PatchAWord(vMacScreenByteWidth);
-	PatchAWord(0x0000); /* Bounds.T */
-	PatchAWord(0x0000); /* Bounds.L */
-	PatchAWord(vMacScreenHeight); /* Bounds.B */
-	PatchAWord(vMacScreenWidth); /* Bounds.R */
-	PatchAWord(0x0000); /* bmVersion */
-	PatchAWord(0x0000); /* packType not used */
-	PatchALong(0x00000000); /* packSize not used */
-	PatchALong(0x00480000); /* bmHRes */
-	PatchALong(0x00480000); /* bmVRes */
-	PatchAWord((vMacScreenDepth < 4) ? 0x0000 : 0x0010);
-		/* bmPixelType */
-	PatchAWord(1 << vMacScreenDepth); /* bmPixelSize */
-	PatchAWord((vMacScreenDepth < 4) ? 0x0001 : 0x0003);
-		/* bmCmpCount */
+		PatchAReservedOSLstEntry(pTo_ColorVidParams, 0x01);
+		PatchALong(0x0000002E); /* physical Block Size */
+		PatchALong(0x00000000); /* defmBaseOffset */
+		PatchAWord(vMacScreenByteWidth);
+		PatchAWord(0x0000); /* Bounds.T */
+		PatchAWord(0x0000); /* Bounds.L */
+		PatchAWord(vMacScreenHeight); /* Bounds.B */
+		PatchAWord(vMacScreenWidth); /* Bounds.R */
+		PatchAWord(0x0000); /* bmVersion */
+		PatchAWord(0x0000); /* packType not used */
+		PatchALong(0x00000000); /* packSize not used */
+		PatchALong(0x00480000); /* bmHRes */
+		PatchALong(0x00480000); /* bmVRes */
+		PatchAWord((vMacScreenDepth < 4) ? 0x0000 : 0x0010);
+			/* bmPixelType */
+		PatchAWord(1 << vMacScreenDepth); /* bmPixelSize */
+		PatchAWord((vMacScreenDepth < 4) ? 0x0001 : 0x0003);
+			/* bmCmpCount */
 #if 4 == vMacScreenDepth
-	PatchAWord(0x0005); /* bmCmpSize */
+		PatchAWord(0x0005); /* bmCmpSize */
 #elif 5 == vMacScreenDepth
-	PatchAWord(0x0008); /* bmCmpSize */
+		PatchAWord(0x0008); /* bmCmpSize */
 #else
-	PatchAWord(1 << vMacScreenDepth); /* bmCmpSize */
+		PatchAWord(1 << vMacScreenDepth); /* bmCmpSize */
 #endif
-	PatchALong(0x00000000); /* bmPlaneBytes */
+		PatchALong(0x00000000); /* bmPlaneBytes */
 
+	}
 #endif
 
 	UsedSoFar = (pPatch - VidROM) + 20;
@@ -436,7 +440,7 @@ LOCALFUNC tMacErr Vid_SetMode(ui4r v)
 #if 0 == vMacScreenDepth
 	UnusedParam(v);
 #else
-	if (UseColorMode != (v != 128)) {
+	if (UseColorMode != ((v != 128) && ColorModeWorks)) {
 		UseColorMode = ! UseColorMode;
 		ColorMappingChanged = trueblnr;
 	}

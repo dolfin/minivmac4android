@@ -30,6 +30,8 @@
 #define IncludeVidMem 0
 
 #define EmVidCard 0
+
+#define MaxATTListN 16
 #define IncludeExtnPbufs 0
 #define IncludeExtnHostTextClipExchange 0
 

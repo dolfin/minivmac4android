@@ -1083,6 +1083,11 @@ LOCALFUNC blnr Screen_Init(void) {
 	if (CntrlDisplayBuff == NULL)
 		return falseblnr;
 #endif
+
+#if 0 != vMacScreenDepth
+    ColorModeWorks = trueblnr;
+#endif
+
 	return trueblnr;
 }
 

@@ -88,5 +88,5 @@ typedef si5b si5r;
 #define EnableMouseMotion 1
 
 #define IncludeHostTextClipExchange 0
-#define WantInitSpeedValue 3
 #define EnableAutoSlow 1
+#define EmLocalTalk 0

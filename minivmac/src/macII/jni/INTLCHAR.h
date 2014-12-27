@@ -467,6 +467,55 @@ LOCALVAR const ui3b CellData[] = {
 	/* kCellSharpS 247 0xDF 0x00DF 'B' ';s' szlig */
 	0x00, 0x00, 0x00, 0x1C, 0x22, 0x42, 0x44, 0x44,
 	0x42, 0x42, 0x42, 0x5C, 0x40, 0x00, 0x00, 0x00,
+
+	/* kCellUpACedille 260 ? 0x0104 'A' ';dA' #260 */
+	0x00, 0x00, 0x00, 0x3C, 0x42, 0x42, 0x42, 0x7E,
+	0x42, 0x42, 0x42, 0x42, 0x04, 0x04, 0x02, 0x00,
+	/* kCellLoACedille 261 ? 0x0105 'a' ';da' #261 */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3E, 0x42,
+	0x42, 0x42, 0x46, 0x3A, 0x04, 0x04, 0x02, 0x00,
+	/* kCellUpCAcute 262 ? 0x0106 'C' ';eC' #262 */
+	0x08, 0x10, 0x00, 0x3C, 0x42, 0x42, 0x40, 0x40,
+	0x40, 0x40, 0x42, 0x3C, 0x00, 0x00, 0x00, 0x00,
+	/* kCellLoCAcute 263 ? 0x0107 'c' ';ec' #263 */
+	0x00, 0x00, 0x00, 0x08, 0x10, 0x00, 0x3C, 0x42,
+	0x40, 0x40, 0x42, 0x3C, 0x00, 0x00, 0x00, 0x00,
+	/* kCellUpECedille 264 ? 0x0118 'E' ';dE' #280 */
+	0x00, 0x00, 0x00, 0x7E, 0x40, 0x40, 0x40, 0x7C,
+	0x40, 0x40, 0x40, 0x7E, 0x04, 0x04, 0x02, 0x00,
+	/* kCellLoECedille 265 ? 0x0119 'e' ';de' #281 */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3C, 0x42,
+	0x7E, 0x40, 0x42, 0x3C, 0x08, 0x08, 0x04, 0x00,
+	/* kCellUpLBar 266 ? 0x0141 'L' ';dL' #321 */
+	0x00, 0x00, 0x00, 0x40, 0x40, 0x40, 0x60, 0x40,
+	0xC0, 0x40, 0x40, 0x7E, 0x00, 0x00, 0x00, 0x00,
+	/* kCellLoLBar 267 ? 0x0142 'l' ';dl' #322 */
+	0x00, 0x00, 0x00, 0x08, 0x08, 0x08, 0x0C, 0x08,
+	0x18, 0x08, 0x08, 0x08, 0x00, 0x00, 0x00, 0x00,
+	/* kCellUpNAcute 270 ? 0x0143 'N' ';eN' #323 */
+	0x08, 0x10, 0x00, 0x42, 0x42, 0x62, 0x52, 0x4A,
+	0x46, 0x42, 0x42, 0x42, 0x00, 0x00, 0x00, 0x00,
+	/* kCellLoNAcute 271 ? 0x0144 'n' ';en' #324 */
+	0x00, 0x00, 0x00, 0x08, 0x10, 0x00, 0x7C, 0x42,
+	0x42, 0x42, 0x42, 0x42, 0x00, 0x00, 0x00, 0x00,
+	/* kCellUpSAcute 272 ? 0x015A 'S' ';eS' #346 */
+	0x08, 0x10, 0x00, 0x3C, 0x42, 0x40, 0x40, 0x3C,
+	0x02, 0x02, 0x42, 0x3C, 0x00, 0x00, 0x00, 0x00,
+	/* kCellLoSAcute 273 ? 0x015B 's' ';es' #347 */
+	0x00, 0x00, 0x00, 0x08, 0x10, 0x00, 0x3C, 0x42,
+	0x3C, 0x02, 0x42, 0x3C, 0x00, 0x00, 0x00, 0x00,
+	/* kCellUpZAcute 274 ? 0x0179 'Z' ';eZ' #377 */
+	0x08, 0x10, 0x00, 0x7E, 0x02, 0x04, 0x08, 0x10,
+	0x20, 0x40, 0x40, 0x7E, 0x00, 0x00, 0x00, 0x00,
+	/* kCellLoZAcute 275 ? 0x017A 'z' ';ez' #378 */
+	0x00, 0x00, 0x00, 0x08, 0x10, 0x00, 0x7E, 0x04,
+	0x08, 0x10, 0x20, 0x7E, 0x00, 0x00, 0x00, 0x00,
+	/* kCellUpZDot 276 ? 0x017B 'Z' ';dZ' #379 */
+	0x10, 0x00, 0x00, 0x7E, 0x02, 0x04, 0x08, 0x10,
+	0x20, 0x40, 0x40, 0x7E, 0x00, 0x00, 0x00, 0x00,
+	/* kCellLoZDot 277 ? 0x017C 'z' ';dz' #380 */
+	0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x7E, 0x04,
+	0x08, 0x10, 0x20, 0x7E, 0x00, 0x00, 0x00, 0x00,
 #endif
 
 	/* kCellUpperLeft */
@@ -705,6 +754,23 @@ enum {
 	kCellUpUCircumflex,
 	kCellUpUGrave,
 	kCellSharpS,
+
+	kCellUpACedille,
+	kCellLoACedille,
+	kCellUpCAcute,
+	kCellLoCAcute,
+	kCellUpECedille,
+	kCellLoECedille,
+	kCellUpLBar,
+	kCellLoLBar,
+	kCellUpNAcute,
+	kCellLoNAcute,
+	kCellUpSAcute,
+	kCellLoSAcute,
+	kCellUpZAcute,
+	kCellLoZAcute,
+	kCellUpZDot,
+	kCellLoZDot,
 #endif
 
 	kCellUpperLeft,
@@ -738,6 +804,12 @@ enum {
 
 	kNumCells
 };
+
+#if UseActvCode && 0
+#define UseActvFile 1
+#else
+#define UseActvFile 0
+#endif
 
 #ifndef NeedCell2MacAsciiMap
 #if UseActvCode
@@ -901,6 +973,23 @@ LOCALVAR const char Cell2MacAsciiMap[] = {
 	'\363', /* kCellUpUCircumflex */
 	'\364', /* kCellUpUGrave */
 	'\247', /* kCellSharpS */
+
+	'\260', /* kCellUpACedille */
+	'\261', /* kCellLoACedille */
+	'\262', /* kCellUpCAcute */
+	'\263', /* kCellLoCAcute */
+	'\264', /* kCellUpECedille */
+	'\265', /* kCellLoECedille */
+	'\266', /* kCellUpLBar */
+	'\267', /* kCellLoLBar */
+	'\270', /* kCellUpNAcute */
+	'\271', /* kCellLoNAcute */
+	'\272', /* kCellUpSAcute */
+	'\273', /* kCellLoSAcute */
+	'\274', /* kCellUpZAcute */
+	'\275', /* kCellLoZAcute */
+	'\276', /* kCellUpZDot */
+	'\277', /* kCellLoZDot */
 #endif
 
 	'\0' /* just so last above line can end in ',' */
@@ -1065,6 +1154,23 @@ LOCALVAR const ui3b Cell2WinAsciiMap[] = {
 	0xDB, /* kCellUpUCircumflex */
 	0xD9, /* kCellUpUGrave */
 	0xDF, /* kCellSharpS */
+
+	0x41, /* kCellUpACedille */
+	0x61, /* kCellLoACedille */
+	0x43, /* kCellUpCAcute */
+	0x63, /* kCellLoCAcute */
+	0x45, /* kCellUpECedille */
+	0x65, /* kCellLoECedille */
+	0x4C, /* kCellUpLBar */
+	0x6C, /* kCellLoLBar */
+	0x4E, /* kCellUpNAcute */
+	0x6E, /* kCellLoNAcute */
+	0x53, /* kCellUpSAcute */
+	0x73, /* kCellLoSAcute */
+	0x5A, /* kCellUpZAcute */
+	0x7A, /* kCellLoZAcute */
+	0x5A, /* kCellUpZDot */
+	0x7A, /* kCellLoZDot */
 #endif
 
 	'\0' /* just so last above line can end in ',' */
@@ -1229,6 +1335,23 @@ LOCALVAR const char Cell2PlainAsciiMap[] = {
 	'U', /* kCellUpUCircumflex */
 	'U', /* kCellUpUGrave */
 	'B', /* kCellSharpS */
+
+	'A', /* kCellUpACedille */
+	'a', /* kCellLoACedille */
+	'C', /* kCellUpCAcute */
+	'c', /* kCellLoCAcute */
+	'E', /* kCellUpECedille */
+	'e', /* kCellLoECedille */
+	'L', /* kCellUpLBar */
+	'l', /* kCellLoLBar */
+	'N', /* kCellUpNAcute */
+	'n', /* kCellLoNAcute */
+	'S', /* kCellUpSAcute */
+	's', /* kCellLoSAcute */
+	'Z', /* kCellUpZAcute */
+	'z', /* kCellLoZAcute */
+	'Z', /* kCellUpZDot */
+	'z', /* kCellLoZDot */
 #endif
 
 	'\0' /* just so last above line can end in ',' */
@@ -1393,6 +1516,23 @@ LOCALVAR const ui4b Cell2UnicodeMap[] = {
 	0x00DB, /* kCellUpUCircumflex */
 	0x00D9, /* kCellUpUGrave */
 	0x00DF, /* kCellSharpS */
+
+	0x0104, /* kCellUpACedille */
+	0x0105, /* kCellLoACedille */
+	0x0106, /* kCellUpCAcute */
+	0x0107, /* kCellLoCAcute */
+	0x0118, /* kCellUpECedille */
+	0x0119, /* kCellLoECedille */
+	0x0141, /* kCellUpLBar */
+	0x0142, /* kCellLoLBar */
+	0x0143, /* kCellUpNAcute */
+	0x0144, /* kCellLoNAcute */
+	0x015A, /* kCellUpSAcute */
+	0x015B, /* kCellLoSAcute */
+	0x0179, /* kCellUpZAcute */
+	0x017A, /* kCellLoZAcute */
+	0x017B, /* kCellUpZDot */
+	0x017C, /* kCellLoZDot */
 #endif
 
 	'\0' /* just so last above line can end in ',' */
@@ -1591,6 +1731,19 @@ LOCALPROC ClStrAppendSubstCStr(int *L, ui3b *r, char *s)
 					break;
 				case 'a': x = kCellLoARing; break;
 				case 'c': x = kCellLoCCedilla; break;
+				case 'd':
+					switch (*p++) {
+						case 'A': x = kCellUpACedille; break;
+						case 'a': x = kCellLoACedille; break;
+						case 'E': x = kCellUpECedille; break;
+						case 'e': x = kCellLoECedille; break;
+						case 'L': x = kCellUpLBar; break;
+						case 'l': x = kCellLoLBar; break;
+						case 'Z': x = kCellUpZDot; break;
+						case 'z': x = kCellLoZDot; break;
+						default: return; break;
+					}
+					break;
 				case 'e':
 					switch (*p++) {
 						case 'A': x = kCellUpAAcute; break;
@@ -1603,6 +1756,16 @@ LOCALPROC ClStrAppendSubstCStr(int *L, ui3b *r, char *s)
 						case 'i': x = kCellLoIAcute; break;
 						case 'o': x = kCellLoOAcute; break;
 						case 'u': x = kCellLoUAcute; break;
+
+						case 'C': x = kCellUpCAcute; break;
+						case 'c': x = kCellLoCAcute; break;
+						case 'N': x = kCellUpNAcute; break;
+						case 'n': x = kCellLoNAcute; break;
+						case 'S': x = kCellUpSAcute; break;
+						case 's': x = kCellLoSAcute; break;
+						case 'Z': x = kCellUpZAcute; break;
+						case 'z': x = kCellLoZAcute; break;
+
 						default: return; break;
 					}
 					break;

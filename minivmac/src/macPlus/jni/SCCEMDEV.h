@@ -25,3 +25,8 @@ EXPORTPROC SCC_Reset(void);
 EXPORTFUNC ui5b SCC_Access(ui5b Data, blnr WriteMem, CPTR addr);
 
 EXPORTFUNC blnr SCC_InterruptsEnabled(void);
+
+#if EmLocalTalk
+EXPORTPROC LocalTalkTick(void);
+EXPORTFUNC int InitLocalTalk(void);
+#endif

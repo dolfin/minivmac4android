@@ -160,16 +160,19 @@ LOCALVAR ui5b LastRealDate;
 	((MenuBlink << 2) + (StartUpDisk << 4) \
 		+ (DiskCacheOn << 5) + (MouseScalingOn << 6))
 
-#if 0
+#if dbglog_HAVE && 0
 EXPORTPROC DumpRTC(void);
-#include <stdio.h>
 
 GLOBALPROC DumpRTC(void)
 {
 	int Counter;
 
+	dbglog_writeln("RTC Parameter RAM");
 	for (Counter = 0; Counter < PARAMRAMSize; Counter++) {
-		printf("%d, %d\n", Counter, RTC.PARAMRAM[Counter]);
+		dbglog_writeNum(Counter);
+		dbglog_writeCStr(", ");
+		dbglog_writeHex(RTC.PARAMRAM[Counter]);
+		dbglog_writeReturn();
 	}
 }
 #endif
@@ -199,8 +202,17 @@ GLOBALFUNC blnr RTC_Init(void)
 	RTC.PARAMRAM[0 + Group1Base] = 168; /* valid */
 #if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
 	RTC.PARAMRAM[2 + Group1Base] = 1;
+		/* node id hint for printer port (AppleTalk) */
 #endif
-	RTC.PARAMRAM[3 + Group1Base] = 34; /* config, serial ports */
+	RTC.PARAMRAM[3 + Group1Base] = 34;
+		/*
+			serial ports config bits: 4-7 A, 0-3 B
+				useFree   0 Use undefined
+				useATalk  1 AppleTalk
+				useAsync  2 Async
+				useExtClk 3 externally clocked
+		*/
+
 	RTC.PARAMRAM[4 + Group1Base] = 204; /* portA, high */
 	RTC.PARAMRAM[5 + Group1Base] = 10; /* portA, low */
 	RTC.PARAMRAM[6 + Group1Base] = 204; /* portB, high */
@@ -209,6 +221,10 @@ GLOBALFUNC blnr RTC_Init(void)
 	RTC.PARAMRAM[14 + Group1Base] = prb_kbdPrintHi;
 #if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
 	RTC.PARAMRAM[15 + Group1Base] = 1;
+		/*
+			printer, if any, connected to modem port
+			because printer port used for appletalk.
+		*/
 #endif
 
 #if prb_volClickHi != 0

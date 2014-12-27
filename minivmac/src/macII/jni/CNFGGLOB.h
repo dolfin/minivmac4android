@@ -94,5 +94,5 @@ typedef unsigned long long ui6b;
 #define EnableMouseMotion 1
 
 #define IncludeHostTextClipExchange 0
-#define WantInitSpeedValue 2
 #define EnableAutoSlow 1
+#define EmLocalTalk 0

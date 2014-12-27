@@ -111,6 +111,9 @@ EXPORTPROC dbglog_StartLine(void);
 
 #if dbglog_HAVE
 EXPORTPROC dbglog_WriteMemArrow(blnr WriteMem);
+
+EXPORTPROC dbglog_WriteNote(char *s);
+EXPORTPROC dbglog_WriteSetBool(char *s, blnr v);
 EXPORTPROC dbglog_AddrAccess(char *s,
 	ui5r Data, blnr WriteMem, ui5r addr);
 EXPORTPROC dbglog_Access(char *s, ui5r Data, blnr WriteMem);

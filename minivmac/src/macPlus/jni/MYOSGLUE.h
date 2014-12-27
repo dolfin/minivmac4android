@@ -43,6 +43,7 @@ EXPORTPROC dbglog_writeCStr(char *s);
 EXPORTPROC dbglog_writeReturn(void);
 EXPORTPROC dbglog_writeHex(ui5r x);
 EXPORTPROC dbglog_writeNum(ui5r x);
+EXPORTPROC dbglog_writeMacChar(ui3r x);
 EXPORTPROC dbglog_writeln(char *s);
 EXPORTPROC dbglog_writelnNum(char *s, simr v);
 #endif
@@ -96,6 +97,8 @@ EXPORTVAR(ui3p, ROM)
 	/* (ui4b) - 61 - write permissions error */
 #define mnvm_offLinErr  ((tMacErr) 0xFFBF)
 	/* (ui4b) - 65 - off-line drive */
+#define mnvm_dirNFErr  ((tMacErr) 0xFF88)
+	/* (ui4b) - 120 - directory not found */
 #define mnvm_afpAccessDenied  ((tMacErr) 0xEC78)
 	/* (ui4b) - 5000 - Insufficient access privileges for operation */
 
@@ -174,6 +177,7 @@ EXPORTVAR(ui5b, CurMacDelta)
 
 #if 0 != vMacScreenDepth
 EXPORTVAR(blnr, UseColorMode)
+EXPORTVAR(blnr, ColorModeWorks)
 #endif
 
 #if 0 != vMacScreenDepth
@@ -242,6 +246,21 @@ EXPORTFUNC tpSoundSamp MySound_BeginWrite(ui4r n, ui4r *actL);
 EXPORTPROC MySound_EndWrite(ui4r actL);
 
 /* 370 samples per tick = 22,254.54 per second */
+#endif
+
+#if EmLocalTalk
+
+#define LT_TxBfMxSz 1024
+EXPORTVAR(ui3p, LT_TxBuffer)
+EXPORTVAR(ui4r, LT_TxBuffSz)
+
+EXPORTPROC LT_TransmitPacket(void);
+
+EXPORTVAR(ui3p, LT_RxBuffer);
+EXPORTVAR(ui5r, LT_RxBuffSz);
+
+EXPORTPROC LT_ReceivePacket(void);
+
 #endif
 
 #define MyEvtQElKindKey 0
