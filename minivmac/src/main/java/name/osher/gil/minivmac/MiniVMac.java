@@ -17,6 +17,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
 import android.text.util.Linkify;
@@ -43,7 +44,7 @@ public class MiniVMac extends Activity {
 	private final static int MENU_CREATEDISK = 8;
 	private final static int ACTIVITY_CREATE_DISK = 200;
 	private final static int ACTIVITY_SETTINGS = 201;
-	private static int TRACKBALL_SENSITIVITY = 8;
+	private final static int TRACKBALL_SENSITIVITY = 8;
 	private File dataDir;
 	private ScreenView screenView;
 	private Boolean onActivity = false;
@@ -189,7 +190,7 @@ public class MiniVMac extends Activity {
 	}
 	
 	@Override
-	public boolean onKeyDown (int keyCode, KeyEvent event) {
+	public boolean onKeyDown (int keyCode, @NonNull KeyEvent event) {
 		if (screenView.isScroll()) {
 			switch(keyCode) {
 			case KeyEvent.KEYCODE_DPAD_UP:
@@ -225,7 +226,7 @@ public class MiniVMac extends Activity {
 	}
 	
 	@Override
-	public boolean onKeyUp (int keyCode, KeyEvent event) {
+	public boolean onKeyUp (int keyCode, @NonNull KeyEvent event) {
 		int macKey = translateKeyCode(keyCode);
 		if (macKey >= 0) {
 			Core.setKeyUp(macKey);
@@ -274,12 +275,12 @@ public class MiniVMac extends Activity {
 	public boolean onOptionsItemSelected (MenuItem item) {
 		if (item.getGroupId() == MENU_INSERTDISK) {
 			File[] disks = getAvailableDisks();
-			for(int i=0; i < disks.length; i++) {
-				if (disks[i].getName().hashCode() == item.getItemId()) {
-					Core.insertDisk(disks[i]);
-					return true;
-				}
-			}
+            for (File disk : disks) {
+                if (disk.getName().hashCode() == item.getItemId()) {
+                    Core.insertDisk(disk);
+                    return true;
+                }
+            }
 			// disk not found
 			return true;
 		}
@@ -299,7 +300,7 @@ public class MiniVMac extends Activity {
 	
 	public void showAbout() {
 		Dialog dialog = new AboutDialog(this);
-        dialog.show(); 
+        dialog.show();
 	}
 	
 	public void showCreateDisk() {
@@ -337,9 +338,9 @@ public class MiniVMac extends Activity {
 				if (!pathname.isFile()) return false;
 				if (pathname.isDirectory()) return false;
 				String ext = pathname.getName().substring(1+pathname.getName().lastIndexOf("."));
-				for(int i=0; i < diskExtensions.length; i++) {
-					if (diskExtensions[i].equals(ext)) return true;
-				}
+                for (String diskExtension : diskExtensions) {
+                    if (diskExtension.equals(ext)) return true;
+                }
 				return false;
 			}
 		});

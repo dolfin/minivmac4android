@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.view.*;
@@ -57,7 +58,7 @@ public class ScreenView extends View {
 		canvas.drawBitmap(screenBits, null, dstRect, screenPaint);
 	}
 	
-	public boolean onTouchEvent (MotionEvent event) {
+	public boolean onTouchEvent (@NonNull MotionEvent event) {
 		int[] macCoords;
 		macCoords = translateMouseCoords((int)event.getX(), (int)event.getY());
 		switch(event.getAction()) {

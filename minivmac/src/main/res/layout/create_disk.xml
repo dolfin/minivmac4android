@@ -7,7 +7,7 @@
     <SeekBar android:id="@+id/size" android:layout_height="wrap_content" android:layout_width="match_parent" android:layout_below="@+id/name" android:layout_alignLeft="@+id/name" android:layout_marginTop="23dp" android:layout_alignRight="@+id/name"></SeekBar>
     <TextView android:id="@+id/sizeText" android:text="@string/sizeTextStub" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignBottom="@+id/size" android:layout_alignLeft="@+id/create"></TextView>
     <TextView android:id="@+id/sizeLabel" android:text="@string/size" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignTop="@+id/size" android:layout_alignLeft="@+id/nameLabel"></TextView>
-    <EditText android:id="@+id/name" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignTop="@+id/nameLabel" android:layout_toRightOf="@+id/nameLabel" android:layout_toLeftOf="@+id/create" android:layout_marginLeft="16dp" android:layout_marginRight="16dp">
+    <EditText android:id="@+id/name" android:inputType="text" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignTop="@+id/nameLabel" android:layout_toRightOf="@+id/nameLabel" android:layout_toLeftOf="@+id/create" android:layout_marginLeft="16dp" android:layout_marginRight="16dp">
         <requestFocus></requestFocus>
     </EditText>
     <TextView android:id="@+id/nameLabel" android:text="@string/name" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentTop="true" android:layout_alignParentLeft="true" android:layout_marginLeft="16dp" android:layout_marginTop="18dp"></TextView>

@@ -32,7 +32,7 @@
         <name.osher.gil.minivmac.Key android:layout_height="fill_parent" android:layout_width="0dip" android:layout_weight="1" key:scanCode="44" key:text="/"/>
     	 <name.osher.gil.minivmac.Key android:layout_height="fill_parent" android:layout_width="0dip" android:layout_weight="1" key:scanCode="70" key:text="←"/>
     	 <name.osher.gil.minivmac.Key android:layout_height="fill_parent" android:layout_width="0dip" android:layout_weight="1" key:scanCode="72" key:text="↓"/>
-    	 <name.osher.gil.minivmac.Key android:layout_height="fill_parent" android:layout_width="0dip" android:layout_weight="1" key:scanCode="66" key:text="→" android:layout_marginRight="47px"/>
+    	 <name.osher.gil.minivmac.Key android:layout_height="fill_parent" android:layout_width="0dip" android:layout_weight="1" key:scanCode="66" key:text="→" android:layout_marginRight="47dp"/>
     	 <name.osher.gil.minivmac.Key android:layout_height="fill_parent" android:layout_width="0dip" android:layout_weight="1" key:scanCode="51" key:upImage="@drawable/kb_backspace_up" key:downImage="@drawable/kb_backspace_down"/>
     </LinearLayout>
     <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">

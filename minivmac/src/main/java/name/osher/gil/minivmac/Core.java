@@ -2,11 +2,7 @@ package name.osher.gil.minivmac;
 
 import java.io.File;
 import java.io.RandomAccessFile;
-import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
-import java.nio.ReadOnlyBufferException;
-
-import org.apache.http.util.ByteArrayBuffer;
 
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -18,7 +14,7 @@ public class Core {
 	private static final String TAG = "name.osher.gil.minivmac.Core";
 	
 	private static int numInsertedDisks = 0;
-	private static int frameSkip = 4;
+	private static final int frameSkip = 4;
 	private static String[] diskPath;
 	private static RandomAccessFile[] diskFile;
 	private static Handler tickHandler = null;
@@ -111,19 +107,18 @@ public class Core {
 	public native static void setPlayOffset(int newValue);
 	
 	private static AudioTrack mAudioTrack;
-	private static int mMinBufferSize;
-	
-	private static final int SOUND_SAMPLERATE = 22255;
+
+    private static final int SOUND_SAMPLERATE = 22255;
 
 	public static Boolean MySound_Init() {
-		mMinBufferSize = AudioTrack.getMinBufferSize(SOUND_SAMPLERATE, AudioFormat.CHANNEL_CONFIGURATION_MONO, AudioFormat.ENCODING_PCM_8BIT);
-		mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, SOUND_SAMPLERATE, AudioFormat.CHANNEL_CONFIGURATION_MONO, AudioFormat.ENCODING_PCM_8BIT, mMinBufferSize, AudioTrack.MODE_STREAM);
-		
-	    if (mAudioTrack != null) {
+        try {
+            int minBufferSize = AudioTrack.getMinBufferSize(SOUND_SAMPLERATE, AudioFormat.CHANNEL_CONFIGURATION_MONO, AudioFormat.ENCODING_PCM_8BIT);
+		    mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, SOUND_SAMPLERATE, AudioFormat.CHANNEL_CONFIGURATION_MONO, AudioFormat.ENCODING_PCM_8BIT, minBufferSize, AudioTrack.MODE_STREAM);
+
 	    	mAudioTrack.pause();
 	    	return true;
-	    } else {
-	    	Log.e(TAG, "MySound_Init() can't init sound.");
+	    } catch (Exception e) {
+	    	Log.e(TAG, "MySound_Init() can't init sound.", e);
 	    	return false;
 	    }
 	}
@@ -209,7 +204,7 @@ public class Core {
 
 	public static int sonyEject(int driveNum) {
 		if (diskFile[driveNum] == null) return -1;
-		int ret = 0;
+		int ret;
 		try {
 			diskFile[driveNum].close();
 			ret = 0;

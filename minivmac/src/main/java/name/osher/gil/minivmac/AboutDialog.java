@@ -8,27 +8,30 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.view.View;
 import android.widget.TextView;
 
-public class AboutDialog extends Dialog implements View.OnClickListener {
+public class AboutDialog extends Dialog {
 	private boolean showBuild = true;
 
 	public AboutDialog(Context context) {
 		super(context);
-        setContentView(R.layout.about); 
-        setTitle("About Mini vMac");
-        findViewById(R.id.buttonOK).setOnClickListener(this);
-        findViewById(R.id.versionText).setOnClickListener(this);
+        initDialog();
+	}
+
+    private void initDialog() {
+        setContentView(R.layout.about);
+        setTitle(R.string.aboutTitle);
+        findViewById(R.id.versionText).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                setBuildDisplay(!showBuild);
+            }
+        });
         setBuildDisplay(false);
-	}
-	
-	public void onClick(View v) {
-		if (v == findViewById(R.id.versionText)) setBuildDisplay(!showBuild);
-		else if (v == findViewById(R.id.buttonOK)) this.dismiss();
-	}
-	
+    }
+
 	private void setBuildDisplay (boolean showBuild) {
 		Context ctx = getContext();
 		TextView versionText = (TextView) findViewById(R.id.versionText);
-		PackageInfo pi = null;
+		PackageInfo pi;
 		try {
 			pi = ctx.getPackageManager().getPackageInfo(ctx.getPackageName(), 0);
 		} catch (NameNotFoundException e) {

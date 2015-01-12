@@ -8,12 +8,13 @@ import java.io.IOException;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.support.annotation.NonNull;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -24,15 +25,16 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class CreateDisk extends Activity {
+    private static final String TAG = "name.osher.gil.minivmac.CreateDisk";
 	
-	static final int PROGRESS_DIALOG = 0;
-    ProgressThread progressThread;
-    ProgressDialog progressDialog;
+	private static final int PROGRESS_DIALOG = 0;
+    private ProgressThread progressThread;
+    private ProgressDialog progressDialog;
 
-	TextView sizeText;
-	EditText name;
-	SeekBar size;
-	Button create;
+	private TextView sizeText;
+	private EditText name;
+	private SeekBar size;
+	private Button create;
 	
 	Activity mContext = this;
 	
@@ -94,7 +96,7 @@ public class CreateDisk extends Activity {
     }
 
     @Override
-    protected void onPrepareDialog(int id, Dialog dialog) {
+    protected void onPrepareDialog(int id, @NonNull Dialog dialog) {
         switch(id) {
         case PROGRESS_DIALOG:
             progressDialog.setProgress(0);
@@ -104,7 +106,7 @@ public class CreateDisk extends Activity {
     }
 
     // Define the Handler that receives messages from the thread and update the progress
-    final Handler handler = new Handler() {
+    private final Handler handler = new Handler() {
         public void handleMessage(Message msg) {
             int total = msg.arg1;
             progressDialog.setProgress(total);
@@ -160,7 +162,7 @@ public class CreateDisk extends Activity {
 				return;
 			}
 			
-			FileOutputStream writer = null;
+			FileOutputStream writer;
 			try {
 				writer = new FileOutputStream(disk);
 			} catch (FileNotFoundException e) {
@@ -202,7 +204,10 @@ public class CreateDisk extends Activity {
 			if (disk != null)
 			{
 				// Delete what we got so far
-				disk.delete();
+				boolean res = disk.delete();
+                if (!res) {
+                    Log.e(TAG, "Couldn't remove disk " + disk.getPath() + "!");
+                }
 			}
 			
 			Message msg = mHandler.obtainMessage();
