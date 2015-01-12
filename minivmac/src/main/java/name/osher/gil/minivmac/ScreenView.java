@@ -1,5 +1,6 @@
 package name.osher.gil.minivmac;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -63,20 +64,36 @@ public class ScreenView extends View {
 		case MotionEvent.ACTION_DOWN:
 			Core.setMousePos(macCoords[0], macCoords[1]);
 			Core.setMouseButton(true);
-			break;
+			return true;
 		case MotionEvent.ACTION_MOVE:
 			Core.setMousePos(macCoords[0], macCoords[1]);
-			break;
+            return true;
 		case MotionEvent.ACTION_CANCEL:
 			Core.setMouseButton(false);
-			break;
+            return true;
 		case MotionEvent.ACTION_UP:
 			Core.setMousePos(macCoords[0], macCoords[1]);
 			Core.setMouseButton(false);
-			break;
+            return true;
 		}
-		return true;
+		return super.onTouchEvent(event);
 	}
+
+    @TargetApi(12)
+    public boolean onGenericMotionEvent (MotionEvent event) {
+        if (event.getSource() == InputDevice.SOURCE_MOUSE) {
+            int[] macCoords;
+            macCoords = translateMouseCoords((int)event.getX(), (int)event.getY());
+
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_HOVER_MOVE:
+                    Core.setMousePos(macCoords[0], macCoords[1]);
+                    return true;
+            }
+        }
+
+        return super.onGenericMotionEvent(event);
+    }
 
 	private int[] translateMouseCoords(int x, int y) {
 		int[] coords = new int[2];
