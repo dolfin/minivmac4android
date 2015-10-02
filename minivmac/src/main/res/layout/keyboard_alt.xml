@@ -40,7 +40,7 @@
     	<name.osher.gil.minivmac.Key android:layout_height="fill_parent" android:layout_width="0dip" android:layout_weight="1" key:scanCode="58" key:upImage="@drawable/kb_option_up" key:downImage="@drawable/kb_option_down" key:holdImage="@drawable/kb_option_hold" />
         <name.osher.gil.minivmac.Key android:layout_height="fill_parent" android:layout_width="0dip" android:layout_weight="1" key:scanCode="55" key:upImage="@drawable/kb_command_up" key:downImage="@drawable/kb_command_down" key:holdImage="@drawable/kb_command_hold" />
         <name.osher.gil.minivmac.Key android:layout_height="fill_parent" android:layout_width="0dip" android:layout_weight="1" key:scanCode="49" key:upImage="@drawable/kb_space_up" key:downImage="@drawable/kb_space_down"/>
-        <name.osher.gil.minivmac.Key android:layout_height="fill_parent" android:layout_width="0dip" android:layout_weight="1" key:scanCode="59" key:upImage="@drawable/kb_escape_up" key:downImage="@drawable/kb_escape_down"/>
+        <name.osher.gil.minivmac.Key android:layout_height="fill_parent" android:layout_width="0dip" android:layout_weight="1" key:scanCode="53" key:upImage="@drawable/kb_escape_up" key:downImage="@drawable/kb_escape_down"/>
         <name.osher.gil.minivmac.Key android:layout_height="fill_parent" android:layout_width="0dip" android:layout_weight="1" key:scanCode="48" key:upImage="@drawable/kb_tab_up" key:downImage="@drawable/kb_tab_down"/>
         <name.osher.gil.minivmac.Key android:layout_height="fill_parent" android:layout_width="0dip" android:layout_weight="1" key:scanCode="36" key:upImage="@drawable/kb_return_up" key:downImage="@drawable/kb_return_down" />
         
