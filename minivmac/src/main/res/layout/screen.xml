@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<merge
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:ScreenView="http://schemas.android.com/apk/res-auto"
-    xmlns:Keyboard="http://schemas.android.com/apk/res-auto">
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
     <name.osher.gil.minivmac.ScreenView
-    	android:id="@+id/screen"
-		android:layout_width="fill_parent"
-        android:layout_height="fill_parent" />
-        
-    <name.osher.gil.minivmac.Keyboard
-    	android:id="@+id/keyboard"
-    	android:layout_width="fill_parent"
+        android:id="@+id/screen"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_weight="1"/>
+
+    <android.inputmethodservice.KeyboardView
+        android:id="@+id/keyboard"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:paddingTop="8dip"
-        android:gravity="center_horizontal"
-        android:background="#AA000000"
-        android:visibility="invisible" />
-</merge>
+        android:background="@color/background_material_dark"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:visibility="gone" />
+</LinearLayout>

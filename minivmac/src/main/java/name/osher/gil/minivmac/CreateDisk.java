@@ -14,6 +14,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.NonNull;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -49,19 +50,19 @@ public class CreateDisk extends Activity {
         create = (Button)findViewById(R.id.create);
         
         size.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
-			
+
 			public void onStopTrackingTouch(SeekBar seekBar) {
 				// TODO Auto-generated method stub
-				
+
 			}
-			
+
 			public void onStartTrackingTouch(SeekBar seekBar) {
 				// TODO Auto-generated method stub
-				
+
 			}
-			
+
 			public void onProgressChanged(SeekBar seekBar, int progress,
-					boolean fromUser) {
+										  boolean fromUser) {
 				String s;
 				double size = progress + 400;
 				if (size < 2048)
@@ -73,7 +74,7 @@ public class CreateDisk extends Activity {
 		});
         
         create.setOnClickListener(new OnClickListener() {
-			
+
 			public void onClick(View v) {
 				showDialog(PROGRESS_DIALOG);
 			}
@@ -81,6 +82,14 @@ public class CreateDisk extends Activity {
         
         size.setMax(128000 - 400);
         size.setProgress(20480 - 400);
+
+		Toolbar bar = (Toolbar)findViewById(R.id.toolbar);
+		bar.setNavigationOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				finish();
+			}
+		});
 	}
    
     protected Dialog onCreateDialog(int id) {

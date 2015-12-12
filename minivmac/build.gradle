@@ -4,14 +4,14 @@ Properties props = new Properties()
 props.load(new FileInputStream(rootProject.file("release.properties")))
 
 android {
-    compileSdkVersion 17
-    buildToolsVersion "21.1.2"
+    compileSdkVersion 23
+    buildToolsVersion "23.0.1"
 
     defaultConfig {
         versionCode 40
 
-        minSdkVersion 4
-        targetSdkVersion 10
+        minSdkVersion 7
+        targetSdkVersion 23
 
         ndk {
             moduleName "mnvmcore"
@@ -49,16 +49,34 @@ android {
             versionName "2.3.0"
         }
 
+        x86_64 {
+            flavorDimension "abi"
+            ndk {
+                abiFilter "x86_64"
+            }
+        }
         x86 {
             flavorDimension "abi"
             ndk {
                 abiFilter "x86"
             }
         }
+        mips64 {
+            flavorDimension "abi"
+            ndk {
+                abiFilter "mips64"
+            }
+        }
         mips {
             flavorDimension "abi"
             ndk {
                 abiFilter "mips"
+            }
+        }
+        armv8 {
+            flavorDimension "abi"
+            ndk {
+                abiFilter "arm64-v8a"
             }
         }
         armv7 {
@@ -80,5 +98,7 @@ android {
 }
 
 dependencies {
-    compile 'com.android.support:support-v4:21.0.3'
+    compile 'com.android.support:support-v4:23.1.0'
+    compile 'com.android.support:appcompat-v7:23.1.0'
+    compile 'com.android.support:design:23.1.0'
 }

@@ -20,7 +20,22 @@
                 android:text="@string/aboutText"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
+				android:paddingBottom="20dp"
 				android:textSize="16sp"
+				android:autoLink="web" />
+			<TextView
+				android:id="@+id/license_header"
+				android:text="@string/thirdparty_license_header"
+				android:textStyle="bold"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:textSize="12sp" />
+			<TextView android:id="@+id/licenseText"
+				android:text="@string/thirdparty_license"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:paddingTop="10dp"
+				android:textSize="10sp"
 				android:autoLink="web" />
 		</LinearLayout>
 </ScrollView>

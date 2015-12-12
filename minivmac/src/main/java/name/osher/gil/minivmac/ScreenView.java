@@ -19,8 +19,13 @@ public class ScreenView extends View {
 	private boolean scaled, scroll;
 	
 	private void init() {
-		targetScreenWidth = Core.screenWidth();
-		targetScreenHeight = Core.screenHeight();
+		if (isInEditMode()) {
+			targetScreenWidth = 512;
+			targetScreenHeight = 320;
+		} else {
+			targetScreenWidth = Core.screenWidth();
+			targetScreenHeight = Core.screenHeight();
+		}
 		screenBits = Bitmap.createBitmap(targetScreenWidth, targetScreenHeight, Bitmap.Config.RGB_565);
 		screenPaint = new Paint();
 		setScaled(false);
@@ -106,14 +111,9 @@ public class ScreenView extends View {
 	public void setScaled(boolean scaled) {
 		this.scaled = scaled;
 		screenPaint.setFilterBitmap(scaled);
-		
-		DisplayMetrics dm = new DisplayMetrics();
-		WindowManager wm = (WindowManager)this.getContext().getSystemService(Context.WINDOW_SERVICE);
-		wm.getDefaultDisplay().getMetrics(dm);
-		
-		int hostScreenWidth = dm.widthPixels;
-		int hostScreenHeight = dm.heightPixels;
-		
+
+		int hostScreenWidth = getMeasuredWidth();
+		int hostScreenHeight = getMeasuredHeight();
 		
 		double perfectWidthFactor = Math.floor((double)hostScreenWidth / (double)targetScreenWidth);
 		double perfectHeightFactor = Math.floor((double)hostScreenHeight / (double)targetScreenHeight);

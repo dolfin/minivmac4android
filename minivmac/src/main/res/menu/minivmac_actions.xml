@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:minivmac="http://schemas.android.com/apk/res-auto">
+    <item android:id="@+id/action_keyboard"
+        android:icon="@drawable/ic_action_keyboard"
+        android:title="@string/menu_keyboard"
+        minivmac:showAsAction="ifRoom" />
+    <item android:id="@+id/action_insert_disk"
+        android:icon="@drawable/ic_action_floppy"
+        android:title="@string/menu_insert_disk"
+        minivmac:showAsAction="ifRoom">
+        <menu>
+            <item android:id="@+id/action_create_disk"
+                android:icon="@drawable/disk_floppy_color"
+                android:title="@string/menu_create_disk" />
+        </menu>
+    </item>
+    <item android:id="@+id/action_settings"
+        android:icon="@drawable/ic_action_settings"
+        android:title="@string/menu_settings"
+        minivmac:showAsAction="ifRoom" />
+</menu>

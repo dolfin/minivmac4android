@@ -7,12 +7,13 @@
 	        android:key="pref_scale"
 	        android:title="@string/pref_scale"
 	        android:summary="@string/pref_scale_summ"
-	        android:icon="@drawable/magnifier"
+	        android:icon="@drawable/ic_scale"
 	        android:defaultValue="true" />
 	    <CheckBoxPreference
 	        android:key="pref_scroll"
 	        android:title="@string/pref_scroll"
 	        android:summary="@string/pref_scroll_summ"
+			android:icon="@drawable/ic_scroll"
 	        android:defaultValue="false" />
     </PreferenceCategory>
     <PreferenceCategory 
@@ -21,20 +22,22 @@
 	    <Preference
 			android:key="pref_reset"
 			android:title="@string/prefs_reset"
-	    	android:icon="@drawable/ps_reset" />
+	    	android:icon="@drawable/ic_reset" />
 	    <Preference 
 	        android:key="pref_interrupt"
 	        android:title="@string/prefs_interrupt"
-	        android:icon="@drawable/ps_interrupt" />
+	        android:icon="@drawable/ic_interrupt" />
 	</PreferenceCategory>
     <PreferenceCategory 
         android:title="@string/pref_learn_title"
         android:key="pref_key_learn_settings">
-	    <Preference android:title="@string/prefs_start" >
+	    <Preference android:title="@string/prefs_start"
+			android:icon="@drawable/ic_help_circle">
 	    	<intent android:action="android.intent.action.VIEW"
 	            android:data="http://minivmac.sourceforge.net/doc/start.html" />
 		</Preference>
-		<Preference android:title="@string/prefs_home" >
+		<Preference android:title="@string/prefs_home"
+			android:icon="@drawable/ic_web">
 	    	<intent android:action="android.intent.action.VIEW"
 	            android:data="http://gil.theoshers.com" />
 		</Preference>
