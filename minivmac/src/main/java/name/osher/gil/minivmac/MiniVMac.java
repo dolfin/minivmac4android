@@ -6,26 +6,24 @@ import java.io.FileInputStream;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import android.app.AlertDialog;
+import android.Manifest;
 import android.app.Dialog;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.DialogInterface.OnClickListener;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
+import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.text.SpannableString;
-import android.text.method.LinkMovementMethod;
-import android.text.util.Linkify;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -34,50 +32,36 @@ import android.view.MotionEvent;
 import android.view.SubMenu;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.TextView;
 
-public class MiniVMac extends AppCompatActivity {
-	private static MiniVMac instance;
+public class MiniVMac extends AppCompatActivity
+		implements ActivityCompat.OnRequestPermissionsResultCallback {
+
 	private final static int[] keycodeTranslationTable = {-1, -1, -1, -1, -1, -1, -1, 0x1D, 0x12, 0x13, 0x14, 0x15, 0x17, 0x16, 0x1A, 0x1C, 0x19, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0x00, 0x0B, 0x08, 0x02, 0x0E, 0x03, 0x05, 0x04, 0x22, 0x26, 0x28, 0x25, 0x2E, 0x2D, 0x1F, 0x23, 0x0C, 0x0F, 0x01, 0x11, 0x20, 0x09, 0x0D, 0x07, 0x10, 0x06, 0x2B, 0x2F, 0x37, 0x37, 0x38, 0x38, 0x30, 0x31, 0x3A, -1, -1, 0x24, 0x33, 0x32, 0x1B, 0x18, 0x21, 0x1E, 0x2A, 0x29, 0x27, 0x2C, 0x37, 0x3A, -1, -1, 0x45, -1, -1, 0x3A, -1, -1, -1, -1, -1, -1, -1};
 	private final static String[] diskExtensions = {"DSK", "dsk", "img", "IMG"};
 	private final static int ACTIVITY_CREATE_DISK = 200;
 	private final static int ACTIVITY_SETTINGS = 201;
+	private final static int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
 	private final static int TRACKBALL_SENSITIVITY = 8;
-	private static final int KEYCODE_MAC_SHIFT = 56;
+	private final static int KEYCODE_MAC_SHIFT = 56;
 
-	private File dataDir;
 	private ScreenView screenView;
 	private Boolean onActivity = false;
 	private Boolean isLandscape = false;
+	private Boolean hasPermission = false;
 
 	private KeyboardView mKeyboardView;
 	private Keyboard mQwertyKeyboard;
 	private Keyboard mSymbolsKeyboard;
 	private Keyboard mSymbolsShiftedKeyboard;
-	
-	public static MiniVMac getInstance() {
-		return instance;
-	}
-	
-	public static File getDataDir() {
-		return instance.dataDir;
-	}
-	
-	public static File getDataFile(String name) {
-		return new File(instance.dataDir, name);
-	}
-	
-	public static void updateScreen(int[] update) {
-		instance.screenView.updateScreen(update);
-	}
+
+	private View mLayout;
+
+	private FileManager mFileManager;
+	private Core mCore;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
-		if (instance != null) throw new RuntimeException("There should be one instance to rule them all.");
-    	
-        instance = this;
         
         // set screen orientation
         if (Build.VERSION.SDK_INT <= 10)
@@ -86,7 +70,9 @@ public class MiniVMac extends AppCompatActivity {
         }
 
         setContentView(R.layout.activity_mini_vmac);
+		mLayout = findViewById(R.id.main_layout);
         screenView = (ScreenView)findViewById(R.id.screen);
+
 		isLandscape = (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
 		toggleFullscreen(isLandscape);
 		initKeyboard();
@@ -94,39 +80,67 @@ public class MiniVMac extends AppCompatActivity {
         onActivity = false;
         
         updateByPrefs();
-        
-        // find data directory
-        dataDir = new File(Environment.getExternalStorageDirectory(), "minivmac");
-        if (!(dataDir.isDirectory() && dataDir.canRead())) {
-        	showAlert(String.format(getString(R.string.errNoDataDir), dataDir.getPath(),
-                    getString(R.string.romFileName)), true);
-        	return;
-        }
+		mFileManager = new FileManager();
+		mCore = new Core(this, mFileManager);
 
-        // load ROM
-        String romFileName = getString(R.string.romFileName);
-        File romFile = new File(dataDir, romFileName);
-        ByteBuffer rom = ByteBuffer.allocateDirect((int)romFile.length());
-        try {
-        	FileInputStream romReader = new FileInputStream(romFile);
-        	romReader.getChannel().read(rom);
-        	romReader.close();
+		screenView.setTargetScreenSize(mCore.getScreenWidth(), mCore.getScreenHeight());
+		screenView.setOnMouseEventListener(new ScreenView.OnMouseEventListener() {
+			@Override
+			public void onMouseMove(int x, int y) {
+				mCore.setMousePosition(x, y);
+			}
+
+			@Override
+			public void onMouseClick(boolean down) {
+				mCore.setMouseBtn(down);
+			}
+		});
+
+		mCore.setOnUpdateScreenListener(new Core.OnUpdateScreenListener() {
+			@Override
+			public void onUpdateScreen(int[] update) {
+				screenView.updateScreen(update);
+			}
+		});
+
+		askForPermissions();
+	}
+
+	private void initEmulator() {
+		if (!mFileManager.init()) {
+			Utils.showAlert(this, String.format(getString(R.string.errNoDataDir), mFileManager.getDataDir().getPath(),
+					getString(R.string.romFileName)), true);
+		}
+
+		// load ROM
+		String romFileName = getString(R.string.romFileName);
+		File romFile = mFileManager.getDataFile(romFileName);
+		ByteBuffer rom = ByteBuffer.allocateDirect((int)romFile.length());
+		try {
+            FileInputStream romReader = new FileInputStream(romFile);
+            romReader.getChannel().read(rom);
+            romReader.close();
         } catch (Exception x) {
-        	showAlert(String.format(getString(R.string.errNoROM), romFile.getPath(),
-                    getString(R.string.romFileName)), true);
-        	return;
-        }
-        
-        // sound
-        Core.MySound_Init();
-
-        // initialize emulation
-        if (!Core.init(rom)) {
-        	showAlert(getString(R.string.errInitEmu), true);
-        	return;
+            Utils.showAlert(this, String.format(getString(R.string.errNoROM), romFile.getPath(),
+					getString(R.string.romFileName)), true);
+            return;
         }
 
-        Core.startEmulation();
+		// sound
+		mCore.MySound_Init();
+
+		// initialize emulation
+		if (!mCore.initEmulation(mCore, rom)) {
+            Utils.showAlert(this, getString(R.string.errInitEmu), true);
+            return;
+        }
+
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				mCore.startEmulation();
+			}
+		});
 	}
 
 	private void initKeyboard() {
@@ -189,8 +203,8 @@ public class MiniVMac extends AppCompatActivity {
 			if (primaryCode >= 0) {
 				Keyboard.Key key = getKey(primaryCode);
 
-				if (!key.sticky || !key.on) {
-					Core.setKeyDown(primaryCode);
+				if (key != null && (!key.sticky || !key.on)) {
+					mCore.keyDown(primaryCode);
 				}
 			}
 		}
@@ -199,8 +213,8 @@ public class MiniVMac extends AppCompatActivity {
 			if (primaryCode >= 0) {
 				Keyboard.Key key = getKey(primaryCode);
 
-				if (!key.sticky || !key.on) {
-					Core.setKeyUp(primaryCode);
+				if (key != null && (!key.sticky || !key.on)) {
+					mCore.keyUp(primaryCode);
 				}
 			}
 		}
@@ -238,6 +252,57 @@ public class MiniVMac extends AppCompatActivity {
 		}
 	};
 
+	private void askForPermissions() {
+		if (ContextCompat.checkSelfPermission(MiniVMac.this,
+				Manifest.permission.WRITE_EXTERNAL_STORAGE)
+				!= PackageManager.PERMISSION_GRANTED) {
+
+			// Should we show an explanation?
+			if (ActivityCompat.shouldShowRequestPermissionRationale(MiniVMac.this,
+					Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+				Snackbar.make(mLayout, getString(R.string.permissionsExplain),
+						Snackbar.LENGTH_INDEFINITE).setAction("OK", new View.OnClickListener() {
+					@Override
+					public void onClick(View view) {
+						// Request the permission
+						ActivityCompat.requestPermissions(MiniVMac.this,
+								new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+								MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
+					}
+				}).show();
+			} else {
+				// No explanation needed, we can request the permission.
+				ActivityCompat.requestPermissions(MiniVMac.this,
+						new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+						MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
+			}
+		} else {
+			hasPermission = true;
+			initEmulator();
+		}
+	}
+
+	@Override
+	public void onRequestPermissionsResult(int requestCode,
+										   @NonNull String permissions[],
+										   @NonNull int[] grantResults) {
+		switch (requestCode) {
+			case MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE: {
+				// If request is cancelled, the result arrays are empty.
+				if (grantResults.length > 0
+						&& grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+					hasPermission = true;
+					initEmulator();
+				} else {
+					Utils.showAlert(this, getString(R.string.errNoPermissions), true);
+				}
+				return;
+			}
+			default:
+				super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+		}
+	}
+
 	private void updateByPrefs() {
 		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 		Boolean scalePref = sharedPref.getBoolean(SettingsActivity.KEY_PREF_SCALE, true);
@@ -247,10 +312,10 @@ public class MiniVMac extends AppCompatActivity {
 	}
     
     public void onPause () {
-    	Core.pauseEmulation();
+    	mCore.pauseEmulation();
     	super.onPause();
-    	if (!Core.hasDisksInserted() && !onActivity) {
-    		Core.uninit();
+    	if (!mCore.hasDisksInserted() && !onActivity) {
+    		mCore.uninitEmulation();
     		System.exit(0);
     	}
     }
@@ -258,54 +323,9 @@ public class MiniVMac extends AppCompatActivity {
     public void onResume () {
     	super.onResume();
     	
-    	Core.resumeEmulation();
+    	mCore.resumeEmulation();
     }
 
-	public static void showAlert(String msg, boolean end) {
-		final SpannableString s = new SpannableString(msg);
-	    Linkify.addLinks(s, Linkify.ALL);
-	    
-		AlertDialog.Builder alert = new AlertDialog.Builder(instance);
-		alert.setMessage(s);
-		alert.setCancelable(false);
-		if (end) {
-			alert.setNegativeButton(R.string.btn_quit, new OnClickListener() { 
-				public void onClick(DialogInterface di, int i) {
-					System.exit(0);
-				}
-			});
-		} else {
-			alert.setNeutralButton(R.string.btn_ok, null);
-		}
-		
-		AlertDialog d = alert.create();
-		d.show();
-		
-	    // Make the textview clickable. Must be called after show()
-	    ((TextView)d.findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
-	}
-	
-	public static void showWarnMessage(String title, String msg, boolean end) {
-		AlertDialog.Builder alert = new AlertDialog.Builder(instance);
-		alert.setTitle(title);
-		alert.setMessage(msg);
-		alert.setNegativeButton(R.string.btn_quit, new OnClickListener() {
-			public void onClick(DialogInterface di, int i) {
-				System.exit(0);
-			}
-		});
-		if (!end) {
-			alert.setPositiveButton(R.string.btn_continue, new OnClickListener() {
-				public void onClick(DialogInterface di, int i) {
-					Core.resumeEmulation();
-				}
-			});
-		}
-		
-		Core.pauseEmulation();
-		alert.show();
-	}
-	
 	@Override
 	public boolean onKeyDown (int keyCode, @NonNull KeyEvent event) {
 		if (screenView.isScroll()) {
@@ -321,7 +341,7 @@ public class MiniVMac extends AppCompatActivity {
 		
 		int macKey = translateKeyCode(keyCode);
 		if (macKey >= 0) {
-			Core.setKeyDown(macKey);
+			mCore.keyDown(macKey);
 			return true;
 		}
 		
@@ -343,7 +363,7 @@ public class MiniVMac extends AppCompatActivity {
 	public boolean onKeyUp (int keyCode, @NonNull KeyEvent event) {
 		int macKey = translateKeyCode(keyCode);
 		if (macKey >= 0) {
-			Core.setKeyUp(macKey);
+			mCore.keyUp(macKey);
 			return true;
 		}
 		return false;
@@ -375,10 +395,14 @@ public class MiniVMac extends AppCompatActivity {
 		ActionBar actionBar = getSupportActionBar();
 		if(isFullscreen) {
 			getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-			actionBar.hide();
+			if (actionBar != null) {
+				actionBar.hide();
+			}
 		} else {
 			getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-			actionBar.show();
+			if (actionBar != null) {
+				actionBar.show();
+			}
 		}
 	}
 
@@ -396,11 +420,13 @@ public class MiniVMac extends AppCompatActivity {
 		// add create disk
 		dm.add(0, R.id.action_create_disk, 0, R.string.menu_create_disk);
 		// add disks
-		File[] disks = getAvailableDisks();
-		for(int i=0; disks != null && i < disks.length; i++) {
-			String diskName = disks[i].getName();
-			MenuItem m = dm.add(R.id.action_insert_disk, diskName.hashCode(), 0, diskName.substring(0, diskName.lastIndexOf(".")));
-			m.setEnabled(!Core.isDiskInserted(disks[i]));
+		if (hasPermission) {
+			File[] disks = getAvailableDisks();
+			for (int i = 0; disks != null && i < disks.length; i++) {
+				String diskName = disks[i].getName();
+				MenuItem m = dm.add(R.id.action_insert_disk, diskName.hashCode(), 0, diskName.substring(0, diskName.lastIndexOf(".")));
+				m.setEnabled(!mCore.isDiskInserted(disks[i]));
+			}
 		}
 		return true;
 	}
@@ -410,7 +436,7 @@ public class MiniVMac extends AppCompatActivity {
 			File[] disks = getAvailableDisks();
             for (File disk : disks) {
                 if (disk.getName().hashCode() == item.getItemId()) {
-                    Core.insertDisk(disk);
+                    mCore.insertDisk(disk);
                     return true;
                 }
             }
@@ -430,10 +456,10 @@ public class MiniVMac extends AppCompatActivity {
 		}
 		return true;
 	}
-	
-	public void showAbout() {
+
+	private void showAbout() {
 		Dialog dialog = new AboutDialog(this);
-        dialog.show();
+		dialog.show();
 	}
 	
 	public void showCreateDisk() {
@@ -460,22 +486,22 @@ public class MiniVMac extends AppCompatActivity {
 	}
 	
 	public void reset() {
-		Core.setWantMacReset();
+		mCore.wantMacReset();
 	}
 	
 	public void interrupt() {
-		Core.setWantMacInterrupt();
+		mCore.wantMacInterrupt();
 	}
 	
 	public File[] getAvailableDisks () {
-		return dataDir.listFiles(new FileFilter(){
-			public boolean accept (File pathname) {
+		return mFileManager.getDataDir().listFiles(new FileFilter() {
+			public boolean accept(File pathname) {
 				if (!pathname.isFile()) return false;
 				if (pathname.isDirectory()) return false;
-				String ext = pathname.getName().substring(1+pathname.getName().lastIndexOf("."));
-                for (String diskExtension : diskExtensions) {
-                    if (diskExtension.equals(ext)) return true;
-                }
+				String ext = pathname.getName().substring(1 + pathname.getName().lastIndexOf("."));
+				for (String diskExtension : diskExtensions) {
+					if (diskExtension.equals(ext)) return true;
+				}
 				return false;
 			}
 		});
@@ -495,12 +521,23 @@ public class MiniVMac extends AppCompatActivity {
 	    	if (extras != null) {
 	    		if (extras.containsKey("diskPath")) {
 	    			String diskPath = extras.getString("diskPath");
-	    			Core.insertDisk(diskPath);
+	    			mCore.insertDisk(diskPath);
 	    		}
 	    	}
 		}
 		else if (requestCode == ACTIVITY_SETTINGS)
 		{
+			switch (resultCode) {
+				case SettingsActivity.RESULT_RESET:
+					reset();
+					break;
+				case SettingsActivity.RESULT_INTERRUPT:
+					interrupt();
+					break;
+				case SettingsActivity.RESULT_ABOUT:
+					showAbout();
+					break;
+			}
 			updateByPrefs();
 		}
 	}

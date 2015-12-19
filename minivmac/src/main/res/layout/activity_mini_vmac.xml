@@ -3,7 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#000000"
-    tools:context=".MiniVMac" >
+    tools:context=".MiniVMac"
+    android:id="@+id/main_layout" >
 
     <include layout="@layout/screen"/>
 </FrameLayout>

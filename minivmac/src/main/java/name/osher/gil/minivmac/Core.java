@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 
+import android.content.Context;
+import android.content.DialogInterface;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
@@ -13,13 +15,17 @@ import android.util.Log;
 public class Core {
 	private static final String TAG = "name.osher.gil.minivmac.Core";
 	
-	private static int numInsertedDisks = 0;
-	private static final int frameSkip = 4;
-	private static String[] diskPath;
-	private static RandomAccessFile[] diskFile;
-	private static Handler tickHandler = null;
-	private static Runnable runTickTask = null;
-	private static boolean initOk = false;
+	private int numInsertedDisks = 0;
+	private final int frameSkip = 4;
+	private String[] diskPath;
+	private RandomAccessFile[] diskFile;
+	private Handler tickHandler = null;
+	private Runnable runTickTask = null;
+	private boolean initOk = false;
+
+	private FileManager mFileManager;
+	private Context mContext;
+	private OnUpdateScreenListener mOnUpdateScreenListener;
 	
 	static {
 		System.loadLibrary("mnvmcore");
@@ -30,30 +36,55 @@ public class Core {
 		// TODO: Add Error handeling here.
 		Log.e(TAG, "Native crashed!");
 	}
+
+	public Core(Context context, FileManager fileManager) {
+		mFileManager = fileManager;
+		mContext = context;
+	}
+
+	public void setOnUpdateScreenListener(OnUpdateScreenListener listener) {
+		mOnUpdateScreenListener = listener;
+	}
 	
 	// initialization
-	public native static boolean init(ByteBuffer rom);
-	public native static boolean uninit();
+	private native static boolean init(Core core, ByteBuffer rom);
+	private native static boolean uninit();
 	
 	// emulation
-	public native static void runTick();
+	private native static void runTick();
 	private native static void _resumeEmulation();
 	private native static void _pauseEmulation();
-	public native static boolean isPaused();
-	public native static void setWantMacReset();
-	public native static void setWantMacInterrupt();
+	private native static boolean isPaused();
+	private native static void setWantMacReset();
+	private native static void setWantMacInterrupt();
+
+	public Boolean initEmulation(Core core, ByteBuffer rom) {
+		return init(core, rom);
+	}
+
+	public Boolean uninitEmulation() {
+		return uninit();
+	}
+
+	public void wantMacReset() {
+		setWantMacReset();
+	}
+
+	public void wantMacInterrupt() {
+		setWantMacInterrupt();
+	}
 	
-	public static void startEmulation() {
+	public void startEmulation() {
 		if (!initOk) return;
 		// insert initial disks
 		for(int i=0; i < getNumDrives(); i++) {
-			File f = MiniVMac.getDataFile("disk"+i+".dsk");
+			File f = mFileManager.getDataFile("disk"+i+".dsk");
 			if (!insertDisk(f)) break;
 		}
 		resumeEmulation();
 	}
 	
-	public static void resumeEmulation() {
+	public void resumeEmulation() {
 		if (!initOk) return;
 		if (!isPaused()) return;
 		_resumeEmulation();
@@ -63,11 +94,13 @@ public class Core {
 			private int frame = 0;
 			public void run() {
 				int[] screenUpdate;
-				Core.runTick();
+				runTick();
 				if (++frame == frameSkip) {
 					frame = 0;
-					screenUpdate = Core.getScreenUpdate();
-					if (screenUpdate != null) MiniVMac.updateScreen(screenUpdate);
+					screenUpdate = getScreenUpdate();
+					if (mOnUpdateScreenListener != null && screenUpdate != null) {
+						mOnUpdateScreenListener.onUpdateScreen(screenUpdate);
+					}
 				}
 				if (tickHandler == null) tickHandler = new Handler();
 				tickHandler.post(runTickTask);
@@ -76,7 +109,7 @@ public class Core {
 		tickHandler.post(runTickTask);
 	}
 	
-	public static void pauseEmulation() {
+	public void pauseEmulation() {
 		if (!initOk) return;
 		if (isPaused()) return;
 		_pauseEmulation();
@@ -86,31 +119,55 @@ public class Core {
 	}
 	
 	// mouse
-	public native static void moveMouse(int dx, int dy);
-	public native static void setMousePos(int x, int y);
-	public native static void setMouseButton(boolean down);
-	public native static int getMouseX();
-	public native static int getMouseY();
-	public native static boolean getMouseButton();
+	private native static void moveMouse(int dx, int dy);
+	private native static void setMousePos(int x, int y);
+	private native static void setMouseButton(boolean down);
+	private native static int getMouseX();
+	private native static int getMouseY();
+	private native static boolean getMouseButton();
+
+	public void setMousePosition(int x, int y) {
+		setMousePos(x, y);
+	}
+
+	public void setMouseBtn(Boolean down) {
+		setMouseButton(down);
+	}
 	
 	// keyboard
-	public native static void setKeyDown(int scancode);
-	public native static void setKeyUp(int scancode);
+	private native static void setKeyDown(int scancode);
+	private native static void setKeyUp(int scancode);
+
+	public void keyDown(int scancode) {
+		setKeyDown(scancode);
+	}
+
+	public void keyUp(int scancode) {
+		setKeyUp(scancode);
+	}
 	
 	// screen
-	public native static int screenWidth();
-	public native static int screenHeight();
-	public native static int[] getScreenUpdate();
+	private native static int screenWidth();
+	private native static int screenHeight();
+	private native static int[] getScreenUpdate();
+
+	public int getScreenWidth() {
+		return screenWidth();
+	}
+
+	public int getScreenHeight() {
+		return screenHeight();
+	}
 	
 	// sound
-	public native static byte[] soundBuf();
-	public native static void setPlayOffset(int newValue);
+	private native static byte[] soundBuf();
+	private native static void setPlayOffset(int newValue);
 	
 	private static AudioTrack mAudioTrack;
 
     private static final int SOUND_SAMPLERATE = 22255;
 
-	public static Boolean MySound_Init() {
+	public Boolean MySound_Init() {
         try {
             int minBufferSize = AudioTrack.getMinBufferSize(SOUND_SAMPLERATE, AudioFormat.CHANNEL_CONFIGURATION_MONO, AudioFormat.ENCODING_PCM_8BIT);
 		    mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, SOUND_SAMPLERATE, AudioFormat.CHANNEL_CONFIGURATION_MONO, AudioFormat.ENCODING_PCM_8BIT, minBufferSize, AudioTrack.MODE_STREAM);
@@ -123,7 +180,7 @@ public class Core {
 	    }
 	}
 	
-	public static void playSound() {
+	public void playSound() {
 		for (int i = 0 ; i < 32 ; i++) {
 			byte[] buf = soundBuf();
 			if (buf == null) break;
@@ -144,13 +201,13 @@ public class Core {
 		//mAudioTrack.pause();
 	}
 
-	public static void MySound_Start () {
+	public void MySound_Start () {
 		if (mAudioTrack != null) {
 			mAudioTrack.play();
 		}
 	}
 
-	public static void MySound_Stop () {
+	public void MySound_Stop () {
 		if (mAudioTrack != null) {
 		    mAudioTrack.stop();
 		    mAudioTrack.release();
@@ -158,13 +215,13 @@ public class Core {
 	}
 	
 	// disks
-	public native static void notifyDiskInserted(int driveNum, boolean locked);
-	public native static void notifyDiskEjected(int driveNum);
-	public native static int getFirstFreeDisk();
-	public native static int getNumDrives();
+	private native static void notifyDiskInserted(int driveNum, boolean locked);
+	private native static void notifyDiskEjected(int driveNum);
+	private native static int getFirstFreeDisk();
+	private native static int getNumDrives();
 	
 	// disk driver callbacks
-	public static int sonyTransfer(boolean isWrite, ByteBuffer buf, int driveNum, int start, int length) {
+	public int sonyTransfer(boolean isWrite, ByteBuffer buf, int driveNum, int start, int length) {
 		if (diskFile[driveNum] == null) return -1;
 		try {
 			if (isWrite)
@@ -183,7 +240,7 @@ public class Core {
 				int actualLength = diskFile[driveNum].read(bytes);
 				buf.rewind();
 				buf.put(bytes);
-				//Log.v(TAG, "Read " + actualLength + " bytrs from drive number " + driveNum + ".");
+				//Log.v(TAG, "Read " + actualLength + " bytes from drive number " + driveNum + ".");
 				return actualLength;
 			}
 		} catch (Exception x) {
@@ -192,7 +249,7 @@ public class Core {
 		}
 	}
 	
-	public static int sonyGetSize(int driveNum) {
+	public int sonyGetSize(int driveNum) {
 		if (diskFile[driveNum] == null) return 0;
 		try {
 			return (int)diskFile[driveNum].length();
@@ -202,7 +259,7 @@ public class Core {
 		}
 	}
 
-	public static int sonyEject(int driveNum) {
+	public int sonyEject(int driveNum) {
 		if (diskFile[driveNum] == null) return -1;
 		int ret;
 		try {
@@ -220,7 +277,7 @@ public class Core {
 		return ret;
 	}
 	
-	public static boolean isDiskInserted(File f) {
+	public boolean isDiskInserted(File f) {
 		if (numInsertedDisks == 0) return false;
 		String path = f.getAbsolutePath();
 		for(int i=0; i < diskFile.length; i++) {
@@ -230,11 +287,11 @@ public class Core {
 		return false;
 	}
 	
-	public static boolean insertDisk(File f) {
+	public boolean insertDisk(File f) {
 		int driveNum = getFirstFreeDisk();
 		// check for free drive
 		if (driveNum == -1) {
-			MiniVMac.showAlert("I can not mount that many Disk Images. Try ejecting one.", false);
+			Utils.showAlert(mContext, mContext.getString(R.string.errTooManyDisks), false);
 			return false;
 		}
 		
@@ -261,17 +318,26 @@ public class Core {
 		return true;
 	}
 	
-	public static boolean insertDisk(String path) {
+	public boolean insertDisk(String path) {
 		return insertDisk(new File(path));
 	}
 	
-	public static boolean hasDisksInserted() {
+	public boolean hasDisksInserted() {
 		return numInsertedDisks > 0;
 	}
-	
+
 	// warnings
-	public static void warnMsg(String shortMsg, String longMsg) {
-		MiniVMac.showWarnMessage(shortMsg, longMsg, false);
+	public void warnMsg(String shortMsg, String longMsg) {
+		pauseEmulation();
+
+		Utils.showWarnMessage(mContext, shortMsg, longMsg, false, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface di, int i) {
+				resumeEmulation();
+			}
+		});
 	}
-	
+
+	interface OnUpdateScreenListener {
+		void onUpdateScreen(int[] update);
+	}
 }

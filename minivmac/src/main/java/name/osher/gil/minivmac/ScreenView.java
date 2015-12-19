@@ -2,6 +2,7 @@ package name.osher.gil.minivmac;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -12,22 +13,20 @@ import android.util.DisplayMetrics;
 import android.view.*;
 
 public class ScreenView extends View {
-	private Bitmap screenBits;
-	private int targetScreenWidth, targetScreenHeight;
-	private Paint screenPaint;
-	private Rect srcRect, dstRect;
-	private boolean scaled, scroll;
+	private Bitmap mScreenBits = null;
+	private int mTargetScreenWidth = 0, mTargetScreenHeight = 0;
+	private Paint mScreenPaint;
+	private Rect mSrcRect, mDstRect;
+	private boolean mScaled, mScroll;
+	private OnMouseEventListener mListener;
 	
 	private void init() {
 		if (isInEditMode()) {
-			targetScreenWidth = 512;
-			targetScreenHeight = 320;
-		} else {
-			targetScreenWidth = Core.screenWidth();
-			targetScreenHeight = Core.screenHeight();
+			mTargetScreenWidth = 512;
+			mTargetScreenHeight = 320;
 		}
-		screenBits = Bitmap.createBitmap(targetScreenWidth, targetScreenHeight, Bitmap.Config.RGB_565);
-		screenPaint = new Paint();
+
+		mScreenPaint = new Paint();
 		setScaled(false);
 	}
 	
@@ -45,6 +44,16 @@ public class ScreenView extends View {
 		super(context, attrs, defStyle);
 		init();
 	}
+
+	public void setTargetScreenSize(int width, int height) {
+		mTargetScreenWidth = width;
+		mTargetScreenHeight = height;
+		mScreenBits = Bitmap.createBitmap(mTargetScreenWidth, mTargetScreenHeight, Bitmap.Config.RGB_565);
+	}
+
+	public void setOnMouseEventListener(OnMouseEventListener listener) {
+		mListener = listener;
+	}
 	
 	protected void onMeasure (int widthMeasureSpec, int heightMeasureSpec) {
 		setMeasuredDimension(widthMeasureSpec, heightMeasureSpec);
@@ -52,15 +61,17 @@ public class ScreenView extends View {
 	}
 	
 	public void updateScreen(int[] update) {
-		if (update.length < 4) return;
+		if (mScreenBits == null || update.length < 4) return;
 		int width = update[3]-update[1];
 		int height = update[2]-update[0];
-		screenBits.setPixels(update, 4, width, update[1], update[0], width, height);
+		mScreenBits.setPixels(update, 4, width, update[1], update[0], width, height);
 		this.invalidate(); // FIXME invalidate only changed area
 	}
 	
 	protected void onDraw (Canvas canvas) {
-		canvas.drawBitmap(screenBits, null, dstRect, screenPaint);
+		if (mScreenBits != null) {
+			canvas.drawBitmap(mScreenBits, null, mDstRect, mScreenPaint);
+		}
 	}
 	
 	public boolean onTouchEvent (@NonNull MotionEvent event) {
@@ -68,18 +79,18 @@ public class ScreenView extends View {
 		macCoords = translateMouseCoords((int)event.getX(), (int)event.getY());
 		switch(event.getAction()) {
 		case MotionEvent.ACTION_DOWN:
-			Core.setMousePos(macCoords[0], macCoords[1]);
-			Core.setMouseButton(true);
+			mListener.onMouseMove(macCoords[0], macCoords[1]);
+			mListener.onMouseClick(true);
 			return true;
 		case MotionEvent.ACTION_MOVE:
-			Core.setMousePos(macCoords[0], macCoords[1]);
+			mListener.onMouseMove(macCoords[0], macCoords[1]);
             return true;
 		case MotionEvent.ACTION_CANCEL:
-			Core.setMouseButton(false);
+			mListener.onMouseClick(false);
             return true;
 		case MotionEvent.ACTION_UP:
-			Core.setMousePos(macCoords[0], macCoords[1]);
-			Core.setMouseButton(false);
+			mListener.onMouseMove(macCoords[0], macCoords[1]);
+			mListener.onMouseClick(false);
             return true;
 		}
 		return super.onTouchEvent(event);
@@ -93,7 +104,7 @@ public class ScreenView extends View {
 
             switch (event.getAction()) {
                 case MotionEvent.ACTION_HOVER_MOVE:
-                    Core.setMousePos(macCoords[0], macCoords[1]);
+                    mListener.onMouseMove(macCoords[0], macCoords[1]);
                     return true;
             }
         }
@@ -103,58 +114,58 @@ public class ScreenView extends View {
 
 	private int[] translateMouseCoords(int x, int y) {
 		int[] coords = new int[2];
-		coords[0] = (int)((x - dstRect.left) * (srcRect.right / (double)dstRect.width()));
-		coords[1] = (int)((y - dstRect.top) * (srcRect.bottom / (double)dstRect.height()));
+		coords[0] = (int)((x - mDstRect.left) * (mSrcRect.right / (double) mDstRect.width()));
+		coords[1] = (int)((y - mDstRect.top) * (mSrcRect.bottom / (double) mDstRect.height()));
 		return coords;
 	}
 
 	public void setScaled(boolean scaled) {
-		this.scaled = scaled;
-		screenPaint.setFilterBitmap(scaled);
+		this.mScaled = scaled;
+		mScreenPaint.setFilterBitmap(scaled);
 
 		int hostScreenWidth = getMeasuredWidth();
 		int hostScreenHeight = getMeasuredHeight();
 		
-		double perfectWidthFactor = Math.floor((double)hostScreenWidth / (double)targetScreenWidth);
-		double perfectHeightFactor = Math.floor((double)hostScreenHeight / (double)targetScreenHeight);
+		double perfectWidthFactor = Math.floor((double)hostScreenWidth / (double) mTargetScreenWidth);
+		double perfectHeightFactor = Math.floor((double)hostScreenHeight / (double) mTargetScreenHeight);
 		double scaleFactor = Math.min(perfectWidthFactor, perfectHeightFactor);
 		if (scaleFactor < 1.0) scaleFactor = 1.0;
 	
 		if (scaled) {
-			scaleFactor = Math.min( (double)hostScreenWidth/(double)targetScreenWidth, (double)hostScreenHeight/(double)targetScreenHeight);
+			scaleFactor = Math.min( (double)hostScreenWidth/(double) mTargetScreenWidth, (double)hostScreenHeight/(double) mTargetScreenHeight);
 		}
 		
-		int surfaceHeight = (int)(targetScreenHeight * scaleFactor);
-		int surfaceWidth = (int)(targetScreenWidth * scaleFactor);
+		int surfaceHeight = (int)(mTargetScreenHeight * scaleFactor);
+		int surfaceWidth = (int)(mTargetScreenWidth * scaleFactor);
 		
 		int left = (hostScreenWidth - surfaceWidth)/2;
 		int top = (hostScreenHeight - surfaceHeight)/2;
 		if (left < 0) left = 0;
 		if (top < 0) top = 0;
-		dstRect = new Rect(left, top, left + surfaceWidth, top + surfaceHeight);
-		srcRect = new Rect(0, 0, targetScreenWidth, targetScreenHeight);
+		mDstRect = new Rect(left, top, left + surfaceWidth, top + surfaceHeight);
+		mSrcRect = new Rect(0, 0, mTargetScreenWidth, mTargetScreenHeight);
 		
 		invalidate();
 	}
 	
 	public boolean isScaled() {
-		return scaled;
+		return mScaled;
 	}
 	
 	public void setScroll(boolean scroll) {
-		this.scroll = scroll;
+		this.mScroll = scroll;
 	}
 	
 	public boolean isScroll() {
-		return scroll;
+		return mScroll;
 	}
 	
 	public void scrollScreen(int keyCode, int increment) {
 		int top,left;
-		if (!scroll) return;
-		if (scaled) return;
-		top = dstRect.top;
-		left = dstRect.left;
+		if (!mScroll) return;
+		if (mScaled) return;
+		top = mDstRect.top;
+		left = mDstRect.left;
 		switch(keyCode) {
 		case KeyEvent.KEYCODE_DPAD_RIGHT:
 			left += increment;
@@ -177,29 +188,34 @@ public class ScreenView extends View {
 		int hostScreenWidth = dm.widthPixels;
 		int hostScreenHeight = dm.heightPixels;
 		
-		if (hostScreenHeight < targetScreenHeight) {
+		if (hostScreenHeight < mTargetScreenHeight) {
 			if (top > 0) top = 0;
-			if (top < (hostScreenHeight - dstRect.height()))
-				top = hostScreenHeight - dstRect.height();
+			if (top < (hostScreenHeight - mDstRect.height()))
+				top = hostScreenHeight - mDstRect.height();
 		}
 		else
 		{
 			if (top < 0) top = 0;
-			if (top + dstRect.height() > hostScreenHeight) top = hostScreenHeight - dstRect.height();
+			if (top + mDstRect.height() > hostScreenHeight) top = hostScreenHeight - mDstRect.height();
 		}
 		
-		if (hostScreenWidth < targetScreenWidth) {
+		if (hostScreenWidth < mTargetScreenWidth) {
 			if (left >0) left = 0;
-			if (left < (hostScreenWidth - dstRect.width())) 
-				left = hostScreenWidth - dstRect.width();
+			if (left < (hostScreenWidth - mDstRect.width()))
+				left = hostScreenWidth - mDstRect.width();
 		}
 		else
 		{
 			if (left < 0) left = 0;
-			if (left + dstRect.width() > hostScreenWidth) left = hostScreenWidth - dstRect.width();
+			if (left + mDstRect.width() > hostScreenWidth) left = hostScreenWidth - mDstRect.width();
 		}
 		
-		dstRect.offsetTo(left,top);
+		mDstRect.offsetTo(left, top);
 		invalidate();
+	}
+
+	public interface OnMouseEventListener {
+		void onMouseMove(int x, int y);
+		void onMouseClick(boolean down);
 	}
 }

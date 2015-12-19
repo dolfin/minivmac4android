@@ -14,6 +14,10 @@ public class SettingsActivity extends PreferenceActivity {
 	public static final String KEY_PREF_RESET = "pref_reset";
 	public static final String KEY_PREF_INTERRUPT = "pref_interrupt";
 	public static final String KEY_PREF_ABOUT = "pref_about";
+
+	public static final int RESULT_RESET = 10;
+	public static final int RESULT_INTERRUPT = 20;
+	public static final int RESULT_ABOUT = 30;
 	
 	@Override
     public void onCreate(Bundle savedInstanceState) {
@@ -25,7 +29,7 @@ public class SettingsActivity extends PreferenceActivity {
 			
 			@Override
 			public boolean onPreferenceClick(Preference preference) {
-				MiniVMac.getInstance().showAbout();
+				setResult(RESULT_ABOUT);
 				finish();
 				return true;
 			}
@@ -36,7 +40,7 @@ public class SettingsActivity extends PreferenceActivity {
 			
 			@Override
 			public boolean onPreferenceClick(Preference preference) {
-				MiniVMac.getInstance().reset();
+				setResult(RESULT_RESET);
 				finish();
 				return true;
 			}
@@ -47,7 +51,7 @@ public class SettingsActivity extends PreferenceActivity {
 			
 			@Override
 			public boolean onPreferenceClick(Preference preference) {
-				MiniVMac.getInstance().interrupt();
+				setResult(RESULT_INTERRUPT);
 				finish();
 				return true;
 			}

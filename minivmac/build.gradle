@@ -5,7 +5,7 @@ props.load(new FileInputStream(rootProject.file("release.properties")))
 
 android {
     compileSdkVersion 23
-    buildToolsVersion "23.0.1"
+    buildToolsVersion "23.0.2"
 
     defaultConfig {
         versionCode 40
@@ -98,7 +98,7 @@ android {
 }
 
 dependencies {
-    compile 'com.android.support:support-v4:23.1.0'
-    compile 'com.android.support:appcompat-v7:23.1.0'
-    compile 'com.android.support:design:23.1.0'
+    compile 'com.android.support:support-v4:23.1.1'
+    compile 'com.android.support:appcompat-v7:23.1.1'
+    compile 'com.android.support:design:23.1.1'
 }

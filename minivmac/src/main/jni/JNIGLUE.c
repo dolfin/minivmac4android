@@ -61,6 +61,7 @@ JNIEnv * jEnv;
 jclass jClass;
 jmethodID jSonyTransfer, jSonyGetSize, jSonyEject;
 jmethodID jWarnMsg;
+jobject mCore;
 
 static jmethodID nativeCrashed, playSound;
 
@@ -230,14 +231,14 @@ GLOBALPROC MySound_EndWrite(ui4r actL)
 		if (wantplaying) {
 			TheFillOffset = TheWriteOffset;
 
-			(*jEnv)->CallStaticVoidMethod(jEnv, jClass, playSound);
+			(*jEnv)->CallVoidMethod(jEnv, mCore, playSound);
 		} else if (((TheWriteOffset - ThePlayOffset) >> kLnOneBuffLen) < 12) {
 			/* just wait */
 		} else {
 			TheFillOffset = TheWriteOffset;
 			wantplaying = trueblnr;
 
-			(*jEnv)->CallStaticVoidMethod(jEnv, jClass, playSound);
+			(*jEnv)->CallVoidMethod(jEnv, mCore, playSound);
 		}
 	}
 }
@@ -542,7 +543,7 @@ GLOBALFUNC tMacErr vSonyTransfer(blnr IsWrite, ui3p Buffer,	tDrive Drive_No, ui5
 {
 	jobject jBuffer;
 	jBuffer = (*jEnv)->NewDirectByteBuffer(jEnv, Buffer, (jlong)Sony_Count);
-	ui5r actCount = (*jEnv)->CallStaticIntMethod(jEnv, jClass, jSonyTransfer, (jboolean)IsWrite, jBuffer, (jint)Drive_No, (jint)Sony_Start, (jint)Sony_Count);
+	ui5r actCount = (*jEnv)->CallIntMethod(jEnv, mCore, jSonyTransfer, (jboolean)IsWrite, jBuffer, (jint)Drive_No, (jint)Sony_Start, (jint)Sony_Count);
 
 	if (nullpr != Sony_ActCount) {
 		*Sony_ActCount = actCount;
@@ -553,13 +554,13 @@ GLOBALFUNC tMacErr vSonyTransfer(blnr IsWrite, ui3p Buffer,	tDrive Drive_No, ui5
 
 GLOBALFUNC tMacErr vSonyGetSize(tDrive Drive_No, ui5r *Sony_Count)
 {
-	*Sony_Count = (*jEnv)->CallStaticIntMethod(jEnv, jClass, jSonyGetSize, (jint)Drive_No);
+	*Sony_Count = (*jEnv)->CallIntMethod(jEnv, mCore, jSonyGetSize, (jint)Drive_No);
 	if (*Sony_Count < 0) return -1;
 	return 0;
 }
 
 GLOBALFUNC tMacErr vSonyEject(tDrive Drive_No) {
-	return (*jEnv)->CallStaticIntMethod(jEnv, jClass, jSonyEject, (jint)Drive_No);
+	return (*jEnv)->CallIntMethod(jEnv, mCore, jSonyEject, (jint)Drive_No);
 }
 
 #if 0
@@ -853,7 +854,7 @@ LOCALPROC CheckSavedMacMsg(void)
 		NativeStrFromCStr(briefMsg0, SavedBriefMsg);
 		NativeStrFromCStr(longMsg0, SavedLongMsg);
 
-		(*jEnv)->CallStaticVoidMethod(jEnv, jClass, jWarnMsg, SavedBriefMsg, SavedLongMsg);
+		(*jEnv)->CallVoidMethod(jEnv, mCore, jWarnMsg, SavedBriefMsg, SavedLongMsg);
 
 		SavedBriefMsg = nullpr;
 	}
@@ -1096,7 +1097,7 @@ LOCALFUNC blnr Screen_Init(void) {
  * Method:    init
  * Signature: (Ljava/nio/ByteBuffer;)V
  */
-JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_init (JNIEnv * env, jclass this, jobject romBuffer) {
+JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_init (JNIEnv * env, jclass this, jobject core, jobject romBuffer) {
 	if (initDone) return JNI_FALSE;
 	
 	void * romData = (*env)->GetDirectBufferAddress(env, romBuffer);
@@ -1107,28 +1108,29 @@ JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_init (JNIEnv * env,
 	if (Screen_Init())
 	if (InitEmulation())
 	{
+		mCore = (*env)->NewGlobalRef(env, core);
 		// get java method IDs
-		jSonyTransfer = (*env)->GetStaticMethodID(env, this, "sonyTransfer", "(ZLjava/nio/ByteBuffer;III)I");
-		jSonyGetSize = (*env)->GetStaticMethodID(env, this, "sonyGetSize", "(I)I");
-		jSonyEject = (*env)->GetStaticMethodID(env, this, "sonyEject", "(I)I");
-		jWarnMsg = (*env)->GetStaticMethodID(env, this, "warnMsg", "(Ljava/lang/String;Ljava/lang/String;)V");
+		jSonyTransfer = (*env)->GetMethodID(env, this, "sonyTransfer", "(ZLjava/nio/ByteBuffer;III)I");
+		jSonyGetSize = (*env)->GetMethodID(env, this, "sonyGetSize", "(I)I");
+		jSonyEject = (*env)->GetMethodID(env, this, "sonyEject", "(I)I");
+		jWarnMsg = (*env)->GetMethodID(env, this, "warnMsg", "(Ljava/lang/String;Ljava/lang/String;)V");
 
 		// initialize fields
 		jfieldID sDiskPath, sDiskFile, sNumInsertedDisks, sInitOk;
-		sDiskPath = (*env)->GetStaticFieldID(env, this, "diskPath", "[Ljava/lang/String;");
-		sDiskFile = (*env)->GetStaticFieldID(env, this, "diskFile", "[Ljava/io/RandomAccessFile;");
-		sNumInsertedDisks = (*env)->GetStaticFieldID(env, this, "numInsertedDisks", "I");
-		sInitOk = (*env)->GetStaticFieldID(env, this, "initOk", "Z");
+		sDiskPath = (*env)->GetFieldID(env, this, "diskPath", "[Ljava/lang/String;");
+		sDiskFile = (*env)->GetFieldID(env, this, "diskFile", "[Ljava/io/RandomAccessFile;");
+		sNumInsertedDisks = (*env)->GetFieldID(env, this, "numInsertedDisks", "I");
+		sInitOk = (*env)->GetFieldID(env, this, "initOk", "Z");
 
 		// init drives
 		jobjectArray diskPath = (*env)->NewObjectArray(env, NumDrives, (*env)->FindClass(env, "java/lang/String"), NULL);
 		jobjectArray diskFile = (*env)->NewObjectArray(env, NumDrives, (*env)->FindClass(env, "java/io/RandomAccessFile"), NULL);
-		(*env)->SetStaticIntField(env, this, sNumInsertedDisks, 0);
-		(*env)->SetStaticObjectField(env, this, sDiskPath, diskPath);
-		(*env)->SetStaticObjectField(env, this, sDiskFile, diskFile);
+		(*env)->SetIntField(env, mCore, sNumInsertedDisks, 0);
+		(*env)->SetObjectField(env, mCore, sDiskPath, diskPath);
+		(*env)->SetObjectField(env, mCore, sDiskFile, diskFile);
 
 		// init ok
-		(*env)->SetStaticBooleanField(env, this, sInitOk, JNI_TRUE);
+		(*env)->SetBooleanField(env, mCore, sInitOk, JNI_TRUE);
 		initDone = trueblnr;
 
 		return JNI_TRUE;
@@ -1163,6 +1165,8 @@ JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_uninit (JNIEnv * en
 	UnallocMyMemory();
 
 	CheckSavedMacMsg();
+
+	(*env)->DeleteGlobalRef(env, mCore);
 }
 
 static struct sigaction old_sa[NSIG];
@@ -1179,7 +1183,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
 	jClass = (*jEnv)->FindClass(jEnv, "name/osher/gil/minivmac/Core");
 
 	nativeCrashed = (*jEnv)->GetStaticMethodID(jEnv, jClass, "nativeCrashed", "()V");
-	playSound = (*jEnv)->GetStaticMethodID(jEnv, jClass, "playSound", "()V");
+	playSound = (*jEnv)->GetMethodID(jEnv, jClass, "playSound", "()V");
 
 
 	// Try to catch crashes...
