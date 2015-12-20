@@ -59,7 +59,7 @@ LOCALVAR blnr initDone = falseblnr;
 // java
 JNIEnv * jEnv;
 jclass jClass;
-jmethodID jSonyTransfer, jSonyGetSize, jSonyEject;
+jmethodID jSonyTransfer, jSonyGetSize, jSonyEject, jSonyGetName, jSonyMakeNewDisk;
 jmethodID jWarnMsg;
 jobject mCore;
 
@@ -378,7 +378,7 @@ LOCALVAR const ui3b Native2MacRomanTab[] = {
 	0xBF, 0x9D, 0x9C, 0x9E, 0x9F, 0xFE, 0xFF, 0xD8
 };
 
-LOCALFUNC tMacErr NativeTextToMacRomanPbuf(char *x, tPbuf *r)
+LOCALFUNC tMacErr NativeTextToMacRomanPbuf(const char *x, tPbuf *r)
 {
 	if (NULL == x) {
 		return mnvm_miscErr;
@@ -560,8 +560,50 @@ GLOBALFUNC tMacErr vSonyGetSize(tDrive Drive_No, ui5r *Sony_Count)
 }
 
 GLOBALFUNC tMacErr vSonyEject(tDrive Drive_No) {
-	return (*jEnv)->CallIntMethod(jEnv, mCore, jSonyEject, (jint)Drive_No);
+	return (*jEnv)->CallIntMethod(jEnv, mCore, jSonyEject, (jint)Drive_No, JNI_FALSE);
 }
+
+#if IncludeSonyNew
+GLOBALFUNC tMacErr vSonyEjectDelete(tDrive Drive_No)
+{
+	return (*jEnv)->CallIntMethod(jEnv, mCore, jSonyEject, (jint)Drive_No, JNI_TRUE);
+}
+#endif
+
+#if IncludeSonyGetName
+GLOBALFUNC tMacErr vSonyGetName(tDrive Drive_No, tPbuf *r)
+{
+	jstring result = (*jEnv)->CallObjectMethod(jEnv, mCore, jSonyGetName, (jint)Drive_No);
+
+	if (NULL == result) {
+		return -1;
+	} else {
+		const char *nativeString = (*jEnv)->GetStringUTFChars(jEnv, result, 0);
+		tMacErr res = NativeTextToMacRomanPbuf(nativeString, r);
+		(*jEnv)->ReleaseStringUTFChars(jEnv, result, nativeString);
+		return res;
+	}
+}
+#endif
+
+#if IncludeSonyNew
+LOCALPROC MakeNewDisk(ui5b L, char *drivename)
+{
+	jstring jdrivename = (*jEnv)->NewStringUTF(jEnv, drivename);
+	(*jEnv)->CallIntMethod(jEnv, mCore, jSonyMakeNewDisk, (jint)L, jdrivename);
+	(*jEnv)->DeleteLocalRef(jEnv, jdrivename);
+}
+#endif
+
+#if IncludeSonyNew
+LOCALPROC MakeNewDiskAtDefault(ui5b L)
+{
+	char s[ClStrMaxLength + 1];
+
+	NativeStrFromCStr(s, "untitled.dsk");
+	MakeNewDisk(L, s);
+}
+#endif
 
 #if 0
 #pragma mark -
@@ -873,6 +915,50 @@ GLOBALFUNC blnr ExtraTimeNotOver(void)
 	return TrueEmulatedTime == OnTrueTime;
 }
 
+LOCALPROC CheckForSavedTasks(void)
+{
+	if (RequestMacOff) {
+		RequestMacOff = falseblnr;
+		if (AnyDiskInserted()) {
+			MacMsgOverride(kStrQuitWarningTitle,
+						   kStrQuitWarningMessage);
+		} else {
+			ForceMacOff = trueblnr;
+		}
+	}
+
+	if (ForceMacOff) {
+		return;
+	}
+
+#if IncludeSonyNew
+	if (vSonyNewDiskWanted) {
+#if IncludeSonyNameNew
+		if (vSonyNewDiskName != NotAPbuf) {
+			ui3p NewDiskNameDat;
+			if (MacRomanTextToNativePtr(vSonyNewDiskName, trueblnr,
+				&NewDiskNameDat))
+			{
+				MakeNewDisk(vSonyNewDiskSize, (char *)NewDiskNameDat);
+				free(NewDiskNameDat);
+			}
+			PbufDispose(vSonyNewDiskName);
+			vSonyNewDiskName = NotAPbuf;
+		} else
+#endif
+		{
+			MakeNewDiskAtDefault(vSonyNewDiskSize);
+		}
+		vSonyNewDiskWanted = falseblnr;
+			/* must be done after may have gotten disk */
+	}
+#endif
+
+	if ((nullpr != SavedBriefMsg) & ! MacMsgDisplayed) {
+		MacMsgDisplayOn();
+	}
+}
+
 /* --- platform independent code can be thought of as going here --- */
 
 #include "PROGMAIN.h"
@@ -1017,7 +1103,7 @@ JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_runTick (JNIEnv * env, 
 	jEnv = env;
 	jClass = class;
 
-	//CheckForSavedTasks();
+	CheckForSavedTasks();
 	if (ForceMacOff) {
 		return;
 	}
@@ -1112,7 +1198,9 @@ JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_init (JNIEnv * env,
 		// get java method IDs
 		jSonyTransfer = (*env)->GetMethodID(env, this, "sonyTransfer", "(ZLjava/nio/ByteBuffer;III)I");
 		jSonyGetSize = (*env)->GetMethodID(env, this, "sonyGetSize", "(I)I");
-		jSonyEject = (*env)->GetMethodID(env, this, "sonyEject", "(I)I");
+		jSonyEject = (*env)->GetMethodID(env, this, "sonyEject", "(IZ)I");
+		jSonyGetName = (*env)->GetMethodID(env, this, "sonyGetName", "(I)Ljava/lang/String;");
+		jSonyMakeNewDisk = (*env)->GetMethodID(env, this, "sonyMakeNewDisk", "(ILjava/lang/String;)I");
 		jWarnMsg = (*env)->GetMethodID(env, this, "warnMsg", "(Ljava/lang/String;Ljava/lang/String;)V");
 
 		// initialize fields

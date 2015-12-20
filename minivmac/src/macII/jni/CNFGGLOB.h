@@ -77,10 +77,10 @@ typedef unsigned long long ui6b;
 #define dbglog_HAVE 0
 
 #define NumDrives 8
-#define IncludeSonyRawMode 0
-#define IncludeSonyGetName 0
-#define IncludeSonyNew 0
-#define IncludeSonyNameNew 0
+#define IncludeSonyRawMode 1
+#define IncludeSonyGetName 1
+#define IncludeSonyNew 1
+#define IncludeSonyNameNew 1
 
 #define vMacScreenHeight 480
 #define vMacScreenWidth 640

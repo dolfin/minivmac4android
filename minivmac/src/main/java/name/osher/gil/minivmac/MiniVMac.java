@@ -15,6 +15,7 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -33,6 +34,8 @@ import android.view.SubMenu;
 import android.view.View;
 import android.view.WindowManager;
 
+import com.nononsenseapps.filepicker.FilePickerActivity;
+
 public class MiniVMac extends AppCompatActivity
 		implements ActivityCompat.OnRequestPermissionsResultCallback {
 
@@ -40,6 +43,7 @@ public class MiniVMac extends AppCompatActivity
 	private final static String[] diskExtensions = {"DSK", "dsk", "img", "IMG"};
 	private final static int ACTIVITY_CREATE_DISK = 200;
 	private final static int ACTIVITY_SETTINGS = 201;
+	private final static int ACTIVITY_SELECT_DISK = 202;
 	private final static int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
 	private final static int TRACKBALL_SENSITIVITY = 8;
 	private final static int KEYCODE_MAC_SHIFT = 56;
@@ -56,7 +60,6 @@ public class MiniVMac extends AppCompatActivity
 
 	private View mLayout;
 
-	private FileManager mFileManager;
 	private Core mCore;
 	
 	@Override
@@ -80,8 +83,7 @@ public class MiniVMac extends AppCompatActivity
         onActivity = false;
         
         updateByPrefs();
-		mFileManager = new FileManager();
-		mCore = new Core(this, mFileManager);
+		mCore = new Core(this);
 
 		screenView.setTargetScreenSize(mCore.getScreenWidth(), mCore.getScreenHeight());
 		screenView.setOnMouseEventListener(new ScreenView.OnMouseEventListener() {
@@ -107,14 +109,14 @@ public class MiniVMac extends AppCompatActivity
 	}
 
 	private void initEmulator() {
-		if (!mFileManager.init()) {
-			Utils.showAlert(this, String.format(getString(R.string.errNoDataDir), mFileManager.getDataDir().getPath(),
+		if (!FileManager.getInstance().init()) {
+			Utils.showAlert(this, String.format(getString(R.string.errNoDataDir), FileManager.getInstance().getDataDir().getPath(),
 					getString(R.string.romFileName)), true);
 		}
 
 		// load ROM
 		String romFileName = getString(R.string.romFileName);
-		File romFile = mFileManager.getDataFile(romFileName);
+		File romFile = FileManager.getInstance().getDataFile(romFileName);
 		ByteBuffer rom = ByteBuffer.allocateDirect((int)romFile.length());
 		try {
             FileInputStream romReader = new FileInputStream(romFile);
@@ -265,6 +267,7 @@ public class MiniVMac extends AppCompatActivity
 					@Override
 					public void onClick(View view) {
 						// Request the permission
+						onActivity = true;
 						ActivityCompat.requestPermissions(MiniVMac.this,
 								new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
 								MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
@@ -272,6 +275,7 @@ public class MiniVMac extends AppCompatActivity
 				}).show();
 			} else {
 				// No explanation needed, we can request the permission.
+				onActivity = true;
 				ActivityCompat.requestPermissions(MiniVMac.this,
 						new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
 						MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
@@ -286,6 +290,7 @@ public class MiniVMac extends AppCompatActivity
 	public void onRequestPermissionsResult(int requestCode,
 										   @NonNull String permissions[],
 										   @NonNull int[] grantResults) {
+		onActivity = false;
 		switch (requestCode) {
 			case MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE: {
 				// If request is cancelled, the result arrays are empty.
@@ -419,12 +424,13 @@ public class MiniVMac extends AppCompatActivity
 		dm.setHeaderIcon(R.drawable.disk_floppy_color);
 		// add create disk
 		dm.add(0, R.id.action_create_disk, 0, R.string.menu_create_disk);
+		dm.add(0, R.id.action_select_disk, 1, R.string.menu_select_disk);
 		// add disks
 		if (hasPermission) {
 			File[] disks = getAvailableDisks();
 			for (int i = 0; disks != null && i < disks.length; i++) {
 				String diskName = disks[i].getName();
-				MenuItem m = dm.add(R.id.action_insert_disk, diskName.hashCode(), 0, diskName.substring(0, diskName.lastIndexOf(".")));
+				MenuItem m = dm.add(R.id.action_insert_disk, diskName.hashCode(), i+2, diskName.substring(0, diskName.lastIndexOf(".")));
 				m.setEnabled(!mCore.isDiskInserted(disks[i]));
 			}
 		}
@@ -450,6 +456,9 @@ public class MiniVMac extends AppCompatActivity
 		case R.id.action_create_disk:
 			showCreateDisk();
 			break;
+		case R.id.action_select_disk:
+			showSelectDisk();
+			break;
 		case R.id.action_settings:
 			showSettings();
 			break;
@@ -466,6 +475,17 @@ public class MiniVMac extends AppCompatActivity
 		onActivity = true;
 		Intent i = new Intent(MiniVMac.this, CreateDisk.class);
 		startActivityForResult(i, ACTIVITY_CREATE_DISK);
+	}
+
+	public void showSelectDisk() {
+		onActivity = true;
+		Intent i = new Intent(this, FilePickerActivity.class);
+		i.putExtra(FilePickerActivity.EXTRA_ALLOW_MULTIPLE, false);
+		i.putExtra(FilePickerActivity.EXTRA_ALLOW_CREATE_DIR, false);
+		i.putExtra(FilePickerActivity.EXTRA_MODE, FilePickerActivity.MODE_FILE);
+		i.putExtra(FilePickerActivity.EXTRA_START_PATH, FileManager.getInstance().getDataDir());
+
+		startActivityForResult(i, ACTIVITY_SELECT_DISK);
 	}
 	
 	public void showSettings() {
@@ -494,7 +514,7 @@ public class MiniVMac extends AppCompatActivity
 	}
 	
 	public File[] getAvailableDisks () {
-		return mFileManager.getDataDir().listFiles(new FileFilter() {
+		return FileManager.getInstance().getDataDir().listFiles(new FileFilter() {
 			public boolean accept(File pathname) {
 				if (!pathname.isFile()) return false;
 				if (pathname.isDirectory()) return false;
@@ -524,6 +544,11 @@ public class MiniVMac extends AppCompatActivity
 	    			mCore.insertDisk(diskPath);
 	    		}
 	    	}
+		}
+		else if (requestCode == ACTIVITY_SELECT_DISK && resultCode == RESULT_OK)
+		{
+			Uri uri = data.getData();
+			mCore.insertDisk(uri.getPath());
 		}
 		else if (requestCode == ACTIVITY_SETTINGS)
 		{

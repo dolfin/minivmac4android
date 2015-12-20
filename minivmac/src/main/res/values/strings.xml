@@ -5,6 +5,7 @@
 	<string name="menu_insert_disk">Insert Disk</string>
 	<string name="menu_keyboard">Keyboard</string>
 	<string name="menu_create_disk">Create a new disk&#8230;</string>
+	<string name="menu_select_disk">Select a disk&#8230;</string>
 	<string name="btn_quit">Quit</string>
 	<string name="btn_continue">Continue</string>
 	<string name="btn_ok">OK</string>

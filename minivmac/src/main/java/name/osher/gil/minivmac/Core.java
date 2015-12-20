@@ -23,7 +23,6 @@ public class Core {
 	private Runnable runTickTask = null;
 	private boolean initOk = false;
 
-	private FileManager mFileManager;
 	private Context mContext;
 	private OnUpdateScreenListener mOnUpdateScreenListener;
 	
@@ -37,8 +36,7 @@ public class Core {
 		Log.e(TAG, "Native crashed!");
 	}
 
-	public Core(Context context, FileManager fileManager) {
-		mFileManager = fileManager;
+	public Core(Context context) {
 		mContext = context;
 	}
 
@@ -78,7 +76,7 @@ public class Core {
 		if (!initOk) return;
 		// insert initial disks
 		for(int i=0; i < getNumDrives(); i++) {
-			File f = mFileManager.getDataFile("disk"+i+".dsk");
+			File f = FileManager.getInstance().getDataFile("disk"+i+".dsk");
 			if (!insertDisk(f)) break;
 		}
 		resumeEmulation();
@@ -259,7 +257,7 @@ public class Core {
 		}
 	}
 
-	public int sonyEject(int driveNum) {
+	public int sonyEject(int driveNum, boolean deleteit) {
 		if (diskFile[driveNum] == null) return -1;
 		int ret;
 		try {
@@ -268,12 +266,42 @@ public class Core {
 		} catch (Exception x) {
 			ret = -1;
 		}
+
+		if (deleteit) {
+			String path = diskPath[driveNum];
+			File file = new File(path);
+			file.delete();
+		}
 		
 		diskFile[driveNum] = null;
 		diskPath[driveNum] = null;
 		numInsertedDisks--;
 		
 		notifyDiskEjected(driveNum);
+		return ret;
+	}
+
+	public String sonyGetName(int driveNum) {
+		if (diskPath[driveNum] == null) return null;
+
+		File file = new File(diskPath[driveNum]);
+		return file.getName();
+	}
+
+	public int sonyMakeNewDisk(int size, String drivepath) {
+		int ret = 0;
+
+		if (!FileManager.getInstance().makeNewDisk(size, drivepath)) {
+			ret = -1;
+		} else {
+			File disk = FileManager.getInstance().getDataFile(drivepath);
+			boolean isOk = insertDisk(disk);
+
+			if (!isOk) {
+				disk.delete();
+			}
+		}
+
 		return ret;
 	}
 	

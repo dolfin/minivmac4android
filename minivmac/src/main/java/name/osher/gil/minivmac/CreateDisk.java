@@ -1,21 +1,14 @@
 package name.osher.gil.minivmac;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -26,8 +19,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class CreateDisk extends Activity {
-    private static final String TAG = "name.osher.gil.minivmac.CreateDisk";
-	
 	private static final int PROGRESS_DIALOG = 0;
     private ProgressThread progressThread;
     private ProgressDialog progressDialog;
@@ -36,8 +27,6 @@ public class CreateDisk extends Activity {
 	private EditText name;
 	private SeekBar size;
 	private Button create;
-	
-	Activity mContext = this;
 	
 	@Override
     public void onCreate(Bundle savedInstanceState) {
@@ -145,86 +134,19 @@ public class CreateDisk extends Activity {
         final static int STATE_DONE = 0;
         final static int STATE_RUNNING = 1;
         int mState;
-        int total;
        
         ProgressThread(Handler h) {
-            mHandler = h;
-        }
+			mHandler = h;
+		}
        
         public void run() {
         	
             mState = STATE_RUNNING;
-            
-        	File dataDir = new File(Environment.getExternalStorageDirectory(), "minivmac");
-			String fileName = String.format("%s.dsk", name.getText().toString().replace(" ", "_"));
-			File disk = new File(dataDir, fileName);
-			try {
-				if (!disk.createNewFile())
-				{
-					// Error show file exist warning
-					handleError(null, R.string.errFileExist);
-					return;
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-				handleError(null, R.string.errGeneral);
-				return;
-			}
-			
-			FileOutputStream writer;
-			try {
-				writer = new FileOutputStream(disk);
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-				handleError(disk, R.string.errGeneral);
-				return;
-			}
-			
-			int sizeInBytes = size.getProgress() + 400;
-			
-			byte[] buffer = new byte[1024];
-			for (int i = 0 ; i < 1024 ; i++)
-				buffer[i] = 0;
-			
-			try {
-				for (int i = 0 ; i < sizeInBytes ; i++)
-				{
-					writer.write(buffer);
-					
-					Message msg = mHandler.obtainMessage();
-	                msg.arg1 = (int)(99.0 * i / sizeInBytes);
-	                mHandler.sendMessage(msg);
-				}
-				writer.close();
-			} catch (IOException e) {
-				handleError(disk, R.string.errCreateDisk);
-				return;
-			}
-			
-			Message msg = mHandler.obtainMessage();
-            msg.arg1 = 100;
-            msg.arg2 = RESULT_OK;
-            msg.obj = disk.getAbsolutePath();
-            mHandler.sendMessage(msg);
-        }
 
-		private void handleError(File disk, int error) {
-			
-			if (disk != null)
-			{
-				// Delete what we got so far
-				boolean res = disk.delete();
-                if (!res) {
-                    Log.e(TAG, "Couldn't remove disk " + disk.getPath() + "!");
-                }
-			}
-			
-			Message msg = mHandler.obtainMessage();
-			msg.arg1 = 100;
-			msg.arg2 = RESULT_FIRST_USER;
-			msg.obj = error;
-			mHandler.sendMessage(msg);
-		}
+			String fileName = String.format("%s.dsk", name.getText().toString().replace(" ", "_"));
+            int sizeInBytes = 1024 * (size.getProgress() + 400);
+			FileManager.getInstance().makeNewDisk(sizeInBytes, fileName, mHandler);
+        }
         
         /* sets the current state for the thread,
          * used to stop the thread */
