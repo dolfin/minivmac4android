@@ -44,6 +44,6 @@
 	    <Preference 
 	        android:key="pref_about"
 	        android:title="@string/prefs_about"
-	        android:icon="@drawable/icon_classic" />
+	        android:icon="@drawable/icon" />
 	</PreferenceCategory>
 </PreferenceScreen>
