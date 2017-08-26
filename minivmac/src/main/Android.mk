@@ -1,0 +1,20 @@
+LOCAL_PATH := $(call my-dir)
+
+LOCAL_SRC_FILES := \
+	$(LOCAL_PATH)/jni/GLOBGLUE.c \
+	$(LOCAL_PATH)/jni/IWMEMDEV.c \
+	$(LOCAL_PATH)/jni/JNIGLUE.c \
+	$(LOCAL_PATH)/jni/M68KITAB.c \
+	$(LOCAL_PATH)/jni/MINEM68K.c \
+	$(LOCAL_PATH)/jni/MOUSEMDV.c \
+	$(LOCAL_PATH)/jni/PROGMAIN.c \
+	$(LOCAL_PATH)/jni/ROMEMDEV.c \
+	$(LOCAL_PATH)/jni/RTCEMDEV.c \
+	$(LOCAL_PATH)/jni/SCCEMDEV.c \
+	$(LOCAL_PATH)/jni/SCRNEMDV.c \
+	$(LOCAL_PATH)/jni/SCSIEMDV.c \
+	$(LOCAL_PATH)/jni/SONYEMDV.c \
+	$(LOCAL_PATH)/jni/VIAEMDEV.c \
+
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/jni
+

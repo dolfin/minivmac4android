@@ -1,0 +1,8 @@
+LOCAL_PATH := $(call my-dir)
+
+LOCAL_SRC_FILES += \
+	$(LOCAL_PATH)/jni/KBRDEMDV.c \
+	$(LOCAL_PATH)/jni/SNDEMDEV.c \
+
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/jni
+

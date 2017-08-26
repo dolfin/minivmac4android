@@ -3,4 +3,5 @@
     <string name="app_name">Mini vMac II</string>
     <string name="romFileName">MacII.ROM</string>
     <string name="aboutTitle">Mini vMac II for Android</string>
+    <string name="moduleName">mnvmcoreii</string>
 </resources>

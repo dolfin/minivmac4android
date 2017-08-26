@@ -26,10 +26,6 @@ public class Core {
 	private Context mContext;
 	private OnUpdateScreenListener mOnUpdateScreenListener;
 	
-	static {
-		System.loadLibrary("mnvmcore");
-	}
-	
 	public static void nativeCrashed()
 	{
 		// TODO: Add Error handeling here.
@@ -38,6 +34,7 @@ public class Core {
 
 	public Core(Context context) {
 		mContext = context;
+		System.loadLibrary(mContext.getString(R.string.moduleName));
 	}
 
 	public void setOnUpdateScreenListener(OnUpdateScreenListener listener) {

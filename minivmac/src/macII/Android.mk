@@ -1,0 +1,10 @@
+LOCAL_PATH := $(call my-dir)
+
+LOCAL_SRC_FILES += \
+	$(LOCAL_PATH)/jni/ADBEMDEV.c \
+	$(LOCAL_PATH)/jni/ASCEMDEV.c \
+	$(LOCAL_PATH)/jni/VIA2EMDV.c \
+	$(LOCAL_PATH)/jni/VIDEMDEV.c \
+
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/jni
+

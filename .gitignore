@@ -32,6 +32,7 @@ proguard/
 *.so
 *.o
 *.d
+.externalNativeBuild
 
 # Android Studio
 .gradle
