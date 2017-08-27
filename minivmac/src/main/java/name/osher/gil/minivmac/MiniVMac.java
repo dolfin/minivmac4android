@@ -583,13 +583,15 @@ public class MiniVMac extends AppCompatActivity
 		else if (requestCode == ACTIVITY_SELECT_DISK && resultCode == RESULT_OK)
 		{
 			Uri uri = data.getData();
-			mCore.insertDisk(uri.getPath());
+			File file = com.nononsenseapps.filepicker.Utils.getFileForUri(uri);
+			mCore.insertDisk(file.getPath());
 		}
 		else if (requestCode == ACTIVITY_SELECT_FOLDER)
 		{
 			if (resultCode == RESULT_OK && mTempSize > 0) {
-				Uri uri = data.getData();
-				mCore.makeNewDisk(mTempSize, uri.getPath(), mTempFilename);
+				Uri uri =  data.getData();
+				File file = com.nononsenseapps.filepicker.Utils.getFileForUri(uri);
+				mCore.makeNewDisk(mTempSize, file.getPath(), mTempFilename);
 			}
 			mTempSize = 0;
 			mTempFilename = "";
