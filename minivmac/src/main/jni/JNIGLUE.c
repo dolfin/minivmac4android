@@ -525,6 +525,15 @@ JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_notifyDiskEjected (JNIE
 
 /*
  * Class:     name_osher_gil_minivmac_Core
+ * Method:    notifyDiskEjected
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_notifyDiskCreated (JNIEnv * env, jclass class) {
+	vSonyNewDiskWanted = falseblnr;
+}
+
+/*
+ * Class:     name_osher_gil_minivmac_Core
  * Method:    getFirstFreeDisk
  * Signature: ()I
  */
@@ -949,8 +958,6 @@ LOCALPROC CheckForSavedTasks(void)
 		{
 			MakeNewDiskAtDefault(vSonyNewDiskSize);
 		}
-		vSonyNewDiskWanted = falseblnr;
-			/* must be done after may have gotten disk */
 	}
 #endif
 

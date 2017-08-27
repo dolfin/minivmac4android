@@ -44,6 +44,7 @@ public class MiniVMac extends AppCompatActivity
 	private final static int ACTIVITY_CREATE_DISK = 200;
 	private final static int ACTIVITY_SETTINGS = 201;
 	private final static int ACTIVITY_SELECT_DISK = 202;
+	private final static int ACTIVITY_SELECT_FOLDER = 203;
 	private final static int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
 	private final static int TRACKBALL_SENSITIVITY = 8;
 	private final static int KEYCODE_MAC_SHIFT = 56;
@@ -57,6 +58,9 @@ public class MiniVMac extends AppCompatActivity
 	private Keyboard mQwertyKeyboard;
 	private Keyboard mSymbolsKeyboard;
 	private Keyboard mSymbolsShiftedKeyboard;
+
+	private int mTempSize;
+	private String mTempFilename;
 
 	private View mLayout;
 
@@ -102,6 +106,26 @@ public class MiniVMac extends AppCompatActivity
 			@Override
 			public void onUpdateScreen(int[] update) {
 				screenView.updateScreen(update);
+			}
+		});
+
+		mCore.setOnDiskEventListener(new Core.OnDiskEventListener() {
+
+			@Override
+			public void onDiskInserted(String filename) {
+				invalidateOptionsMenu();
+			}
+
+			@Override
+			public void onDiskEjected(String filename) {
+				invalidateOptionsMenu();
+			}
+
+			@Override
+			public void onCreateDisk(int size, String filename) {
+				mTempSize = size;
+				mTempFilename = filename;
+				showSelectFolder();
 			}
 		});
 
@@ -483,7 +507,7 @@ public class MiniVMac extends AppCompatActivity
 		i.putExtra(FilePickerActivity.EXTRA_ALLOW_MULTIPLE, false);
 		i.putExtra(FilePickerActivity.EXTRA_ALLOW_CREATE_DIR, false);
 		i.putExtra(FilePickerActivity.EXTRA_MODE, FilePickerActivity.MODE_FILE);
-		i.putExtra(FilePickerActivity.EXTRA_START_PATH, FileManager.getInstance().getDataDir());
+		i.putExtra(FilePickerActivity.EXTRA_START_PATH, FileManager.getInstance().getDataDir().getAbsolutePath());
 
 		startActivityForResult(i, ACTIVITY_SELECT_DISK);
 	}
@@ -504,7 +528,18 @@ public class MiniVMac extends AppCompatActivity
 			kbd.setEnabled(true);
 		}
 	}
-	
+
+	public void showSelectFolder() {
+		onActivity = true;
+		Intent i = new Intent(this, FilePickerActivity.class);
+		i.putExtra(FilePickerActivity.EXTRA_ALLOW_MULTIPLE, false);
+		i.putExtra(FilePickerActivity.EXTRA_ALLOW_CREATE_DIR, true);
+		i.putExtra(FilePickerActivity.EXTRA_MODE, FilePickerActivity.MODE_DIR);
+		i.putExtra(FilePickerActivity.EXTRA_START_PATH, FileManager.getInstance().getDataDir().getAbsolutePath());
+
+		startActivityForResult(i, ACTIVITY_SELECT_FOLDER);
+	}
+
 	public void reset() {
 		mCore.wantMacReset();
 	}
@@ -549,6 +584,16 @@ public class MiniVMac extends AppCompatActivity
 		{
 			Uri uri = data.getData();
 			mCore.insertDisk(uri.getPath());
+		}
+		else if (requestCode == ACTIVITY_SELECT_FOLDER)
+		{
+			if (resultCode == RESULT_OK && mTempSize > 0) {
+				Uri uri = data.getData();
+				mCore.makeNewDisk(mTempSize, uri.getPath(), mTempFilename);
+			}
+			mTempSize = 0;
+			mTempFilename = "";
+			Core.notifyDiskCreated();
 		}
 		else if (requestCode == ACTIVITY_SETTINGS)
 		{

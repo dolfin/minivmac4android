@@ -25,6 +25,7 @@ public class Core {
 
 	private Context mContext;
 	private OnUpdateScreenListener mOnUpdateScreenListener;
+	private OnDiskEventListener mOnDiskEventListener;
 	
 	public static void nativeCrashed()
 	{
@@ -39,6 +40,10 @@ public class Core {
 
 	public void setOnUpdateScreenListener(OnUpdateScreenListener listener) {
 		mOnUpdateScreenListener = listener;
+	}
+
+	public void setOnDiskEventListener(OnDiskEventListener listener) {
+		mOnDiskEventListener = listener;
 	}
 	
 	// initialization
@@ -73,7 +78,7 @@ public class Core {
 		if (!initOk) return;
 		// insert initial disks
 		for(int i=0; i < getNumDrives(); i++) {
-			File f = FileManager.getInstance().getDataFile("disk"+i+".dsk");
+			File f = FileManager.getInstance().getDataFile("disk" + i + ".dsk");
 			if (!insertDisk(f)) break;
 		}
 		resumeEmulation();
@@ -212,6 +217,7 @@ public class Core {
 	// disks
 	private native static void notifyDiskInserted(int driveNum, boolean locked);
 	private native static void notifyDiskEjected(int driveNum);
+	public native static void notifyDiskCreated();
 	private native static int getFirstFreeDisk();
 	private native static int getNumDrives();
 	
@@ -269,7 +275,8 @@ public class Core {
 			File file = new File(path);
 			file.delete();
 		}
-		
+
+		mOnDiskEventListener.onDiskEjected(diskPath[driveNum]);
 		diskFile[driveNum] = null;
 		diskPath[driveNum] = null;
 		numInsertedDisks--;
@@ -286,12 +293,17 @@ public class Core {
 	}
 
 	public int sonyMakeNewDisk(int size, String drivepath) {
+		mOnDiskEventListener.onCreateDisk(size, drivepath);
+		return 0;
+	}
+
+	public int makeNewDisk(int size, String path, String filename) {
 		int ret = 0;
 
-		if (!FileManager.getInstance().makeNewDisk(size, drivepath)) {
+		if (!FileManager.getInstance().makeNewDisk(size, filename, path, null)) {
 			ret = -1;
 		} else {
-			File disk = FileManager.getInstance().getDataFile(drivepath);
+			File disk = new File(path, filename);
 			boolean isOk = insertDisk(disk);
 
 			if (!isOk) {
@@ -340,6 +352,7 @@ public class Core {
 		notifyDiskInserted(driveNum, !f.canWrite());
 		diskPath[driveNum] = f.getAbsolutePath();
 		numInsertedDisks++;
+		mOnDiskEventListener.onDiskInserted(f.getAbsolutePath());
 		return true;
 	}
 	
@@ -364,5 +377,11 @@ public class Core {
 
 	interface OnUpdateScreenListener {
 		void onUpdateScreen(int[] update);
+	}
+
+	interface OnDiskEventListener {
+		void onDiskInserted(String filename);
+		void onDiskEjected(String filename);
+		void onCreateDisk(int size, String filename);
 	}
 }

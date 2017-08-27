@@ -42,12 +42,8 @@ public class FileManager {
         return mDataDir;
     }
 
-    public boolean makeNewDisk(int size, String fileName) {
-        return makeNewDisk(size, fileName, null);
-    }
-
-    public boolean makeNewDisk(int size, String fileName, Handler progressHandler) {
-        File disk = new File(mDataDir, fileName);
+    public boolean makeNewDisk(int size, String fileName, String path, Handler progressHandler) {
+        File disk = new File(path, fileName);
         try {
             if (!disk.createNewFile())
             {

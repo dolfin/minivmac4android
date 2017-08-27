@@ -32,7 +32,7 @@
 #define EmVidCard 0
 
 #define MaxATTListN 16
-#define IncludeExtnPbufs 0
+#define IncludeExtnPbufs 1
 #define IncludeExtnHostTextClipExchange 0
 
 #define Sony_SupportDC42 1
