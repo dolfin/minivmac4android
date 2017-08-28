@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 
 Properties props = new Properties()
-props.load(new FileInputStream(rootProject.file("release.properties")))
+props.load(new FileInputStream(rootProject.file('release.properties')))
 
 android {
     compileSdkVersion 25
@@ -31,72 +31,57 @@ android {
         }
     }
 
-    flavorDimensions "abi", "machine"
+    flavorDimensions 'abi', 'machine'
     productFlavors {
         macPlus {
-            dimension "machine"
-            applicationId "name.osher.gil.minivmac"
-            versionName "1.4.0"
+            dimension 'machine'
+            applicationId 'name.osher.gil.minivmac'
+            versionName '1.4.0'
 
             ndk {
-                moduleName "mnvmcoreplus"
+                moduleName 'mnvmcoreplus'
             }
         }
 
         macII {
-            dimension "machine"
-            applicationId "name.osher.gil.minivmac.ii"
-            versionName "2.4.0"
+            dimension 'machine'
+            applicationId 'name.osher.gil.minivmac.ii'
+            versionName '2.4.0'
 
             ndk {
-                moduleName "mnvmcoreii"
+                moduleName 'mnvmcoreii'
             }
         }
 
-        x86_64 {
-            dimension "abi"
-            ndk {
-                abiFilter "x86_64"
-            }
-        }
         x86 {
-            dimension "abi"
+            dimension 'abi'
             ndk {
-                abiFilter "x86"
-            }
-        }
-        mips64 {
-            dimension "abi"
-            ndk {
-                abiFilter "mips64"
+                abiFilter 'x86'
             }
         }
         mips {
-            dimension "abi"
+            dimension 'abi'
             ndk {
-                abiFilter "mips"
-            }
-        }
-        armv8 {
-            dimension "abi"
-            ndk {
-                abiFilter "arm64-v8a"
+                abiFilter 'mips'
             }
         }
         armv7 {
-            dimension "abi"
+            dimension 'abi'
             ndk {
-                abiFilter "armeabi-v7a"
+                abiFilter 'armeabi-v7a'
             }
         }
         arm {
-            dimension "abi"
+            dimension 'abi'
             ndk {
-                abiFilter "armeabi"
+                abiFilter 'armeabi'
             }
         }
         fat {
-            dimension "abi"
+            dimension 'abi'
+            ndk {
+                abiFilters 'x86', 'armeabi', 'armeabi-v7a', 'mips'
+            }
         }
     }
     externalNativeBuild {
