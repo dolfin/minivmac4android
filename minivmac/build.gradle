@@ -8,7 +8,7 @@ android {
     buildToolsVersion '25.0.0'
 
     defaultConfig {
-        versionCode 41
+        versionCode 42
 
         minSdkVersion 9
         targetSdkVersion 25
@@ -36,7 +36,7 @@ android {
         macPlus {
             dimension 'machine'
             applicationId 'name.osher.gil.minivmac'
-            versionName '1.4.0'
+            versionName '1.4.1'
 
             ndk {
                 moduleName 'mnvmcoreplus'
@@ -46,7 +46,7 @@ android {
         macII {
             dimension 'machine'
             applicationId 'name.osher.gil.minivmac.ii'
-            versionName '2.4.0'
+            versionName '2.4.1'
 
             ndk {
                 moduleName 'mnvmcoreii'
