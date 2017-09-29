@@ -45,7 +45,7 @@ android {
 
         macII {
             dimension 'machine'
-            applicationId 'name.osher.gil.minivmac.ii'
+            applicationId 'ninja.gil.miniv.ii'
             versionName '2.4.1'
 
             ndk {

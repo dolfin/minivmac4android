@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Mini vMac II</string>
+    <string name="app_name">Mini V II</string>
     <string name="romFileName">MacII.ROM</string>
-    <string name="aboutTitle">Mini vMac II for Android</string>
+    <string name="aboutTitle">A Macintosh II Emulator for Android based on Mini vMac</string>
     <string name="moduleName">mnvmcoreii</string>
 </resources>
