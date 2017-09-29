@@ -502,6 +502,8 @@ public class MiniVMac extends AppCompatActivity
 	}
 
 	public void showSelectDisk() {
+		if (FileManager.getInstance().getDataDir() == null) return;
+
 		onActivity = true;
 		Intent i = new Intent(this, FilePickerActivity.class);
 		i.putExtra(FilePickerActivity.EXTRA_ALLOW_MULTIPLE, false);
@@ -530,6 +532,8 @@ public class MiniVMac extends AppCompatActivity
 	}
 
 	public void showSelectFolder() {
+		if (FileManager.getInstance().getDataDir() == null) return;
+		
 		onActivity = true;
 		Intent i = new Intent(this, FilePickerActivity.class);
 		i.putExtra(FilePickerActivity.EXTRA_ALLOW_MULTIPLE, false);
