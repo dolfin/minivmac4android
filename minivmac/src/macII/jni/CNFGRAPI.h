@@ -15,7 +15,9 @@
 #include <sys/times.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <errno.h>
 #include <unistd.h>
+#include <dlfcn.h>
 
 #define CanGetAppPath 1
 #define HaveAppPathLink 1
@@ -34,6 +36,7 @@
 #define WantInitMagnify 0
 #define EnableMagnify 1
 #define MyWindowScale 2
+#define UseColorImage 1
 #define WantInitRunInBackground 0
 #define WantInitNotAutoSlow 1
 #define WantInitSpeedValue 2
@@ -42,12 +45,13 @@
 #define NeedDoAboutMsg 0
 #define UseControlKeys 1
 #define UseActvCode 0
+#define EnableDemoMsg 0
 
 /* version and other info to display to user */
 
-#define NeedIntlChars 1
+#define NeedIntlChars 0
 #define kStrAppName "Mini vMac"
-#define kAppVariationStr "minivmac-3.3.3-android (Mac II)"
-#define kStrCopyrightYear "2013"
+#define kAppVariationStr "minivmac-3.5.8-android (Mac II)"
+#define kStrCopyrightYear "2018"
 #define kMaintainerName "Gil Osher"
-#define kStrHomePage "http://dolfin.github.com/minivmac4android"
+#define kStrHomePage "http://miniv.gil.ninja/"

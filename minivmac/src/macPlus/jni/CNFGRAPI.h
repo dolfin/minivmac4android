@@ -24,7 +24,6 @@
 #define TheAppPathLink "/proc/self/exe"
 #define HaveSysctlPath 0
 
-#define RaspbianWorkAround 1
 
 #define RomFileName "vMac.ROM"
 #define EnableDragDrop 0
@@ -37,6 +36,7 @@
 #define WantInitMagnify 0
 #define EnableMagnify 1
 #define MyWindowScale 2
+#define UseColorImage 1
 #define WantInitRunInBackground 0
 #define WantInitNotAutoSlow 0
 #define WantInitSpeedValue 3
@@ -45,12 +45,13 @@
 #define NeedDoAboutMsg 0
 #define UseControlKeys 1
 #define UseActvCode 0
+#define EnableDemoMsg 0
 
 /* version and other info to display to user */
 
-#define NeedIntlChars 1
+#define NeedIntlChars 0
 #define kStrAppName "Mini vMac"
-#define kAppVariationStr "minivmac-3.3.3-android"
-#define kStrCopyrightYear "2013"
+#define kAppVariationStr "minivmac-3.5.8-android"
+#define kStrCopyrightYear "2018"
 #define kMaintainerName "Gil Osher"
-#define kStrHomePage "http://dolfin.github.com/minivmac4android"
+#define kStrHomePage "http://miniv.gil.ninja/"

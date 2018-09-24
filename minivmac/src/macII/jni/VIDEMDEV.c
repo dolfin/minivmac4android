@@ -39,6 +39,12 @@
 
 #include "VIDEMDEV.h"
 
+/*
+	ReportAbnormalID unused 0x0A08 - 0x0AFF
+*/
+
+#define VID_dolog (dbglog_HAVE && 0)
+
 LOCALVAR const ui3b VidDrvr_contents[] = {
 0x4C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x2A, 0x00, 0x00, 0x00, 0xE2, 0x00, 0xEC,
@@ -384,7 +390,7 @@ GLOBALFUNC blnr Vid_Init(void)
 
 	UsedSoFar = (pPatch - VidROM) + 20;
 	if (UsedSoFar > kVidROM_Size) {
-		ReportAbnormal("kVidROM_Size to small");
+		ReportAbnormalID(0x0A01, "kVidROM_Size to small");
 		return falseblnr;
 	}
 
@@ -467,6 +473,7 @@ GLOBALFUNC ui4r Vid_Reset(void)
 #define CntrlParam_csParam 0x1C /* operation-defined parameters */
 
 #define VDPageInfo_csMode 0
+#define VDPageInfo_csData 2
 #define VDPageInfo_csPage 6
 #define VDPageInfo_csBaseAddr 8
 
@@ -535,21 +542,33 @@ GLOBALPROC ExtnVideo_Access(CPTR p)
 
 	switch (get_vm_word(p + ExtnDat_commnd)) {
 		case kCmndVersion:
+#if VID_dolog
+			dbglog_WriteNote("Video_Access kCmndVersion");
+#endif
 			put_vm_word(p + ExtnDat_version, 1);
 			result = mnvm_noErr;
 			break;
 		case kCmndVideoGetIntEnbl:
+#if VID_dolog
+			dbglog_WriteNote("Video_Access kCmndVideoGetIntEnbl");
+#endif
 			put_vm_word(p + 8,
 				Vid_VBLintunenbl ? 0 : 1);
 			result = mnvm_noErr;
 			break;
 		case kCmndVideoSetIntEnbl:
+#if VID_dolog
+			dbglog_WriteNote("Video_Access kCmndVideoSetIntEnbl");
+#endif
 			Vid_VBLintunenbl =
 				(0 == get_vm_word(p + 8))
 					? 1 : 0;
 			result = mnvm_noErr;
 			break;
 		case kCmndVideoClearInt:
+#if VID_dolog && 0 /* frequent */
+			dbglog_WriteNote("Video_Access kCmndVideoClearInt");
+#endif
 			Vid_VBLinterrupt = 1;
 			result = mnvm_noErr;
 			break;
@@ -563,6 +582,10 @@ GLOBALPROC ExtnVideo_Access(CPTR p)
 
 				switch (csCode) {
 					case 0: /* VidReset */
+#if VID_dolog
+						dbglog_WriteNote(
+							"Video_Access kCmndVideoControl, VidReset");
+#endif
 						put_vm_word(csParam + VDPageInfo_csMode,
 							Vid_GetMode());
 						put_vm_word(csParam + VDPageInfo_csPage, 0);
@@ -573,13 +596,24 @@ GLOBALPROC ExtnVideo_Access(CPTR p)
 						result = mnvm_noErr;
 						break;
 					case 1: /* KillIO */
+#if VID_dolog
+						dbglog_WriteNote(
+							"Video_Access kCmndVideoControl, KillIO");
+#endif
 						result = mnvm_noErr;
 						break;
 					case 2: /* SetVidMode */
+#if VID_dolog
+						dbglog_WriteNote(
+							"Video_Access kCmndVideoControl, "
+							"SetVidMode");
+#endif
 						if (0 != get_vm_word(
 							csParam + VDPageInfo_csPage))
 						{
 							/* return mnvm_controlErr, page must be 0 */
+							ReportAbnormalID(0x0A02,
+								"SetVidMode not page 0");
 						} else {
 							result = Vid_SetMode(get_vm_word(
 								csParam + VDPageInfo_csMode));
@@ -588,6 +622,11 @@ GLOBALPROC ExtnVideo_Access(CPTR p)
 						}
 						break;
 					case 3: /* SetEntries */
+#if VID_dolog
+						dbglog_WriteNote(
+							"Video_Access kCmndVideoControl, "
+							"SetEntries");
+#endif
 #if (0 != vMacScreenDepth) && (vMacScreenDepth < 4)
 						if (UseColorMode) {
 							CPTR csTable = get_vm_long(
@@ -596,21 +635,24 @@ GLOBALPROC ExtnVideo_Access(CPTR p)
 								csParam + VDSetEntryRecord_csStart);
 							ui4r csCount = 1 + get_vm_word(
 								csParam + VDSetEntryRecord_csCount);
+
 							if (((ui4r) 0xFFFF) == csStart) {
-								ReportAbnormal(
-								"Indexed SetEntries not implemented");
-							} else if (csStart + csCount > CLUT_size) {
-								result = mnvm_paramErr;
-							} else {
 								int i;
 
+								result = mnvm_noErr;
 								for (i = 0; i < csCount; ++i) {
-									int j = i + csStart;
+									ui4r j = get_vm_word(csTable + 0);
 									if (j == 0) {
 										/* ignore input, leave white */
-									} else if (j == CLUT_size - 1) {
+									} else
+									if (j == CLUT_size - 1) {
 										/* ignore input, leave black */
-									} else {
+									} else
+									if (j >= CLUT_size) {
+										/* out of range */
+										result = mnvm_paramErr;
+									} else
+									{
 										ui4r r =
 											get_vm_word(csTable + 2);
 										ui4r g =
@@ -624,6 +666,41 @@ GLOBALPROC ExtnVideo_Access(CPTR p)
 									csTable += 8;
 								}
 								ColorMappingChanged = trueblnr;
+							} else
+							if (csStart + csCount < csStart) {
+								/* overflow */
+								result = mnvm_paramErr;
+							} else
+							if (csStart + csCount > CLUT_size) {
+								result = mnvm_paramErr;
+							} else
+							{
+								int i;
+
+								for (i = 0; i < csCount; ++i) {
+									int j = i + csStart;
+
+									if (j == 0) {
+										/* ignore input, leave white */
+									} else
+									if (j == CLUT_size - 1) {
+										/* ignore input, leave black */
+									} else
+									{
+										ui4r r =
+											get_vm_word(csTable + 2);
+										ui4r g =
+											get_vm_word(csTable + 4);
+										ui4r b =
+											get_vm_word(csTable + 6);
+										CLUT_reds[j] = r;
+										CLUT_greens[j] = g;
+										CLUT_blues[j] = b;
+									}
+									csTable += 8;
+								}
+								ColorMappingChanged = trueblnr;
+								result = mnvm_noErr;
 							}
 						} else
 #endif
@@ -632,6 +709,10 @@ GLOBALPROC ExtnVideo_Access(CPTR p)
 						}
 						break;
 					case 4: /* SetGamma */
+#if VID_dolog
+						dbglog_WriteNote(
+							"Video_Access kCmndVideoControl, SetGamma");
+#endif
 						{
 #if 0
 							CPTR csTable = get_vm_long(
@@ -639,8 +720,19 @@ GLOBALPROC ExtnVideo_Access(CPTR p)
 							/* not implemented */
 #endif
 						}
+#if 0
+						ReportAbnormalID(0x0A03,
+							"Video_Access SetGamma not implemented");
+#else
+						result = mnvm_noErr;
+#endif
 						break;
 					case 5: /* GrayScreen */
+#if VID_dolog
+						dbglog_WriteNote(
+							"Video_Access kCmndVideoControl, "
+							"GrayScreen");
+#endif
 						{
 #if 0
 							ui4r csPage = get_vm_word(
@@ -652,6 +744,10 @@ GLOBALPROC ExtnVideo_Access(CPTR p)
 						}
 						break;
 					case 6: /* SetGray */
+#if VID_dolog
+						dbglog_WriteNote(
+							"Video_Access kCmndVideoControl, SetGray");
+#endif
 						{
 							ui3r csMode = get_vm_byte(
 								csParam + VDPageInfo_csMode);
@@ -664,6 +760,37 @@ GLOBALPROC ExtnVideo_Access(CPTR p)
 							UseGrayTones = (csMode != 0);
 							result = mnvm_noErr;
 						}
+						break;
+					case 9: /* SetDefaultMode */
+#if VID_dolog
+						dbglog_WriteNote(
+							"Video_Access kCmndVideoControl, "
+							"SetDefaultMode");
+#endif
+						/* not handled yet */
+						/*
+							seen when close Monitors control panel
+							in system 7.5.5
+						*/
+						break;
+					case 16: /* SavePreferredConfiguration */
+#if VID_dolog
+						dbglog_WriteNote(
+							"Video_Access kCmndVideoControl, "
+							"SavePreferredConfiguration");
+#endif
+						/* not handled yet */
+						/*
+							seen when close Monitors control panel
+							in system 7.5.5
+						*/
+						break;
+					default:
+						ReportAbnormalID(0x0A04,
+							"kCmndVideoControl, unknown csCode");
+#if dbglog_HAVE
+						dbglog_writelnNum("csCode", csCode);
+#endif
 						break;
 				}
 			}
@@ -679,6 +806,10 @@ GLOBALPROC ExtnVideo_Access(CPTR p)
 				result = mnvm_statusErr;
 				switch (csCode) {
 					case 2: /* GetMode */
+#if VID_dolog
+						dbglog_WriteNote(
+							"Video_Access kCmndVideoStatus, GetMode");
+#endif
 						put_vm_word(csParam + VDPageInfo_csMode,
 							Vid_GetMode());
 						put_vm_word(csParam + VDPageInfo_csPage, 0);
@@ -688,6 +819,11 @@ GLOBALPROC ExtnVideo_Access(CPTR p)
 						result = mnvm_noErr;
 						break;
 					case 3: /* GetEntries */
+#if VID_dolog
+						dbglog_WriteNote(
+							"Video_Access kCmndVideoStatus, "
+							"GetEntries");
+#endif
 						{
 #if 0
 							CPTR csTable = get_vm_long(
@@ -699,16 +835,25 @@ GLOBALPROC ExtnVideo_Access(CPTR p)
 								csParam + VDSetEntryRecord_csCount,
 								csCount);
 #endif
-							ReportAbnormal(
+							ReportAbnormalID(0x0A05,
 								"GetEntries not implemented");
 						}
 						break;
 					case 4: /* GetPages */
+#if VID_dolog
+						dbglog_WriteNote(
+							"Video_Access kCmndVideoStatus, GetPages");
+#endif
 						put_vm_word(csParam + VDPageInfo_csPage, 1);
 							/* always 1 page */
 						result = mnvm_noErr;
 						break;
 					case 5: /* GetPageAddr */
+#if VID_dolog
+						dbglog_WriteNote(
+							"Video_Access kCmndVideoStatus,"
+							" GetPageAddr");
+#endif
 						{
 							ui4r csPage = get_vm_word(
 								csParam + VDPageInfo_csPage);
@@ -726,19 +871,132 @@ GLOBALPROC ExtnVideo_Access(CPTR p)
 						}
 						break;
 					case 6: /* GetGray */
-						{
-							put_vm_word(csParam + VDPageInfo_csMode,
-								UseGrayTones ? 0x0100 : 0);
-								/*
-									"Designing Cards and Drivers" book
-									says this is a word, but it seems
-									to be a byte.
-								*/
-							result = mnvm_noErr;
-						}
+#if VID_dolog
+						dbglog_WriteNote(
+							"Video_Access kCmndVideoStatus, GetGray");
+#endif
+						put_vm_word(csParam + VDPageInfo_csMode,
+							UseGrayTones ? 0x0100 : 0);
+							/*
+								"Designing Cards and Drivers" book
+								says this is a word, but it seems
+								to be a byte.
+							*/
+						result = mnvm_noErr;
+						break;
+					case 8: /* GetGamma */
+#if VID_dolog
+						dbglog_WriteNote(
+							"Video_Access kCmndVideoStatus, "
+							"GetGamma");
+#endif
+						/* not handled yet */
+						/*
+							seen when close Monitors control panel
+							in system 7.5.5
+						*/
+						break;
+					case 9: /* GetDefaultMode */
+#if VID_dolog
+						dbglog_WriteNote(
+							"Video_Access kCmndVideoStatus, "
+							"GetDefaultMode");
+#endif
+						/* not handled yet */
+						/* seen in System 7.5.5 boot */
+						break;
+					case 10: /* GetCurrentMode */
+#if VID_dolog
+						dbglog_WriteNote(
+							"Video_Access kCmndVideoStatus, "
+							"GetCurrentMode");
+#endif
+#if 0
+						put_vm_word(csParam + VDPageInfo_csMode,
+							Vid_GetMode());
+						put_vm_long(csParam + VDPageInfo_csData, 0);
+							/* what is this ? */
+						put_vm_word(csParam + VDPageInfo_csPage, 0);
+							/* page is always 0 */
+						put_vm_long(csParam + VDPageInfo_csBaseAddr,
+							VidBaseAddr);
+
+						result = mnvm_noErr;
+#endif
+						break;
+					case 12: /* GetConnection */
+#if VID_dolog
+						dbglog_WriteNote(
+							"Video_Access kCmndVideoStatus, "
+							"GetConnection");
+#endif
+						/* not handled yet */
+						/* seen in System 7.5.5 boot */
+						break;
+					case 13: /* GetCurrentMode */
+#if VID_dolog
+						dbglog_WriteNote(
+							"Video_Access kCmndVideoStatus, "
+							"GetCurrentMode");
+#endif
+						/* not handled yet */
+						/* seen in System 7.5.5 boot */
+						break;
+					case 14: /* GetModeBaseAddress */
+#if VID_dolog
+						dbglog_WriteNote(
+							"Video_Access kCmndVideoStatus, "
+							"GetModeBaseAddress");
+#endif
+						/* not handled yet */
+						/*
+							seen in System 7.5.5 Monitors control panel
+						*/
+						break;
+					case 16: /* GetPreferredConfiguration */
+#if VID_dolog
+						dbglog_WriteNote(
+							"Video_Access kCmndVideoStatus, "
+							"GetPreferredConfiguration");
+#endif
+						/* not handled yet */
+						/* seen in System 7.5.5 boot */
+						break;
+					case 17: /* GetNextResolution */
+#if VID_dolog
+						dbglog_WriteNote(
+							"Video_Access kCmndVideoStatus, "
+							"GetNextResolution");
+#endif
+						/* not handled yet */
+						/*
+							seen in System 7.5.5 monitors control panel
+							option button
+						*/
+						break;
+					case 18: /* GetVideoParameters */
+#if VID_dolog
+						dbglog_WriteNote(
+							"Video_Access kCmndVideoStatus, "
+							"GetVideoParameters");
+#endif
+						/* not handled yet */
+						/* seen in System 7.5.5 boot */
+						break;
+					default:
+						ReportAbnormalID(0x0A06,
+							"Video_Access kCmndVideoStatus, "
+								"unknown csCode");
+#if dbglog_HAVE
+						dbglog_writelnNum("csCode", csCode);
+#endif
 						break;
 				}
 			}
+			break;
+		default:
+			ReportAbnormalID(0x0A07,
+				"Video_Access, unknown commnd");
 			break;
 	}
 

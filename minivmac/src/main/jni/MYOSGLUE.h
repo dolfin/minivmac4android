@@ -34,24 +34,24 @@
 #endif
 
 
-EXPORTPROC WarnMsgCorruptedROM(void);
-EXPORTPROC WarnMsgUnsupportedROM(void);
-EXPORTPROC WarnMsgAbnormal(void);
+EXPORTOSGLUPROC WarnMsgCorruptedROM(void);
+EXPORTOSGLUPROC WarnMsgUnsupportedROM(void);
+EXPORTOSGLUPROC WarnMsgAbnormalID(ui4r id);
 
 #if dbglog_HAVE
-EXPORTPROC dbglog_writeCStr(char *s);
-EXPORTPROC dbglog_writeReturn(void);
-EXPORTPROC dbglog_writeHex(ui5r x);
-EXPORTPROC dbglog_writeNum(ui5r x);
-EXPORTPROC dbglog_writeMacChar(ui3r x);
-EXPORTPROC dbglog_writeln(char *s);
-EXPORTPROC dbglog_writelnNum(char *s, simr v);
+EXPORTOSGLUPROC dbglog_writeCStr(char *s);
+EXPORTOSGLUPROC dbglog_writeReturn(void);
+EXPORTOSGLUPROC dbglog_writeHex(ui5r x);
+EXPORTOSGLUPROC dbglog_writeNum(ui5r x);
+EXPORTOSGLUPROC dbglog_writeMacChar(ui3r x);
+EXPORTOSGLUPROC dbglog_writeln(char *s);
+EXPORTOSGLUPROC dbglog_writelnNum(char *s, simr v);
 #endif
 
-EXPORTPROC ReserveAllocOneBlock(ui3p *p, uimr n, ui3r align,
+EXPORTOSGLUPROC ReserveAllocOneBlock(ui3p *p, uimr n, ui3r align,
 	blnr FillOnes);
 
-EXPORTPROC MyMoveBytes(anyp srcPtr, anyp destPtr, si5b byteCount);
+EXPORTOSGLUPROC MyMoveBytes(anyp srcPtr, anyp destPtr, si5b byteCount);
 
 
 EXPORTVAR(ui3p, ROM)
@@ -108,12 +108,12 @@ EXPORTVAR(ui3p, ROM)
 
 #define NotAPbuf ((tPbuf)0xFFFF)
 
-EXPORTFUNC tMacErr CheckPbuf(tPbuf Pbuf_No);
-EXPORTFUNC tMacErr PbufGetSize(tPbuf Pbuf_No, ui5r *Count);
+EXPORTOSGLUFUNC tMacErr CheckPbuf(tPbuf Pbuf_No);
+EXPORTOSGLUFUNC tMacErr PbufGetSize(tPbuf Pbuf_No, ui5r *Count);
 
-EXPORTFUNC tMacErr PbufNew(ui5b count, tPbuf *r);
-EXPORTPROC PbufDispose(tPbuf i);
-EXPORTPROC PbufTransfer(ui3p Buffer,
+EXPORTOSGLUFUNC tMacErr PbufNew(ui5b count, tPbuf *r);
+EXPORTOSGLUPROC PbufDispose(tPbuf i);
+EXPORTOSGLUPROC PbufTransfer(ui3p Buffer,
 	tPbuf i, ui5r offset, ui5r count, blnr IsWrite);
 
 #endif
@@ -126,14 +126,14 @@ EXPORTVAR(ui5b, vSonyInsertedMask)
 #define vSonyIsInserted(Drive_No) \
 	((vSonyInsertedMask & ((ui5b)1 << (Drive_No))) != 0)
 
-EXPORTFUNC tMacErr vSonyTransfer(blnr IsWrite, ui3p Buffer,
+EXPORTOSGLUFUNC tMacErr vSonyTransfer(blnr IsWrite, ui3p Buffer,
 	tDrive Drive_No, ui5r Sony_Start, ui5r Sony_Count,
 	ui5r *Sony_ActCount);
-EXPORTFUNC tMacErr vSonyEject(tDrive Drive_No);
-EXPORTFUNC tMacErr vSonyGetSize(tDrive Drive_No, ui5r *Sony_Count);
+EXPORTOSGLUFUNC tMacErr vSonyEject(tDrive Drive_No);
+EXPORTOSGLUFUNC tMacErr vSonyGetSize(tDrive Drive_No, ui5r *Sony_Count);
 
-EXPORTFUNC blnr AnyDiskInserted(void);
-EXPORTPROC DiskRevokeWritable(tDrive Drive_No);
+EXPORTOSGLUFUNC blnr AnyDiskInserted(void);
+EXPORTOSGLUPROC DiskRevokeWritable(tDrive Drive_No);
 
 #if IncludeSonyRawMode
 EXPORTVAR(blnr, vSonyRawMode)
@@ -142,7 +142,7 @@ EXPORTVAR(blnr, vSonyRawMode)
 #if IncludeSonyNew
 EXPORTVAR(blnr, vSonyNewDiskWanted)
 EXPORTVAR(ui5b, vSonyNewDiskSize)
-EXPORTFUNC tMacErr vSonyEjectDelete(tDrive Drive_No);
+EXPORTOSGLUFUNC tMacErr vSonyEjectDelete(tDrive Drive_No);
 #endif
 
 #if IncludeSonyNameNew
@@ -150,13 +150,15 @@ EXPORTVAR(tPbuf, vSonyNewDiskName)
 #endif
 
 #if IncludeSonyGetName
-EXPORTFUNC tMacErr vSonyGetName(tDrive Drive_No, tPbuf *r);
+EXPORTOSGLUFUNC tMacErr vSonyGetName(tDrive Drive_No, tPbuf *r);
 #endif
 
 #if IncludeHostTextClipExchange
-EXPORTFUNC tMacErr HTCEexport(tPbuf i);
-EXPORTFUNC tMacErr HTCEimport(tPbuf *r);
+EXPORTOSGLUFUNC tMacErr HTCEexport(tPbuf i);
+EXPORTOSGLUFUNC tMacErr HTCEimport(tPbuf *r);
 #endif
+
+EXPORTVAR(ui5b, OnTrueTime)
 
 EXPORTVAR(ui5b, CurMacDateInSeconds)
 EXPORTVAR(ui5b, CurMacLatitude)
@@ -192,8 +194,11 @@ EXPORTVAR(ui4r, CLUT_greens[CLUT_size])
 EXPORTVAR(ui4r, CLUT_blues[CLUT_size])
 #endif
 
-EXPORTPROC Screen_OutputFrame(ui3p screencurrentbuff);
+EXPORTVAR(blnr, EmVideoDisable)
+EXPORTVAR(si3b, EmLagTime)
 
+EXPORTOSGLUPROC Screen_OutputFrame(ui3p screencurrentbuff);
+EXPORTOSGLUPROC DoneWithDrawingForTick(void);
 
 EXPORTVAR(blnr, ForceMacOff)
 
@@ -201,7 +206,7 @@ EXPORTVAR(blnr, WantMacInterrupt)
 
 EXPORTVAR(blnr, WantMacReset)
 
-EXPORTFUNC blnr ExtraTimeNotOver(void);
+EXPORTOSGLUFUNC blnr ExtraTimeNotOver(void);
 
 EXPORTVAR(ui3b, SpeedValue)
 
@@ -242,8 +247,8 @@ EXPORTVAR(ui5r, QuietSubTicks)
 
 #if MySoundEnabled
 
-EXPORTFUNC tpSoundSamp MySound_BeginWrite(ui4r n, ui4r *actL);
-EXPORTPROC MySound_EndWrite(ui4r actL);
+EXPORTOSGLUFUNC tpSoundSamp MySound_BeginWrite(ui4r n, ui4r *actL);
+EXPORTOSGLUPROC MySound_EndWrite(ui4r actL);
 
 /* 370 samples per tick = 22,254.54 per second */
 #endif
@@ -254,14 +259,16 @@ EXPORTPROC MySound_EndWrite(ui4r actL);
 EXPORTVAR(ui3p, LT_TxBuffer)
 EXPORTVAR(ui4r, LT_TxBuffSz)
 
-EXPORTPROC LT_TransmitPacket(void);
+EXPORTOSGLUPROC LT_TransmitPacket(void);
 
-EXPORTVAR(ui3p, LT_RxBuffer);
-EXPORTVAR(ui5r, LT_RxBuffSz);
+EXPORTVAR(ui3p, LT_RxBuffer)
+EXPORTVAR(ui5r, LT_RxBuffSz)
 
-EXPORTPROC LT_ReceivePacket(void);
+EXPORTOSGLUPROC LT_ReceivePacket(void);
 
 #endif
+
+EXPORTOSGLUPROC WaitForNextTick(void);
 
 #define MyEvtQElKindKey 0
 #define MyEvtQElKindMouseButton 1
@@ -285,8 +292,8 @@ struct MyEvtQEl {
 };
 typedef struct MyEvtQEl MyEvtQEl;
 
-EXPORTFUNC MyEvtQEl * MyEvtQOutP(void);
-EXPORTPROC MyEvtQOutDone(void);
+EXPORTOSGLUFUNC MyEvtQEl * MyEvtQOutP(void);
+EXPORTOSGLUPROC MyEvtQOutDone(void);
 
 #define MKC_A 0x00
 #define MKC_B 0x0B
@@ -398,3 +405,5 @@ EXPORTPROC MyEvtQOutDone(void);
 #define MKC_Print 0x69
 #define MKC_ScrollLock 0x6B
 #define MKC_Pause 0x71
+
+#define MKC_AngleBracket 0x0A /* found on german keyboard */

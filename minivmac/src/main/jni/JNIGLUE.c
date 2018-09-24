@@ -61,6 +61,7 @@ JNIEnv * jEnv;
 jclass jClass;
 jmethodID jSonyTransfer, jSonyGetSize, jSonyEject, jSonyGetName, jSonyMakeNewDisk;
 jmethodID jWarnMsg;
+jmethodID jUpdateScreen;
 jobject mCore;
 
 static jmethodID nativeCrashed, playSound;
@@ -82,7 +83,6 @@ GLOBALPROC MyMoveBytes(anyp srcPtr, anyp destPtr, si5b byteCount)
 #endif
 
 LOCALVAR ui5b TrueEmulatedTime = 0;
-LOCALVAR ui5b CurEmulatedTime = 0;
 
 #include "DATE2SEC.h"
 
@@ -159,7 +159,7 @@ LOCALPROC UpdateTrueEmulatedTime(void)
 
 	TimeDiff = GetTimeDiff();
 	if (TimeDiff >= 0) {
-		if (TimeDiff > 4 * MyInvTimeStep) {
+		if (TimeDiff > 16 * MyInvTimeStep) {
 			/* emulation interrupted, forget it */
 			++TrueEmulatedTime;
 			InitNextTime();
@@ -170,7 +170,7 @@ LOCALPROC UpdateTrueEmulatedTime(void)
 				TimeDiff -= TicksPerSecond;
 			} while (TimeDiff >= 0);
 		}
-	} else if (TimeDiff < - 2 * MyInvTimeStep) {
+	} else if (TimeDiff < - 16 * MyInvTimeStep) {
 		/* clock goofed if ever get here, reset */
 		InitNextTime();
 	}
@@ -263,9 +263,9 @@ GLOBALFUNC tpSoundSamp MySound_BeginWrite(ui4r n, ui4r *actL)
 LOCALPROC MySound_SecondNotify(void)
 {
 	if (MinFilledSoundBuffs > DesiredMinFilledSoundBuffs) {
-		++CurEmulatedTime;
+		IncrNextTime();
 	} else if (MinFilledSoundBuffs < DesiredMinFilledSoundBuffs) {
-		--CurEmulatedTime;
+		++TrueEmulatedTime;
 	}
 	MinFilledSoundBuffs = kSoundBuffers;
 }
@@ -553,6 +553,7 @@ GLOBALFUNC tMacErr vSonyTransfer(blnr IsWrite, ui3p Buffer,	tDrive Drive_No, ui5
 	jobject jBuffer;
 	jBuffer = (*jEnv)->NewDirectByteBuffer(jEnv, Buffer, (jlong)Sony_Count);
 	ui5r actCount = (*jEnv)->CallIntMethod(jEnv, mCore, jSonyTransfer, (jboolean)IsWrite, jBuffer, (jint)Drive_No, (jint)Sony_Start, (jint)Sony_Count);
+	(*jEnv)->DeleteLocalRef(jEnv, jBuffer);
 
 	if (nullpr != Sony_ActCount) {
 		*Sony_ActCount = actCount;
@@ -734,16 +735,10 @@ JNIEXPORT jintArray JNICALL Java_name_osher_gil_minivmac_Core_getScreenUpdate (J
 	int i,x,y;
 
 	// create java array of changes: top, left, bottom, right, pixels...
-	jintArray jArray = (*jEnv)->NewIntArray(jEnv, changesSize+4);
+	jintArray jArray = (*jEnv)->NewIntArray(jEnv, changesSize);
 	jboolean arrayCopy = JNI_FALSE;
 	jint *arr = (jint*)(*jEnv)->GetPrimitiveArrayCritical(jEnv, (jarray)jArray, &arrayCopy);
-	jint *px = &arr[4];
-
-	// add coordinates
-	arr[0] = (jint)top;
-	arr[1] = (jint)left;
-	arr[2] = (jint)bottom;
-	arr[3] = (jint)right;
+	jint *px = arr;
 
 	ui3p curdrawbuff = GetCurDrawBuff();
 
@@ -795,10 +790,17 @@ JNIEXPORT jintArray JNICALL Java_name_osher_gil_minivmac_Core_getScreenUpdate (J
     }
 #endif
 
-	ScreenClearChanges();
-
 	(*jEnv)->ReleasePrimitiveArrayCritical(jEnv, (jarray)jArray, (void*)arr, 0);
 	return jArray;
+}
+
+LOCALPROC MyDrawChangesAndClear(void)
+{
+	if (ScreenChangedBottom > ScreenChangedTop) {
+		(*jEnv)->CallVoidMethod(jEnv, mCore, jUpdateScreen, ScreenChangedTop, ScreenChangedLeft,
+								ScreenChangedBottom, ScreenChangedRight);
+		ScreenClearChanges();
+	}
 }
 
 #if 0
@@ -916,12 +918,20 @@ LOCALPROC CheckSavedMacMsg(void)
 #pragma mark Emulation
 #endif
 
-LOCALVAR ui5b OnTrueTime = 0;
-
-GLOBALFUNC blnr ExtraTimeNotOver(void)
+LOCALPROC LeaveSpeedStopped(void)
 {
-	UpdateTrueEmulatedTime();
-	return TrueEmulatedTime == OnTrueTime;
+#if MySoundEnabled
+	//MySound_Start();
+#endif
+
+	StartUpTimeAdjust();
+}
+
+LOCALPROC EnterSpeedStopped(void)
+{
+#if MySoundEnabled
+	//MySound_Stop();
+#endif
 }
 
 LOCALPROC CheckForSavedTasks(void)
@@ -938,6 +948,16 @@ LOCALPROC CheckForSavedTasks(void)
 
 	if (ForceMacOff) {
 		return;
+	}
+
+	if (CurSpeedStopped != SpeedStopped)
+	{
+		CurSpeedStopped = ! CurSpeedStopped;
+		if (CurSpeedStopped) {
+			EnterSpeedStopped();
+		} else {
+			LeaveSpeedStopped();
+		}
 	}
 
 #if IncludeSonyNew
@@ -964,67 +984,47 @@ LOCALPROC CheckForSavedTasks(void)
 	if ((nullpr != SavedBriefMsg) & ! MacMsgDisplayed) {
 		MacMsgDisplayOn();
 	}
-}
 
-/* --- platform independent code can be thought of as going here --- */
-
-#include "PROGMAIN.h"
-
-LOCALPROC RunEmulatedTicksToTrueTime(void)
-{
-	si3b n = OnTrueTime - CurEmulatedTime;
-
-	if (n > 0) {
-		if (CheckDateTime()) {
-#if MySoundEnabled
-			MySound_SecondNotify();
-#endif
-		}
-
-#if UseMotionEvents
-		if (! CaughtMouse)
-#endif
-		{
-			//CheckMouseState();
-		}
-
-		DoEmulateOneTick();
-		++CurEmulatedTime;
-
-#if EnableMouseMotion && MayFullScreen
-		if (HaveMouseMotion) {
-			AutoScrollScreen();
-		}
-#endif
-		//MyDrawChangesAndClear();
-
-		if (ExtraTimeNotOver() && (--n > 0)) {
-			/* lagging, catch up */
-
-			if (n > 8) {
-				/* emulation not fast enough */
-				n = 8;
-				CurEmulatedTime = OnTrueTime - n;
-			}
-
-			EmVideoDisable = trueblnr;
-
-			do {
-				DoEmulateOneTick();
-				++CurEmulatedTime;
-			} while (ExtraTimeNotOver()
-				&& (--n > 0));
-
-			EmVideoDisable = falseblnr;
-		}
-
-		EmLagTime = n;
+	if (NeedWholeScreenDraw) {
+		NeedWholeScreenDraw = falseblnr;
+		ScreenChangedAll();
 	}
 }
 
-LOCALPROC RunOnEndOfSixtieth(void)
+/* --- main program flow --- */
+
+GLOBALOSGLUPROC DoneWithDrawingForTick(void)
 {
-	while (ExtraTimeNotOver()) {
+#if EnableFSMouseMotion
+	if (HaveMouseMotion) {
+		AutoScrollScreen();
+	}
+#endif
+	MyDrawChangesAndClear();
+}
+
+GLOBALOSGLUFUNC blnr ExtraTimeNotOver(void)
+{
+	UpdateTrueEmulatedTime();
+	return TrueEmulatedTime == OnTrueTime;
+}
+
+
+GLOBALOSGLUPROC WaitForNextTick(void)
+{
+label_retry:
+    sleep(0);
+	CheckForSavedTasks();
+	if (ForceMacOff) {
+		return;
+	}
+
+	if (CurSpeedStopped) {
+		DoneWithDrawingForTick();
+		goto label_retry;
+	}
+
+	if (ExtraTimeNotOver()) {
 		struct timespec rqt;
 		struct timespec rmt;
 
@@ -1034,11 +1034,35 @@ LOCALPROC RunOnEndOfSixtieth(void)
 			rqt.tv_nsec = (- TimeDiff) * 1000;
 			(void) nanosleep(&rqt, &rmt);
 		}
+		goto label_retry;
+	}
+
+	if (CheckDateTime()) {
+#if MySoundEnabled
+		MySound_SecondNotify();
+#endif
+#if EnableDemoMsg
+		DemoModeSecondNotify();
+#endif
+	}
+
+#if UseMotionEvents
+	if (! CaughtMouse)
+#endif
+	{
+		//CheckMouseState();
 	}
 
 	OnTrueTime = TrueEmulatedTime;
-	RunEmulatedTicksToTrueTime();
+
+#if dbglog_TimeStuff
+	dbglog_writelnNum("WaitForNextTick, OnTrueTime", OnTrueTime);
+#endif
 }
+
+/* --- platform independent code can be thought of as going here --- */
+
+#include "PROGMAIN.h"
 
 LOCALPROC ReserveAllocAll(void)
 {
@@ -1103,24 +1127,11 @@ JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_setWantMacInterrupt (JN
 
 /*
  * Class:     name_osher_gil_minivmac_Core
- * Method:    runTick
+ * Method:    main
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_runTick (JNIEnv * env, jclass class) {
-	jEnv = env;
-	jClass = class;
-
-	CheckForSavedTasks();
-	if (ForceMacOff) {
-		return;
-	}
-
-	if (CurSpeedStopped) {
-		return;
-	} else {
-		DoEmulateExtraTime();
-		RunOnEndOfSixtieth();
-	}
+JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_main (JNIEnv * env, jclass class) {
+	ProgramMain();
 }
 
 /*
@@ -1199,7 +1210,7 @@ JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_init (JNIEnv * env,
 	if (AllocMyMemory())
 	if (LoadMacRom(romData, romSize))
 	if (Screen_Init())
-	if (InitEmulation())
+	//if (InitEmulation())
 	{
 		mCore = (*env)->NewGlobalRef(env, core);
 		// get java method IDs
@@ -1209,6 +1220,7 @@ JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_init (JNIEnv * env,
 		jSonyGetName = (*env)->GetMethodID(env, this, "sonyGetName", "(I)Ljava/lang/String;");
 		jSonyMakeNewDisk = (*env)->GetMethodID(env, this, "sonyMakeNewDisk", "(ILjava/lang/String;)I");
 		jWarnMsg = (*env)->GetMethodID(env, this, "warnMsg", "(Ljava/lang/String;Ljava/lang/String;)V");
+		jUpdateScreen = (*env)->GetMethodID(env, this, "updateScreen", "(IIII)V");
 
 		// initialize fields
 		jfieldID sDiskPath, sDiskFile, sNumInsertedDisks, sInitOk;

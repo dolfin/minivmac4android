@@ -25,6 +25,9 @@
 #endif
 
 enum {
+#if EnableDemoMsg
+	SpclModeDemo,
+#endif
 #if EnableAltKeysMode
 	SpclModeAltKeyText,
 #endif
@@ -321,11 +324,51 @@ LOCALPROC DrawSpclMode0(char *Title, SpclModeBody Body)
 #define DisconnectKeyCodes1 DisconnectKeyCodes
 #endif
 
+LOCALPROC ClStrAppendHexNib(int *L0, ui3b *r, ui3r v)
+{
+	if (v < 10) {
+		ClStrAppendChar(L0, r, kCellDigit0 + v);
+	} else {
+		ClStrAppendChar(L0, r, kCellUpA + (v - 10));
+	}
+}
+
+LOCALPROC ClStrAppendHexByte(int *L0, ui3b *r, ui3r v)
+{
+	ClStrAppendHexNib(L0, r, (v >> 4) & 0x0F);
+	ClStrAppendHexNib(L0, r, v & 0x0F);
+}
+
+LOCALPROC ClStrAppendHexWord(int *L0, ui3b *r, ui4r v)
+{
+	ClStrAppendHexByte(L0, r, (v >> 8) & 0xFF);
+	ClStrAppendHexByte(L0, r, v & 0xFF);
+}
+
+LOCALPROC DrawCellsOneLineHexWord(ui4r v)
+{
+	ui3b ps[ClStrMaxLength];
+	int L = 0;
+	int i;
+
+	ClStrAppendHexWord(&L, ps, v);
+
+	DrawCellsBeginLine();
+	for (i = 0; i < L; ++i) {
+		DrawCellAdvance(ps[i]);
+	}
+	DrawCellsEndLine();
+}
+
 LOCALPROC DrawCellsMessageModeBody(void)
 {
 	DrawCellsOneLineStr(SavedBriefMsg);
 	DrawCellsBlankLine();
 	DrawCellsOneLineStr(SavedLongMsg);
+	if (0 != SavedIDMsg) {
+		DrawCellsBlankLine();
+		DrawCellsOneLineHexWord(SavedIDMsg);
+	}
 }
 
 LOCALPROC DrawMessageMode(void)
@@ -337,6 +380,7 @@ LOCALPROC MacMsgDisplayOff(void)
 {
 	SpecialModeClr(SpclModeMessage);
 	SavedBriefMsg = nullpr;
+	SavedIDMsg = 0;
 	NeedWholeScreenDraw = trueblnr;
 }
 
@@ -422,7 +466,7 @@ enum {
 #endif
 	kCntrlMsgAbout,
 	kCntrlMsgHelp,
-#if UseActvCode
+#if UseActvCode || EnableDemoMsg
 	kCntrlMsgRegStrCopied,
 #endif
 
@@ -469,6 +513,25 @@ FORWARDPROC ToggleWantFullScreen(void);
 #endif
 #if UseActvCode
 FORWARDPROC CopyRegistrationStr(void);
+#elif EnableDemoMsg
+LOCALPROC CopyRegistrationStr(void)
+{
+	ui3b ps[ClStrMaxLength];
+	int i;
+	int L;
+	tPbuf j;
+
+	ClStrFromSubstCStr(&L, ps, "^v");
+
+	for (i = 0; i < L; ++i) {
+		ps[i] = Cell2MacAsciiMap[ps[i]];
+	}
+
+	if (mnvm_noErr == PbufNew(L, &j)) {
+		PbufTransfer(ps, j, 0, L, trueblnr);
+		HTCEexport(j);
+	}
+}
 #endif
 
 LOCALPROC DoControlModeKey(int key)
@@ -530,7 +593,7 @@ LOCALPROC DoControlModeKey(int key)
 					ControlMessage = kCntrlMsgFullScreen;
 					break;
 #endif
-#if UseActvCode
+#if UseActvCode || EnableDemoMsg
 				case MKC_P:
 					CopyRegistrationStr();
 					ControlMessage = kCntrlMsgRegStrCopied;
@@ -764,6 +827,10 @@ LOCALPROC DrawCellsControlModeBody(void)
 		case kCntrlMsgRegStrCopied:
 			DrawCellsOneLineStr("Registration String copied.");
 			break;
+#elif EnableDemoMsg
+		case kCntrlMsgRegStrCopied:
+			DrawCellsOneLineStr("Variation name copied.");
+			break;
 #endif
 		case kCntrlMsgConfirmResetStart:
 			DrawCellsOneLineStr(kStrConfirmReset);
@@ -815,6 +882,35 @@ LOCALPROC DrawControlMode(void)
 
 #endif /* UseControlKeys */
 
+#if EnableDemoMsg
+
+LOCALPROC DrawDemoMode(void)
+{
+	CurCellv0 = ControlBoxv0 + ((9 * CurMacDateInSeconds) & 0x0F);
+	CurCellh0 = ControlBoxh0 + ((15 * CurMacDateInSeconds) & 0x1F);
+
+	DrawCellAdvance(kCellDemo0);
+	DrawCellAdvance(kCellDemo6);
+	DrawCellAdvance(kCellDemo6);
+	DrawCellAdvance(kCellDemo7);
+	DrawCellAdvance(kCellDemo1);
+	DrawCellAdvance(kCellDemo2);
+	DrawCellAdvance(kCellDemo3);
+	DrawCellAdvance(kCellDemo4);
+	DrawCellAdvance(kCellDemo7);
+	DrawCellAdvance(kCellDemo6);
+	DrawCellAdvance(kCellDemo6);
+	DrawCellAdvance(kCellDemo5);
+}
+
+LOCALPROC DemoModeSecondNotify(void)
+{
+	NeedWholeScreenDraw = trueblnr;
+	SpecialModeSet(SpclModeDemo);
+}
+
+#endif /* EnableDemoMsg */
+
 #if UseActvCode
 #include "ACTVCODE.h"
 #endif
@@ -837,6 +933,11 @@ LOCALPROC DrawSpclMode(void)
 #if EnableAltKeysMode
 	if (SpecialModeTst(SpclModeAltKeyText)) {
 		DrawAltKeyMode();
+	} else
+#endif
+#if EnableDemoMsg
+	if (SpecialModeTst(SpclModeDemo)) {
+		DrawDemoMode();
 	} else
 #endif
 	{
@@ -928,8 +1029,16 @@ LOCALPROC Keyboard_UpdateKeyMap2(int key, blnr down)
 	} else
 #endif
 	if ((0 == SpecialModes)
+#if EnableAltKeysMode || EnableDemoMsg
+			|| (0 == (SpecialModes & ~ (
+				0
 #if EnableAltKeysMode
-			|| (0 == (SpecialModes & ~ (1 << SpclModeAltKeyText)))
+				| (1 << SpclModeAltKeyText)
+#endif
+#if EnableDemoMsg
+				| (1 << SpclModeDemo)
+#endif
+				)))
 #endif
 			|| (MKC_CapsLock == key)
 		)

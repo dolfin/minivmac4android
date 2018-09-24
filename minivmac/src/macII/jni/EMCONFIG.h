@@ -41,6 +41,12 @@
 #define Sony_SupportTags 0
 #define Sony_WantChecksumsUpdated 0
 #define Sony_VerifyChecksums 0
+#define CaretBlinkTime 0x08
+#define SpeakerVol 0x07
+#define DoubleClickTime 0x08
+#define MenuBlink 0x03
+#define AutoKeyThresh 0x06
+#define AutoKeyRate 0x03
 
 
 /* the Wire variables are 1/0, not true/false */

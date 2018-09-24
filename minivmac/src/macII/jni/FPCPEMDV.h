@@ -19,6 +19,10 @@
 	(included by MINEM68K.c)
 */
 
+/*
+	ReportAbnormalID unused 0x0306 - 0x03FF
+*/
+
 
 LOCALVAR struct fpustruct
 {
@@ -36,17 +40,19 @@ LOCALFUNC ui5r myfp_GetFPIAR(void)
 	return fpu_dat.FPIAR;
 }
 
-LOCALFUNC blnr MayNotInline DecodeAddrModeRegister(
-	ui5b themode, ui5b thereg)
+LOCALFUNC blnr DecodeAddrModeRegister(ui5b sz)
 {
+	ui4r Dat = V_regs.CurDecOpY.v[0].ArgDat;
+	ui4r themode = (Dat >> 3) & 7;
+	ui4r thereg = Dat & 7;
+
 	switch (themode) {
 		case 2 :
 		case 3 :
 		case 4 :
 		case 5 :
 		case 6 :
-			DecodeModeRegister(themode, thereg);
-			return trueblnr;
+			return DecodeModeRegister(sz);
 			break;
 		case 7 :
 			switch (thereg) {
@@ -54,17 +60,8 @@ LOCALFUNC blnr MayNotInline DecodeAddrModeRegister(
 				case 1 :
 				case 2 :
 				case 3 :
-					DecodeModeRegister(themode, thereg);
-					return trueblnr;
-					break;
 				case 4 :
-					regs.ArgKind = AKMemory;
-					regs.ArgAddr.mem = m68k_getpc();
-					if (regs.opsize == 1) {
-						++regs.ArgAddr.mem;
-					}
-					m68k_setpc(regs.ArgAddr.mem + regs.opsize);
-					return trueblnr;
+					return DecodeModeRegister(sz);
 					break;
 				default :
 					return falseblnr;
@@ -230,177 +227,196 @@ LOCALFUNC int CheckFPCondition(ui4b predicate)
 	return condition_true;
 }
 
-LOCALPROCUSEDONCE DoCodeFPU_Save(void)
+LOCALIPROC DoCodeFPU_dflt(void)
 {
-	if ((regs.opcode == 0xF327) || (regs.opcode == 0xF32D)) {
+	ReportAbnormalID(0x0301,
+		"unimplemented Floating Point Instruction");
+#if dbglog_HAVE
+	{
+		ui4r opcode = ((ui4r)(V_regs.CurDecOpY.v[0].AMd) << 8)
+			| V_regs.CurDecOpY.v[0].ArgDat;
+
+		dbglog_writelnNum("opcode", opcode);
+	}
+#endif
+	DoCodeFdefault();
+}
+
+LOCALIPROC DoCodeFPU_Save(void)
+{
+	ui4r opcode = ((ui4r)(V_regs.CurDecOpY.v[0].AMd) << 8)
+		| V_regs.CurDecOpY.v[0].ArgDat;
+	if ((opcode == 0xF327) || (opcode == 0xF32D)) {
 #if 0
-		regs.opsize = 4; /* actually unsized */
-		DecodeModeRegister(mode, reg);
-		SetArgValue(0); /* for now, try null state frame */
+		DecodeModeRegister(4);
+		SetArgValueL(0); /* for now, try null state frame */
 #endif
 		/* 28 byte 68881 IDLE frame */
 
-		regs.opsize = 28; /* actually unsized */
-		if (! DecodeAddrModeRegister(mode, reg)) {
-			ReportAbnormal(
+		if (! DecodeAddrModeRegister(28)) {
+			DoCodeFPU_dflt();
+#if dbglog_HAVE
+			dbglog_writeln(
 				"DecodeAddrModeRegister fails in DoCodeFPU_Save");
+#endif
 		} else {
-			put_long(regs.ArgAddr.mem, 0x1f180000);
-			put_long(regs.ArgAddr.mem + 4, 0);
-			put_long(regs.ArgAddr.mem + 8, 0);
-			put_long(regs.ArgAddr.mem + 12, 0);
-			put_long(regs.ArgAddr.mem + 16, 0);
-			put_long(regs.ArgAddr.mem + 20, 0);
-			put_long(regs.ArgAddr.mem + 24, 0x70000000);
+			put_long(V_regs.ArgAddr.mem, 0x1f180000);
+			put_long(V_regs.ArgAddr.mem + 4, 0);
+			put_long(V_regs.ArgAddr.mem + 8, 0);
+			put_long(V_regs.ArgAddr.mem + 12, 0);
+			put_long(V_regs.ArgAddr.mem + 16, 0);
+			put_long(V_regs.ArgAddr.mem + 20, 0);
+			put_long(V_regs.ArgAddr.mem + 24, 0x70000000);
 		}
 
 	} else {
-		ReportAbnormal("unimplemented FPU Save");
-		DoCodeFdefault();
+		DoCodeFPU_dflt();
+#if dbglog_HAVE
+		dbglog_writeln("unimplemented FPU Save");
+#endif
 	}
 }
 
-LOCALPROCUSEDONCE DoCodeFPU_Restore(void)
+LOCALIPROC DoCodeFPU_Restore(void)
 {
-	if ((regs.opcode == 0xF35F) || (regs.opcode == 0xF36D)) {
+	ui4r opcode = ((ui4r)(V_regs.CurDecOpY.v[0].AMd) << 8)
+		| V_regs.CurDecOpY.v[0].ArgDat;
+	ui4r themode = (opcode >> 3) & 7;
+	ui4r thereg = opcode & 7;
+	if ((opcode == 0xF35F) || (opcode == 0xF36D)) {
 		ui5r dstvalue;
-		regs.opsize = 4; /* actually unsized */
 
-		if (! DecodeAddrModeRegister(mode, reg)) {
-			ReportAbnormal(
+		if (! DecodeAddrModeRegister(4)) {
+			DoCodeFPU_dflt();
+#if dbglog_HAVE
+			dbglog_writeln(
 				"DecodeAddrModeRegister fails in DoCodeFPU_Restore");
-			DoCodeFdefault();
+#endif
 		} else {
-			dstvalue = get_long(regs.ArgAddr.mem);
+			dstvalue = get_long(V_regs.ArgAddr.mem);
 			if (dstvalue != 0) {
 				if (0x1f180000 == dstvalue) {
-					if (3 == mode) {
-						m68k_areg(reg) = regs.ArgAddr.mem + 28;
+					if (3 == themode) {
+						m68k_areg(thereg) = V_regs.ArgAddr.mem + 28;
 					}
 				} else {
-					ReportAbnormal("unknown restore");
+					DoCodeFPU_dflt();
+#if dbglog_HAVE
+					dbglog_writeln("unknown restore");
 						/* not a null state we saved */
-					DoCodeFdefault();
+#endif
 				}
 			}
 		}
 	} else {
-		ReportAbnormal("unimplemented FPU Restore");
-		DoCodeFdefault();
+		DoCodeFPU_dflt();
+#if dbglog_HAVE
+		dbglog_writeln("unimplemented FPU Restore");
+#endif
 	}
 }
 
-LOCALPROC DoCodeFPU_FBcc(blnr IsLong)
+LOCALIPROC DoCodeFPU_FBccW(void)
 {
 	/*
 		Also get here for a NOP instruction (opcode 0xF280),
 		which is simply a FBF.w with offset 0
 	*/
+	ui4r Dat = V_regs.CurDecOpY.v[0].ArgDat;
 
-	ui4b predicate = regs.opcode & 0x3F;
-
-	int condition_true = CheckFPCondition(predicate);
-
-#if FastRelativeJump
-	ui3p s = regs.pc_p;
-#else
-	ui5r s = m68k_getpc();
-#endif
-
-
-	if (IsLong) {
-		s += ui5r_FromSLong(nextilong());
+	if (CheckFPCondition(Dat & 0x3F)) {
+		DoCodeBraW();
 	} else {
-		s += ui5r_FromSWord(nextiword());
+		SkipiWord();
 	}
 
-	if (condition_true) {
-#if FastRelativeJump
-		regs.pc_p = s;
-#else
-		m68k_setpc(s);
-#endif
-	}
-
-	/* printf("pc_p set to 0x%p in FBcc (32bit)\n", regs.pc_p); */
+	/* printf("pc_p set to 0x%p in FBcc (32bit)\n", V_pc_p); */
 }
 
-LOCALPROCUSEDONCE DoCodeFPU_DBcc(void)
+LOCALIPROC DoCodeFPU_FBccL(void)
 {
+	ui4r Dat = V_regs.CurDecOpY.v[0].ArgDat;
+
+	if (CheckFPCondition(Dat & 0x3F)) {
+		DoCodeBraL();
+	} else {
+		SkipiLong();
+	}
+}
+
+LOCALIPROC DoCodeFPU_DBcc(void)
+{
+	ui4r Dat = V_regs.CurDecOpY.v[0].ArgDat;
+	ui4r thereg = Dat & 7;
 	ui4b word2 = (int)nextiword();
 
 	ui4b predicate = word2 & 0x3F;
 
 	int condition_true = CheckFPCondition(predicate);
-
-#if FastRelativeJump
-	ui3p srcvalue = regs.pc_p;
-#else
-	ui5r srcvalue = m68k_getpc();
-#endif
-
-	srcvalue += (si5b)(si4b)nextiword();
 
 	if (! condition_true) {
-		ui5b fdb_count = ui5r_FromSWord(m68k_dreg(reg)) - 1;
-		m68k_dreg(reg) =
-			(m68k_dreg(reg) & ~ 0xFFFF) | (fdb_count & 0xFFFF);
-		if ((si5b)fdb_count != -1) {
-#if FastRelativeJump
-			regs.pc_p = srcvalue;
-#else
-			m68k_setpc(srcvalue);
-#endif
+		ui5b fdb_count = ui5r_FromSWord(m68k_dreg(thereg)) - 1;
 
-			/* printf("pc_p set to 0x%p in DoCodeDBcc\n", regs.pc_p); */
+		m68k_dreg(thereg) =
+			(m68k_dreg(thereg) & ~ 0xFFFF) | (fdb_count & 0xFFFF);
+		if ((si5b)fdb_count == -1) {
+			SkipiWord();
+		} else {
+			DoCodeBraW();
 		}
+	} else {
+		SkipiWord();
 	}
 }
 
-LOCALPROCUSEDONCE DoCodeFPU_Trapcc(void)
+LOCALIPROC DoCodeFPU_Trapcc(void)
 {
+	ui4r Dat = V_regs.CurDecOpY.v[0].ArgDat;
+	ui4r thereg = Dat & 7;
+
 	ui4b word2 = (int)nextiword();
 
 	ui4b predicate = word2 & 0x3F;
 
 	int condition_true = CheckFPCondition(predicate);
 
-	if (reg == 2) {
+	if (thereg == 2) {
 		(void) nextiword();
-	} else if (reg == 3) {
+	} else if (thereg == 3) {
 		(void) nextilong();
-	} else if (reg == 4) {
+	} else if (thereg == 4) {
 	} else {
-		ReportAbnormal("Invalid FTRAPcc (?");
+		ReportAbnormalID(0x0302, "Invalid FTRAPcc (?");
 	}
 
 	if (condition_true) {
-		ReportAbnormal("FTRAPcc trapping");
+		ReportAbnormalID(0x0303, "FTRAPcc trapping");
 		Exception(7);
 	}
 }
 
-LOCALPROCUSEDONCE DoCodeFPU_Scc(void)
+LOCALIPROC DoCodeFPU_Scc(void)
 {
 	ui4b word2 = (int)nextiword();
 
-	ui4b predicate = word2 & 0x3F;
-
-	int condition_true = CheckFPCondition(predicate);
-
-	regs.opsize = 1;
-	DecodeModeRegister(mode, reg);
-	if (condition_true) {
-		SetArgValue(0xFFFF);
+	if (! DecodeModeRegister(1)) {
+		DoCodeFPU_dflt();
+#if dbglog_HAVE
+		dbglog_writeln("bad mode/reg in DoCodeFPU_Scc");
+#endif
 	} else {
-		SetArgValue(0x0000);
+		if (CheckFPCondition(word2 & 0x3F)) {
+			SetArgValueB(0xFFFF);
+		} else {
+			SetArgValueB(0x0000);
+		}
 	}
 }
 
 LOCALPROC DoCodeF_InvalidPlusWord(void)
 {
 	BackupPC();
-	DoCodeFdefault();
+	DoCodeFPU_dflt();
 }
 
 LOCALFUNC int CountCSIAlist(ui4b word2)
@@ -421,7 +437,7 @@ LOCALFUNC int CountCSIAlist(ui4b word2)
 	return num;
 }
 
-LOCALPROCUSEDONCE DoCodeFPU_Move_EA_CSIA(ui4b word2)
+LOCALPROC DoCodeFPU_Move_EA_CSIA(ui4b word2)
 {
 	int n;
 	ui5b ea_value[3];
@@ -429,38 +445,43 @@ LOCALPROCUSEDONCE DoCodeFPU_Move_EA_CSIA(ui4b word2)
 	int num = CountCSIAlist(word2);
 
 	if (regselect == 0) {
-		ReportAbnormal("Invalid FMOVE instruction");
 		DoCodeF_InvalidPlusWord();
+#if dbglog_HAVE
+		dbglog_writeln("Invalid FMOVE instruction");
+#endif
 		return;
 	}
 
 	/* FMOVEM.L <EA>, <FP CR,SR,IAR list> */
 
-	regs.opsize = 4 * num;
-	DecodeModeRegister(mode, reg);
+	if (! DecodeModeRegister(4 * num)) {
+		DoCodeF_InvalidPlusWord();
+#if dbglog_HAVE
+		dbglog_writeln("bad mode/reg in DoCodeFPU_Move_EA_CSIA");
+#endif
+	} else {
+		ea_value[0] = GetArgValueL();
+		if (num > 1) {
+			ea_value[1] = get_long(V_regs.ArgAddr.mem + 4);
+		}
+		if (num > 2) {
+			ea_value[2] = get_long(V_regs.ArgAddr.mem + 8);
+		}
 
-	regs.opsize = 4;
-	ea_value[0] = GetArgValue();
-	if (num > 1) {
-		ea_value[1] = get_long(regs.ArgAddr.mem + 4);
-	}
-	if (num > 2) {
-		ea_value[2] = get_long(regs.ArgAddr.mem + 8);
-	}
-
-	n = 0;
-	if (regselect & (1 << 2)) {
-		myfp_SetFPCR(ea_value[n++]);
-	}
-	if (regselect & (1 << 1)) {
-		myfp_SetFPSR(ea_value[n++]);
-	}
-	if (regselect & (1 << 0)) {
-		myfp_SetFPIAR(ea_value[n++]);
+		n = 0;
+		if (regselect & (1 << 2)) {
+			myfp_SetFPCR(ea_value[n++]);
+		}
+		if (regselect & (1 << 1)) {
+			myfp_SetFPSR(ea_value[n++]);
+		}
+		if (regselect & (1 << 0)) {
+			myfp_SetFPIAR(ea_value[n++]);
+		}
 	}
 }
 
-LOCALPROCUSEDONCE DoCodeFPU_MoveM_CSIA_EA(ui4b word2)
+LOCALPROC DoCodeFPU_MoveM_CSIA_EA(ui4b word2)
 {
 	int n;
 	ui5b ea_value[3];
@@ -468,41 +489,47 @@ LOCALPROCUSEDONCE DoCodeFPU_MoveM_CSIA_EA(ui4b word2)
 
 	ui4b regselect = (word2 >> 10) & 0x7;
 
-	if (regselect == 0) {
-		ReportAbnormal("Invalid FMOVE instruction");
-		DoCodeF_InvalidPlusWord();
-		return;
-	}
-
 	/* FMOVEM.L <FP CR,SR,IAR list>, <EA> */
 
-	n = 0;
-	if (regselect & (1 << 2)) {
-		ea_value[n++] = myfp_GetFPCR();
-	}
-	if (regselect & (1 << 1)) {
-		ea_value[n++] = myfp_GetFPSR();
-	}
-	if (regselect & (1 << 0)) {
-		ea_value[n++] = myfp_GetFPIAR();
-	}
+	if (0 == regselect) {
+		DoCodeF_InvalidPlusWord();
+#if dbglog_HAVE
+		dbglog_writeln("Invalid FMOVE instruction");
+#endif
+	} else
+	if (! DecodeModeRegister(4 * num)) {
+		DoCodeF_InvalidPlusWord();
+#if dbglog_HAVE
+		dbglog_writeln("bad mode/reg in DoCodeFPU_MoveM_CSIA_EA");
+#endif
+	} else
+	{
+		n = 0;
+		if (regselect & (1 << 2)) {
+			ea_value[n++] = myfp_GetFPCR();
+		}
+		if (regselect & (1 << 1)) {
+			ea_value[n++] = myfp_GetFPSR();
+		}
+		if (regselect & (1 << 0)) {
+			ea_value[n++] = myfp_GetFPIAR();
+		}
 
-	regs.opsize = 4 * num;
-	DecodeModeRegister(mode, reg);
-
-	SetArgValue(ea_value[0]);
-	if (num > 1) {
-		put_long(regs.ArgAddr.mem + 4, ea_value[1]);
-	}
-	if (num > 2) {
-		put_long(regs.ArgAddr.mem + 8, ea_value[2]);
+		SetArgValueL(ea_value[0]);
+		if (num > 1) {
+			put_long(V_regs.ArgAddr.mem + 4, ea_value[1]);
+		}
+		if (num > 2) {
+			put_long(V_regs.ArgAddr.mem + 8, ea_value[2]);
+		}
 	}
 }
 
-LOCALPROCUSEDONCE DoCodeFPU_MoveM_EA_list(ui4b word2)
+LOCALPROC DoCodeFPU_MoveM_EA_list(ui4b word2)
 {
 	int i;
 	ui5r myaddr;
+	ui5r count;
 	ui4b register_list = word2;
 
 	ui4b fmove_mode = (word2 >> 11) & 0x3;
@@ -510,34 +537,36 @@ LOCALPROCUSEDONCE DoCodeFPU_MoveM_EA_list(ui4b word2)
 	/* FMOVEM.X <ea>, <list> */
 
 	if ((fmove_mode == 0) || (fmove_mode == 1)) {
-		ReportAbnormal("Invalid FMOVEM.X instruction");
 		DoCodeF_InvalidPlusWord();
+#if dbglog_HAVE
+		dbglog_writeln("Invalid FMOVEM.X instruction");
+#endif
 		return;
 	}
 
 	if (fmove_mode == 3) {
 		/* Dynamic mode */
-		register_list = regs.regs[(word2 >> 4) & 7];
+		register_list = V_regs.regs[(word2 >> 4) & 7];
 	}
 
-	if (mode == 3) {
-		/* Postincrement mode */
-
-		for (i = 0; i <= 7; i++) {
-			int j = 1 << (7 - i);
-			if (j & register_list) {
-				regs.opsize = 12;
-				DecodeModeRegister(mode, reg);
-				read_long_double(regs.ArgAddr.mem, &fpu_dat.fp[i]);
-			}
+	count = 0;
+	for (i = 0; i <= 7; i++) {
+		int j = 1 << (7 - i);
+		if (j & register_list) {
+			++count;
 		}
+	}
+
+	if (! DecodeModeRegister(12 * count)) {
+		DoCodeF_InvalidPlusWord();
+#if dbglog_HAVE
+		dbglog_writeln(
+			"DecodeModeRegister fails DoCodeFPU_MoveM_EA_list");
+#endif
 	} else {
-		/* Control mode */
+		/* Postincrement mode or Control mode */
 
-		regs.opsize = 12;
-		DecodeModeRegister(mode, reg);
-
-		myaddr = regs.ArgAddr.mem;
+		myaddr = V_regs.ArgAddr.mem;
 
 		for (i = 0; i <= 7; i++) {
 			int j = 1 << (7 - i);
@@ -549,64 +578,87 @@ LOCALPROCUSEDONCE DoCodeFPU_MoveM_EA_list(ui4b word2)
 	}
 }
 
-LOCALPROCUSEDONCE DoCodeFPU_MoveM_list_EA(ui4b word2)
+LOCALPROC DoCodeFPU_MoveM_list_EA(ui4b word2)
 {
 	/* FMOVEM.X <list>, <ea> */
 
 	int i;
 	ui5r myaddr;
+	ui5r count;
 	ui4b register_list = word2;
+	ui4r Dat = V_regs.CurDecOpY.v[0].ArgDat;
+	ui4r themode = (Dat >> 3) & 7;
 
 	ui4b fmove_mode = (word2 >> 11) & 0x3;
 
 	if ((fmove_mode == 1) || (fmove_mode == 3)) {
 		/* Dynamic mode */
-		register_list = regs.regs[(word2 >> 4) & 7];
+		register_list = V_regs.regs[(word2 >> 4) & 7];
 	}
 
-	if (mode == 4) {
-		/* Predecrement mode */
-
-		for (i = 7; i >= 0; i--) {
-			int j = 1 << i;
-			if (j & register_list) {
-				regs.opsize = 12;
-				DecodeModeRegister(mode, reg);
-				write_long_double(regs.ArgAddr.mem, &fpu_dat.fp[i]);
-			}
+	count = 0;
+	for (i = 7; i >= 0; i--) {
+		int j = 1 << i;
+		if (j & register_list) {
+			++count;
 		}
+	}
+
+	if (! DecodeModeRegister(12 * count)) {
+		DoCodeF_InvalidPlusWord();
+#if dbglog_HAVE
+		dbglog_writeln(
+			"DecodeModeRegister fails DoCodeFPU_MoveM_list_EA");
+#endif
 	} else {
-		/* Control mode */
+		if (themode == 4) {
+			/* Predecrement mode */
 
-		regs.opsize = 12;
-		DecodeModeRegister(mode, reg);
+			myaddr = V_regs.ArgAddr.mem + 12 * count;
 
-		myaddr = regs.ArgAddr.mem;
+			for (i = 7; i >= 0; i--) {
+				int j = 1 << i;
+				if (j & register_list) {
+					myaddr -= 12;
+					write_long_double(myaddr, &fpu_dat.fp[i]);
+				}
+			}
+		} else {
+			/* Control mode */
 
-		for (i = 0; i <= 7; i++) {
-			int j = 1 << (7 - i);
-			if (j & register_list) {
-				write_long_double(myaddr, &fpu_dat.fp[i]);
-				myaddr += 12;
+			myaddr = V_regs.ArgAddr.mem;
+
+			for (i = 0; i <= 7; i++) {
+				int j = 1 << (7 - i);
+				if (j & register_list) {
+					write_long_double(myaddr, &fpu_dat.fp[i]);
+					myaddr += 12;
+				}
 			}
 		}
 	}
 }
 
-LOCALPROCUSEDONCE DoCodeFPU_MoveCR(ui4b word2)
+LOCALPROC DoCodeFPU_MoveCR(ui4b word2)
 {
 	/* FMOVECR */
+	ui4r opcode = ((ui4r)(V_regs.CurDecOpY.v[0].AMd) << 8)
+		| V_regs.CurDecOpY.v[0].ArgDat;
 
-	if (regs.opcode != 0xF200) {
-		ReportAbnormal("bad opcode in FMOVECR");
+	if (opcode != 0xF200) {
 		DoCodeF_InvalidPlusWord();
+#if dbglog_HAVE
+		dbglog_writeln("bad opcode in FMOVECR");
+#endif
 	} else {
 		ui4b RomOffset = word2 & 0x7F;
 		ui4b DestReg = (word2 >> 7) & 0x7;
 
 		if (! myfp_getCR(&fpu_dat.fp[DestReg], RomOffset)) {
-			ReportAbnormal("Invalid constant number in FMOVECR");
 			DoCodeF_InvalidPlusWord();
+#if dbglog_HAVE
+			dbglog_writeln("Invalid constant number in FMOVECR");
+#endif
 		}
 	}
 }
@@ -924,82 +976,112 @@ LOCALPROC DoCodeFPU_GenOp(ui4b word2, myfpr *source)
 			break;
 
 		default:
-			ReportAbnormal("Invalid Floating Point Instruction");
 			DoCodeF_InvalidPlusWord();
+#if dbglog_HAVE
+			dbglog_writeln("Invalid DoCodeFPU_GenOp");
+#endif
 			break;
 	}
 }
 
-LOCALPROCUSEDONCE DoCodeFPU_GenOpReg(ui4b word2)
+LOCALPROC DoCodeFPU_GenOpReg(ui4b word2)
 {
 	ui4r regselect = (word2 >> 10) & 0x7;
 
 	DoCodeFPU_GenOp(word2, &fpu_dat.fp[regselect]);
 }
 
-LOCALPROCUSEDONCE DoCodeFPU_GenOpEA(ui4b word2)
+LOCALPROC DoCodeFPU_GenOpEA(ui4b word2)
 {
 	myfpr source;
 
 	switch ((word2 >> 10) & 0x7) {
 		case 0: /* long-word integer */
-			regs.opsize = 4;
-			DecodeModeRegister(mode, reg);
-			myfp_FromLong(&source, GetArgValue());
-			DoCodeFPU_GenOp(word2, &source);
+			if (! DecodeModeRegister(4)) {
+				DoCodeF_InvalidPlusWord();
+#if dbglog_HAVE
+				dbglog_writeln(
+					"DecodeModeRegister fails GetFPSource L");
+#endif
+			} else {
+				myfp_FromLong(&source, GetArgValueL());
+				DoCodeFPU_GenOp(word2, &source);
+			}
 			break;
 		case 1: /* Single-Precision real */
-			regs.opsize = 4;
-			DecodeModeRegister(mode, reg);
-			myfp_FromSingleFormat(&source, GetArgValue());
-			DoCodeFPU_GenOp(word2, &source);
+			if (! DecodeModeRegister(4)) {
+				DoCodeF_InvalidPlusWord();
+#if dbglog_HAVE
+				dbglog_writeln(
+					"DecodeModeRegister fails GetFPSource S");
+#endif
+			} else {
+				myfp_FromSingleFormat(&source, GetArgValueL());
+				DoCodeFPU_GenOp(word2, &source);
+			}
 			break;
 		case 2: /* extended precision real */
-			regs.opsize = 12;
-			if (! DecodeAddrModeRegister(mode, reg)) {
-				ReportAbnormal(
-					"DecodeAddrModeRegister fails GetFPSource X");
+			if (! DecodeAddrModeRegister(12)) {
 				DoCodeF_InvalidPlusWord();
+#if dbglog_HAVE
+				dbglog_writeln(
+					"DecodeAddrModeRegister fails GetFPSource X");
+#endif
 			} else {
-				read_long_double(regs.ArgAddr.mem, &source);
+				read_long_double(V_regs.ArgAddr.mem, &source);
 				DoCodeFPU_GenOp(word2, &source);
 			}
 			break;
 		case 3: /* packed-decimal real */
-			ReportAbnormal("Packed Decimal in GetFPSource");
-			regs.opsize = 16;
-				/* correct? just set to a constant for now */
-			if (! DecodeAddrModeRegister(mode, reg)) {
-				ReportAbnormal(
-					"DecodeAddrModeRegister fails GetFPSource P");
+			if (! DecodeAddrModeRegister(16)) {
 				DoCodeF_InvalidPlusWord();
+#if dbglog_HAVE
+				dbglog_writeln(
+					"DecodeAddrModeRegister fails GetFPSource P");
+#endif
 			} else {
+				ReportAbnormalID(0x0304,
+					"Packed Decimal in GetFPSource");
+					/* correct? just set to a constant for now */
 				/* *r = 9123456789.0; */
 				DoCodeFPU_GenOp(word2, &source);
 			}
 			break;
 		case 4: /* Word integer */
-			regs.opsize = 2;
-			DecodeModeRegister(mode, reg);
-			myfp_FromLong(&source, GetArgValue());
-			DoCodeFPU_GenOp(word2, &source);
+			if (! DecodeModeRegister(2)) {
+				DoCodeF_InvalidPlusWord();
+#if dbglog_HAVE
+				dbglog_writeln(
+					"DecodeModeRegister fails GetFPSource W");
+#endif
+			} else {
+				myfp_FromLong(&source, GetArgValueW());
+				DoCodeFPU_GenOp(word2, &source);
+			}
 			break;
 		case 5: /* Double-precision real */
-			regs.opsize = 8;
-			if (! DecodeAddrModeRegister(mode, reg)) {
-				ReportAbnormal(
-					"DecodeAddrModeRegister fails GetFPSource D");
+			if (! DecodeAddrModeRegister(8)) {
 				DoCodeF_InvalidPlusWord();
+#if dbglog_HAVE
+				dbglog_writeln(
+					"DecodeAddrModeRegister fails GetFPSource D");
+#endif
 			} else {
-				read_double(regs.ArgAddr.mem, &source);
+				read_double(V_regs.ArgAddr.mem, &source);
 				DoCodeFPU_GenOp(word2, &source);
 			}
 			break;
 		case 6: /* Byte Integer */
-			regs.opsize = 1;
-			DecodeModeRegister(mode, reg);
-			myfp_FromLong(&source, GetArgValue());
-			DoCodeFPU_GenOp(word2, &source);
+			if (! DecodeModeRegister(1)) {
+				DoCodeF_InvalidPlusWord();
+#if dbglog_HAVE
+				dbglog_writeln(
+					"DecodeModeRegister fails GetFPSource B");
+#endif
+			} else {
+				myfp_FromLong(&source, GetArgValueB());
+				DoCodeFPU_GenOp(word2, &source);
+			}
 			break;
 		case 7: /* Not a valid source specifier */
 			DoCodeFPU_MoveCR(word2);
@@ -1010,7 +1092,7 @@ LOCALPROCUSEDONCE DoCodeFPU_GenOpEA(ui4b word2)
 	}
 }
 
-LOCALPROCUSEDONCE DoCodeFPU_Move_FP_EA(ui4b word2)
+LOCALPROC DoCodeFPU_Move_FP_EA(ui4b word2)
 {
 	/* FMOVE FP?, <EA> */
 
@@ -1019,61 +1101,87 @@ LOCALPROCUSEDONCE DoCodeFPU_Move_FP_EA(ui4b word2)
 
 	switch ((word2 >> 10) & 0x7) {
 		case 0: /* long-word integer */
-			regs.opsize = 4;
-			DecodeModeRegister(mode, reg);
-			SetArgValue(myfp_ToLong(source));
+			if (! DecodeModeRegister(4)) {
+				DoCodeF_InvalidPlusWord();
+#if dbglog_HAVE
+				dbglog_writeln("DecodeModeRegister fails FMOVE L");
+#endif
+			} else {
+				SetArgValueL(myfp_ToLong(source));
+			}
 			break;
 		case 1: /* Single-Precision real */
-			regs.opsize = 4;
-			DecodeModeRegister(mode, reg);
-			SetArgValue(myfp_ToSingleFormat(source));
+			if (! DecodeModeRegister(4)) {
+				DoCodeF_InvalidPlusWord();
+#if dbglog_HAVE
+				dbglog_writeln("DecodeModeRegister fails FMOVE S");
+#endif
+			} else {
+				SetArgValueL(myfp_ToSingleFormat(source));
+			}
 			break;
 		case 2: /* extended precision real */
-			regs.opsize = 12;
-			if (! DecodeAddrModeRegister(mode, reg)) {
-				ReportAbnormal("DecodeAddrModeRegister fails FMOVE X");
+			if (! DecodeAddrModeRegister(12)) {
 				DoCodeF_InvalidPlusWord();
+#if dbglog_HAVE
+				dbglog_writeln("DecodeAddrModeRegister fails FMOVE X");
+#endif
 			} else {
-				write_long_double(regs.ArgAddr.mem, source);
+				write_long_double(V_regs.ArgAddr.mem, source);
 			}
 			break;
 		case 3: /* packed-decimal real */
-			ReportAbnormal("Packed Decimal in FMOVE");
-			regs.opsize = 16; /* correct? don't even write anything */
-			if (! DecodeAddrModeRegister(mode, reg)) {
-				ReportAbnormal("DecodeAddrModeRegister fails FMOVE P");
+			if (! DecodeAddrModeRegister(16)) {
 				DoCodeF_InvalidPlusWord();
+#if dbglog_HAVE
+				dbglog_writeln("DecodeAddrModeRegister fails FMOVE P");
+#endif
 			} else {
+				ReportAbnormalID(0x0305, "Packed Decimal in FMOVE");
 				/* ? */
 			}
 			break;
 		case 4: /* Word integer */
-			regs.opsize = 2;
-			DecodeModeRegister(mode, reg);
-			SetArgValue(myfp_ToLong(source));
+			if (! DecodeModeRegister(2)) {
+				DoCodeF_InvalidPlusWord();
+#if dbglog_HAVE
+				dbglog_writeln("DecodeModeRegister fails FMOVE W");
+#endif
+			} else {
+				SetArgValueW(myfp_ToLong(source));
+			}
 			break;
 		case 5: /* Double-precision real */
-			regs.opsize = 8;
-			if (! DecodeAddrModeRegister(mode, reg)) {
-				ReportAbnormal("DecodeAddrModeRegister fails FMOVE D");
+			if (! DecodeAddrModeRegister(8)) {
 				DoCodeF_InvalidPlusWord();
+#if dbglog_HAVE
+				dbglog_writeln("DecodeAddrModeRegister fails FMOVE D");
+#endif
 			} else {
-				write_double(regs.ArgAddr.mem, source);
+				write_double(V_regs.ArgAddr.mem, source);
 			}
 			break;
 		case 6: /* Byte Integer */
-			regs.opsize = 1;
-			DecodeModeRegister(mode, reg);
-			SetArgValue(myfp_ToLong(source));
+			if (! DecodeModeRegister(1)) {
+				DoCodeF_InvalidPlusWord();
+#if dbglog_HAVE
+				dbglog_writeln("DecodeModeRegister fails FMOVE B");
+#endif
+			} else {
+				SetArgValueB(myfp_ToLong(source));
+			}
 			break;
 		default:
-			ReportAbnormal("Bad Source Specifier in FMOVE");
 			DoCodeF_InvalidPlusWord();
+#if dbglog_HAVE
+			dbglog_writelnNum("Bad Source Specifier in FMOVE",
+				(word2 >> 10) & 0x7);
+#endif
 			break;
 	}
 }
 
-LOCALPROCUSEDONCE DoCodeFPU_md60(void)
+LOCALIPROC DoCodeFPU_md60(void)
 {
 	ui4b word2 = (int)nextiword();
 
@@ -1100,43 +1208,11 @@ LOCALPROCUSEDONCE DoCodeFPU_md60(void)
 			DoCodeFPU_MoveM_list_EA(word2);
 			break;
 		default:
-			ReportAbnormal("Invalid Floating Point Instruction");
 			DoCodeF_InvalidPlusWord();
-			break;
-	}
-}
-
-LOCALPROCUSEDONCE DoCodeFPU(void)
-{
-	switch (md6) {
-		case 0:
-			DoCodeFPU_md60();
-			break;
-		case 1:
-			if (mode == 1) {
-				DoCodeFPU_DBcc();
-			} else if (mode == 7) {
-				DoCodeFPU_Trapcc();
-			} else {
-				DoCodeFPU_Scc();
-			}
-			break;
-		case 2:
-			DoCodeFPU_FBcc(falseblnr);
-			break;
-		case 3:
-			DoCodeFPU_FBcc(trueblnr);
-			break;
-		case 4:
-			DoCodeFPU_Save();
-			break;
-		case 5:
-			DoCodeFPU_Restore();
-			break;
-		default:
-			/* fall through */
-			ReportAbnormal("Invalid Floating Point Instruction");
-			DoCodeFdefault();
+#if dbglog_HAVE
+			dbglog_writelnNum("Invalid DoCodeFPU_md60",
+				(word2 >> 13) & 0x7);
+#endif
 			break;
 	}
 }

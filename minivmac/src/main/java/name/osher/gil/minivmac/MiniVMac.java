@@ -18,6 +18,7 @@ import android.inputmethodservice.KeyboardView;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
@@ -87,47 +88,6 @@ public class MiniVMac extends AppCompatActivity
         onActivity = false;
         
         updateByPrefs();
-		mCore = new Core(this);
-
-		screenView.setTargetScreenSize(mCore.getScreenWidth(), mCore.getScreenHeight());
-		screenView.setOnMouseEventListener(new ScreenView.OnMouseEventListener() {
-			@Override
-			public void onMouseMove(int x, int y) {
-				mCore.setMousePosition(x, y);
-			}
-
-			@Override
-			public void onMouseClick(boolean down) {
-				mCore.setMouseBtn(down);
-			}
-		});
-
-		mCore.setOnUpdateScreenListener(new Core.OnUpdateScreenListener() {
-			@Override
-			public void onUpdateScreen(int[] update) {
-				screenView.updateScreen(update);
-			}
-		});
-
-		mCore.setOnDiskEventListener(new Core.OnDiskEventListener() {
-
-			@Override
-			public void onDiskInserted(String filename) {
-				invalidateOptionsMenu();
-			}
-
-			@Override
-			public void onDiskEjected(String filename) {
-				invalidateOptionsMenu();
-			}
-
-			@Override
-			public void onCreateDisk(int size, String filename) {
-				mTempSize = size;
-				mTempFilename = filename;
-				showSelectFolder();
-			}
-		});
 
 		askForPermissions();
 	}
@@ -141,7 +101,7 @@ public class MiniVMac extends AppCompatActivity
 		// load ROM
 		String romFileName = getString(R.string.romFileName);
 		File romFile = FileManager.getInstance().getDataFile(romFileName);
-		ByteBuffer rom = ByteBuffer.allocateDirect((int)romFile.length());
+		final ByteBuffer rom = ByteBuffer.allocateDirect((int)romFile.length());
 		try {
             FileInputStream romReader = new FileInputStream(romFile);
             romReader.getChannel().read(rom);
@@ -152,21 +112,68 @@ public class MiniVMac extends AppCompatActivity
             return;
         }
 
-		// sound
-		mCore.MySound_Init();
+        final MiniVMac thiz = this;
+		final Handler uiHandler = new Handler();
 
-		// initialize emulation
-		if (!mCore.initEmulation(mCore, rom)) {
-            Utils.showAlert(this, getString(R.string.errInitEmu), true);
-            return;
-        }
-
-		runOnUiThread(new Runnable() {
+		Thread emulation = new Thread(new Runnable() {
 			@Override
 			public void run() {
+				mCore = new Core(thiz, uiHandler);
+
+				// sound
+				mCore.MySound_Init();
+
+				// initialize emulation
+				if (!mCore.initEmulation(mCore, rom)) {
+					Utils.showAlert(thiz, thiz.getString(R.string.errInitEmu), true);
+					return;
+				}
+
+				screenView.setTargetScreenSize(mCore.getScreenWidth(), mCore.getScreenHeight());
+				screenView.setOnMouseEventListener(new ScreenView.OnMouseEventListener() {
+					@Override
+					public void onMouseMove(int x, int y) {
+						mCore.setMousePosition(x, y);
+					}
+
+					@Override
+					public void onMouseClick(boolean down) {
+						mCore.setMouseBtn(down);
+					}
+				});
+
+				mCore.setOnUpdateScreenListener(new Core.OnUpdateScreenListener() {
+					@Override
+					public void onUpdateScreen(int[] update, int top, int left, int bottom, int right) {
+						screenView.updateScreen(update, top, left, bottom, right);
+					}
+				});
+
+				mCore.setOnDiskEventListener(new Core.OnDiskEventListener() {
+
+					@Override
+					public void onDiskInserted(String filename) {
+						invalidateOptionsMenu();
+					}
+
+					@Override
+					public void onDiskEjected(String filename) {
+						invalidateOptionsMenu();
+					}
+
+					@Override
+					public void onCreateDisk(int size, String filename) {
+						mTempSize = size;
+						mTempFilename = filename;
+						showSelectFolder();
+					}
+				});
+
 				mCore.startEmulation();
 			}
 		});
+		emulation.setName("EmulationThread");
+		emulation.start();
 	}
 
 	private void initKeyboard() {
@@ -341,9 +348,13 @@ public class MiniVMac extends AppCompatActivity
 	}
     
     public void onPause () {
-    	mCore.pauseEmulation();
+		if (mCore != null) {
+			mCore.pauseEmulation();
+		}
+
     	super.onPause();
-    	if (!mCore.hasDisksInserted() && !onActivity) {
+
+    	if (mCore != null && !mCore.hasDisksInserted() && !onActivity) {
     		mCore.uninitEmulation();
     		System.exit(0);
     	}
@@ -351,8 +362,10 @@ public class MiniVMac extends AppCompatActivity
     
     public void onResume () {
     	super.onResume();
-    	
-    	mCore.resumeEmulation();
+
+    	if (mCore != null) {
+			mCore.resumeEmulation();
+		}
     }
 
 	@Override

@@ -21,15 +21,17 @@
 #endif
 
 
-#define kEmMd_128K        0
-#define kEmMd_512Ke       1
-#define kEmMd_Plus        2
-#define kEmMd_SE          3
-#define kEmMd_SEFDHD      4
-#define kEmMd_Classic     5
-#define kEmMd_PB100       6
-#define kEmMd_II          7
-#define kEmMd_IIx         8
+#define kEmMd_Twig43      0
+#define kEmMd_Twiggy      1
+#define kEmMd_128K        2
+#define kEmMd_512Ke       3
+#define kEmMd_Plus        4
+#define kEmMd_SE          5
+#define kEmMd_SEFDHD      6
+#define kEmMd_Classic     7
+#define kEmMd_PB100       8
+#define kEmMd_II          9
+#define kEmMd_IIx        10
 
 #define RAMSafetyMarginFudge 4
 
@@ -74,6 +76,8 @@ EXPORTFUNC ui3p get_real_address0(ui5b L, blnr WritableMem, CPTR addr,
 	copy of the ram, not the duplicates, i.e. < kRAM_Size).
 */
 
+#ifndef ln2mtb
+
 #define get_ram_byte(addr) do_get_mem_byte((addr) + RAM)
 #define get_ram_word(addr) do_get_mem_word((addr) + RAM)
 #define get_ram_long(addr) do_get_mem_long((addr) + RAM)
@@ -81,6 +85,18 @@ EXPORTFUNC ui3p get_real_address0(ui5b L, blnr WritableMem, CPTR addr,
 #define put_ram_byte(addr, b) do_put_mem_byte((addr) + RAM, (b))
 #define put_ram_word(addr, w) do_put_mem_word((addr) + RAM, (w))
 #define put_ram_long(addr, l) do_put_mem_long((addr) + RAM, (l))
+
+#else
+
+#define get_ram_byte get_vm_byte
+#define get_ram_word get_vm_word
+#define get_ram_long get_vm_long
+
+#define put_ram_byte put_vm_byte
+#define put_ram_word put_vm_word
+#define put_ram_long put_vm_long
+
+#endif
 
 #define get_ram_address(addr) ((addr) + RAM)
 
@@ -101,8 +117,6 @@ EXPORTFUNC blnr AddrSpac_Init(void);
 #define ui5r_FromULong(x) ((ui5r)(ui5b)(x))
 
 
-#define LOCALPROCUSEDONCE LOCALFUNC MayInline void
-
 #if WantDisasm
 EXPORTPROC dbglog_StartLine(void);
 #else
@@ -120,12 +134,15 @@ EXPORTPROC dbglog_Access(char *s, ui5r Data, blnr WriteMem);
 #endif
 
 #if dbglog_HAVE
-#define ReportAbnormal DoReportAbnormal
-EXPORTPROC DoReportAbnormal(char *s);
+#define ReportAbnormalID DoReportAbnormalID
 #else
-#define ReportAbnormal(s) DoReportAbnormal()
-EXPORTPROC DoReportAbnormal(void);
+#define ReportAbnormalID(id, s) DoReportAbnormalID(id)
 #endif
+EXPORTPROC DoReportAbnormalID(ui4r id
+#if dbglog_HAVE
+	, char *s
+#endif
+	);
 
 EXPORTPROC VIAorSCCinterruptChngNtfy(void);
 
@@ -228,7 +245,7 @@ struct ATTer {
 	ui5r cmpmask;
 	ui5r cmpvalu;
 	ui5r Access;
-	ui5r usemask;
+	ui5r usemask; /* Should be one less than a power of two. */
 	ui3p usebase;
 	ui3r MMDV;
 	ui3r Ntfy;

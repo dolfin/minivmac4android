@@ -18,6 +18,23 @@
 	COMmon code for Operating System GLUe
 */
 
+#if EnableMouseMotion && MayFullScreen
+#define EnableFSMouseMotion 1
+#else
+#define EnableFSMouseMotion 0
+#endif
+
+#if EnableMagnify || VarFullScreen
+#define EnableRecreateW 1
+#else
+#define EnableRecreateW 0
+#endif
+
+#if EnableRecreateW || EnableFSMouseMotion
+#define EnableMoveMouse 1
+#else
+#define EnableMoveMouse 0
+#endif
 
 GLOBALVAR ui3p ROM = nullpr;
 
@@ -74,13 +91,21 @@ GLOBALVAR blnr WantNotAutoSlow = (WantInitNotAutoSlow != 0);
 GLOBALVAR ui4b CurMouseV = 0;
 GLOBALVAR ui4b CurMouseH = 0;
 
-#if EnableMouseMotion && MayFullScreen
+#if EnableFSMouseMotion
 LOCALVAR blnr HaveMouseMotion = falseblnr;
 #endif
 
 #if EnableAutoSlow
 GLOBALVAR ui5r QuietTime = 0;
 GLOBALVAR ui5r QuietSubTicks = 0;
+#endif
+
+#ifndef GrabKeysFullScreen
+#define GrabKeysFullScreen 1
+#endif
+
+#ifndef GrabKeysMaxFullScreen
+#define GrabKeysMaxFullScreen 0
 #endif
 
 #if IncludePbufs
@@ -123,7 +148,7 @@ LOCALPROC PbufDisposeNotify(tPbuf Pbuf_No)
 #endif
 
 #if IncludePbufs
-GLOBALFUNC tMacErr CheckPbuf(tPbuf Pbuf_No)
+GLOBALOSGLUFUNC tMacErr CheckPbuf(tPbuf Pbuf_No)
 {
 	tMacErr result;
 
@@ -140,7 +165,7 @@ GLOBALFUNC tMacErr CheckPbuf(tPbuf Pbuf_No)
 #endif
 
 #if IncludePbufs
-GLOBALFUNC tMacErr PbufGetSize(tPbuf Pbuf_No, ui5r *Count)
+GLOBALOSGLUFUNC tMacErr PbufGetSize(tPbuf Pbuf_No, ui5r *Count)
 {
 	tMacErr result = CheckPbuf(Pbuf_No);
 
@@ -165,7 +190,7 @@ LOCALFUNC blnr FirstFreeDisk(tDrive *Drive_No)
 	return falseblnr;
 }
 
-GLOBALFUNC blnr AnyDiskInserted(void)
+GLOBALOSGLUFUNC blnr AnyDiskInserted(void)
 {
 #if 0
 	tDrive i;
@@ -180,7 +205,7 @@ GLOBALFUNC blnr AnyDiskInserted(void)
 	return 0 != vSonyInsertedMask;
 }
 
-GLOBALPROC DiskRevokeWritable(tDrive Drive_No)
+GLOBALOSGLUPROC DiskRevokeWritable(tDrive Drive_No)
 {
 	vSonyWritableMask &= ~ ((ui5b)1 << Drive_No);
 }
@@ -562,8 +587,14 @@ Label_2:
 	return trueblnr;
 }
 
-LOCALVAR blnr EmVideoDisable = falseblnr;
-LOCALVAR si3b EmLagTime = 0;
+GLOBALVAR blnr EmVideoDisable = falseblnr;
+GLOBALVAR si3b EmLagTime = 0;
+
+GLOBALVAR ui5b OnTrueTime = 0;
+	/*
+		The time slice we are currently dealing
+		with, in the same units as TrueEmulatedTime.
+	*/
 
 LOCALVAR si4b ScreenChangedTop;
 LOCALVAR si4b ScreenChangedLeft;
@@ -593,7 +624,7 @@ LOCALVAR si4b ScreenChangedQuietBottom = 0;
 LOCALVAR si4b ScreenChangedQuietRight = 0;
 #endif
 
-GLOBALPROC Screen_OutputFrame(ui3p screencurrentbuff)
+GLOBALOSGLUPROC Screen_OutputFrame(ui3p screencurrentbuff)
 {
 	si4b top;
 	si4b left;
@@ -652,7 +683,7 @@ LOCALVAR ui4r ViewHSize;
 LOCALVAR ui4r ViewVSize;
 LOCALVAR ui4r ViewHStart = 0;
 LOCALVAR ui4r ViewVStart = 0;
-#if EnableMouseMotion
+#if EnableFSMouseMotion
 LOCALVAR si4b SavedMouseH;
 LOCALVAR si4b SavedMouseV;
 #endif
@@ -662,7 +693,7 @@ LOCALVAR si4b SavedMouseV;
 #define WantAutoScrollBorder 0
 #endif
 
-#if EnableMouseMotion && MayFullScreen
+#if EnableFSMouseMotion
 LOCALPROC AutoScrollScreen(void)
 {
 	si4b Shift;
@@ -775,7 +806,7 @@ LOCALVAR ui3p ReserveAllocBigBlock = nullpr;
 #define CeilPow2Mult(i, p) FloorPow2Mult((i) + Pow2Mask(p), (p))
 	/* warning - CeilPow2Mult evaluates p twice */
 
-GLOBALPROC ReserveAllocOneBlock(ui3p *p, uimr n,
+GLOBALOSGLUPROC ReserveAllocOneBlock(ui3p *p, uimr n,
 	ui3r align, blnr FillOnes)
 {
 	ReserveAllocOffset = CeilPow2Mult(ReserveAllocOffset, align);
@@ -794,7 +825,6 @@ GLOBALPROC ReserveAllocOneBlock(ui3p *p, uimr n,
 
 #if dbglog_HAVE
 
-#define dbglog_buflnsz 18
 #define dbglog_bufsz PowOf2(dbglog_buflnsz)
 LOCALVAR uimr dbglog_bufpos = 0;
 
@@ -851,19 +881,19 @@ LOCALFUNC uimr CStrLength(char *s)
 	return p - s - 1;
 }
 
-GLOBALPROC dbglog_writeCStr(char *s)
+GLOBALOSGLUPROC dbglog_writeCStr(char *s)
 {
 	/* fprintf(DumpFile, "%s", s); */
 	dbglog_write(s, CStrLength(s));
 }
 
-GLOBALPROC dbglog_writeReturn(void)
+GLOBALOSGLUPROC dbglog_writeReturn(void)
 {
 	dbglog_writeCStr("\n");
 	/* fprintf(DumpFile, "\n"); */
 }
 
-GLOBALPROC dbglog_writeHex(uimr x)
+GLOBALOSGLUPROC dbglog_writeHex(uimr x)
 {
 	ui3r v;
 	char s[16];
@@ -885,7 +915,7 @@ GLOBALPROC dbglog_writeHex(uimr x)
 	/* fprintf(DumpFile, "%d", (int)x); */
 }
 
-GLOBALPROC dbglog_writeNum(uimr x)
+GLOBALOSGLUPROC dbglog_writeNum(uimr x)
 {
 	uimr newx;
 	char s[16];
@@ -903,7 +933,7 @@ GLOBALPROC dbglog_writeNum(uimr x)
 	/* fprintf(DumpFile, "%d", (int)x); */
 }
 
-GLOBALPROC dbglog_writeMacChar(ui3r x)
+GLOBALOSGLUPROC dbglog_writeMacChar(ui3r x)
 {
 	char s;
 
@@ -921,13 +951,13 @@ LOCALPROC dbglog_writeSpace(void)
 	dbglog_writeCStr(" ");
 }
 
-GLOBALPROC dbglog_writeln(char *s)
+GLOBALOSGLUPROC dbglog_writeln(char *s)
 {
 	dbglog_writeCStr(s);
 	dbglog_writeReturn();
 }
 
-GLOBALPROC dbglog_writelnNum(char *s, simr v)
+GLOBALOSGLUPROC dbglog_writelnNum(char *s, simr v)
 {
 	dbglog_writeCStr(s);
 	dbglog_writeSpace();
@@ -947,7 +977,7 @@ LOCALVAR MyEvtQEl MyEvtQA[MyEvtQSz];
 LOCALVAR ui4r MyEvtQIn = 0;
 LOCALVAR ui4r MyEvtQOut = 0;
 
-GLOBALFUNC MyEvtQEl * MyEvtQOutP(void)
+GLOBALOSGLUFUNC MyEvtQEl * MyEvtQOutP(void)
 {
 	MyEvtQEl *p = nullpr;
 	if (MyEvtQIn != MyEvtQOut) {
@@ -956,7 +986,7 @@ GLOBALFUNC MyEvtQEl * MyEvtQOutP(void)
 	return p;
 }
 
-GLOBALPROC MyEvtQOutDone(void)
+GLOBALOSGLUPROC MyEvtQOutDone(void)
 {
 	++MyEvtQOut;
 }
@@ -1032,7 +1062,7 @@ LOCALPROC MyMouseButtonSet(blnr down)
 	}
 }
 
-#if EnableMouseMotion && MayFullScreen
+#if EnableFSMouseMotion
 LOCALPROC MyMousePositionSetDelta(ui4r dh, ui4r dv)
 {
 	if ((dh != 0) || (dv != 0)) {
@@ -1145,6 +1175,7 @@ LOCALPROC MyEvtQTryRecoverFromFull(void)
 
 LOCALVAR char *SavedBriefMsg = nullpr;
 LOCALVAR char *SavedLongMsg;
+LOCALVAR ui4r SavedIDMsg = 0;
 LOCALVAR blnr SavedFatalMsg;
 
 LOCALPROC MacMsg(char *briefMsg, char *longMsg, blnr fatal)
@@ -1161,19 +1192,28 @@ LOCALPROC MacMsg(char *briefMsg, char *longMsg, blnr fatal)
 	}
 }
 
-GLOBALPROC WarnMsgCorruptedROM(void)
+GLOBALOSGLUPROC WarnMsgCorruptedROM(void)
 {
 	MacMsg(kStrCorruptedROMTitle, kStrCorruptedROMMessage, falseblnr);
 }
 
-GLOBALPROC WarnMsgUnsupportedROM(void)
+GLOBALOSGLUPROC WarnMsgUnsupportedROM(void)
 {
 	MacMsg(kStrUnsupportedROMTitle,
 		kStrUnsupportedROMMessage, falseblnr);
 }
 
-GLOBALPROC WarnMsgAbnormal(void)
+GLOBALOSGLUPROC WarnMsgAbnormalID(ui4r id)
 {
 	MacMsg(kStrReportAbnormalTitle,
 		kStrReportAbnormalMessage, falseblnr);
+
+	if (0 != SavedIDMsg) {
+		/*
+			ignore the new message, only display the
+			first error.
+		*/
+	} else {
+		SavedIDMsg = id;
+	}
 }

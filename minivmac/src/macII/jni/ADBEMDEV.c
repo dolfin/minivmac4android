@@ -31,6 +31,10 @@
 #include <stdio.h>
 #endif
 
+/*
+	ReportAbnormalID unused 0x0C06 - 0x0CFF
+*/
+
 IMPORTPROC ADB_ShiftOutData(ui3b v);
 IMPORTFUNC ui3b ADB_ShiftInData(void);
 
@@ -72,12 +76,14 @@ GLOBALPROC ADB_DoNewState(void)
 								break;
 							case 2: /* reserved */
 							case 3: /* reserved */
-								ReportAbnormal("Reserved ADB command");
+								ReportAbnormalID(0x0C01,
+									"Reserved ADB command");
 								break;
 						}
 						break;
 					case 1: /* reserved */
-						ReportAbnormal("Reserved ADB command");
+						ReportAbnormalID(0x0C02,
+							"Reserved ADB command");
 						break;
 					case 2: /* listen */
 						ADB_ListenDatBuf = trueblnr;
@@ -115,7 +121,7 @@ GLOBALPROC ADB_DoNewState(void)
 					}
 				} else {
 					if (ADB_IndexDatBuf >= ADB_MaxSzDatBuf) {
-						ReportAbnormal("ADB listen too much");
+						ReportAbnormalID(0x0C03, "ADB listen too much");
 							/* ADB_MaxSzDatBuf isn't big enough */
 						(void) ADB_ShiftInData();
 					} else {
@@ -129,12 +135,13 @@ GLOBALPROC ADB_DoNewState(void)
 				break;
 			case 3: /* idle */
 				if (ADB_ListenDatBuf) {
-					ReportAbnormal("ADB idle follows listen");
+					ReportAbnormalID(0x0C04, "ADB idle follows listen");
 					/* apparently doesn't happen */
 				}
 				if (ADB_TalkDatBuf) {
 					if (ADB_IndexDatBuf != 0) {
-						ReportAbnormal("idle when not done talking");
+						ReportAbnormalID(0x0C05,
+							"idle when not done talking");
 					}
 					ADB_ShiftOutData(0xFF);
 					/* ADB_Int = 0; */

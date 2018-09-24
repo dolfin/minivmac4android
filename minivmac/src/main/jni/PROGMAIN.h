@@ -22,6 +22,4 @@
 #endif
 
 EXPORTPROC EmulationReserveAlloc(void);
-EXPORTFUNC blnr InitEmulation(void);
-EXPORTPROC DoEmulateOneTick(void);
-EXPORTPROC DoEmulateExtraTime(void);
+EXPORTPROC ProgramMain(void);

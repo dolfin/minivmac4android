@@ -62,6 +62,10 @@
 
 #include "PROGMAIN.h"
 
+/*
+	ReportAbnormalID unused 0x1002 - 0x10FF
+*/
+
 LOCALPROC EmulatedHardwareZap(void)
 {
 	Memory_Reset();
@@ -109,10 +113,14 @@ LOCALPROC SubTickNotify(int SubTick)
 	dbglog_writeNum(SubTick);
 	dbglog_writeReturn();
 #endif
+#if EmASC
+	ASC_SubTick(SubTick);
+#else
 #if MySoundEnabled && (CurEmMd != kEmMd_PB100)
 	MacSound_SubTick(SubTick);
 #else
 	UnusedParam(SubTick);
+#endif
 #endif
 }
 
@@ -150,9 +158,7 @@ LOCALPROC SubTickTaskEnd(void)
 LOCALPROC SixtiethSecondNotify(void)
 {
 #if dbglog_HAVE && 0
-	dbglog_StartLine();
-	dbglog_writeCStr("begin new Sixtieth");
-	dbglog_writeReturn();
+	dbglog_WriteNote("begin new Sixtieth");
 #endif
 	Mouse_Update();
 	InterruptReset_Update();
@@ -175,9 +181,6 @@ LOCALPROC SixtiethSecondNotify(void)
 #if EmVidCard
 	Vid_Update();
 #endif
-#if EmASC
-	ASC_Update();
-#endif
 
 	SubTickTaskStart();
 }
@@ -188,9 +191,7 @@ LOCALPROC SixtiethEndNotify(void)
 	Mouse_EndTickNotify();
 	Screen_EndTickNotify();
 #if dbglog_HAVE && 0
-	dbglog_StartLine();
-	dbglog_writeCStr("end Sixtieth");
-	dbglog_writeReturn();
+	dbglog_WriteNote("end Sixtieth");
 #endif
 }
 
@@ -234,7 +235,7 @@ GLOBALPROC EmulationReserveAlloc(void)
 #endif
 }
 
-GLOBALFUNC blnr InitEmulation(void)
+LOCALFUNC blnr InitEmulation(void)
 {
 #if EmRTC
 	if (RTC_Init())
@@ -290,7 +291,7 @@ LOCALPROC ICT_DoTask(int taskid)
 			break;
 #endif
 		default:
-			ReportAbnormal("unknown taskid in ICT_DoTask");
+			ReportAbnormalID(0x1001, "unknown taskid in ICT_DoTask");
 			break;
 	}
 }
@@ -382,7 +383,7 @@ LOCALPROC m68k_go_nCycles_1(ui5b n)
 
 LOCALVAR ui5b ExtraSubTicksToDo = 0;
 
-GLOBALPROC DoEmulateOneTick(void)
+LOCALPROC DoEmulateOneTick(void)
 {
 #if EnableAutoSlow
 	{
@@ -445,7 +446,7 @@ LOCALFUNC blnr MoreSubTicksToDo(void)
 	return v;
 }
 
-GLOBALPROC DoEmulateExtraTime(void)
+LOCALPROC DoEmulateExtraTime(void)
 {
 	/*
 		DoEmulateExtraTime is used for
@@ -474,5 +475,88 @@ GLOBALPROC DoEmulateExtraTime(void)
 			--ExtraSubTicksToDo;
 		} while (MoreSubTicksToDo());
 		ExtraTimeEndNotify();
+	}
+}
+
+LOCALVAR ui5b CurEmulatedTime = 0;
+	/*
+		The number of ticks that have been
+		emulated so far.
+
+		That is, the number of times
+		"DoEmulateOneTick" has been called.
+	*/
+
+LOCALPROC RunEmulatedTicksToTrueTime(void)
+{
+	/*
+		The general idea is to call DoEmulateOneTick
+		once per tick.
+
+		But if emulation is lagging, we'll try to
+		catch up by calling DoEmulateOneTick multiple
+		times, unless we're too far behind, in
+		which case we forget it.
+
+		If emulating one tick takes longer than
+		a tick we don't want to sit here
+		forever. So the maximum number of calls
+		to DoEmulateOneTick is determined at
+		the beginning, rather than just
+		calling DoEmulateOneTick until
+		CurEmulatedTime >= TrueEmulatedTime.
+	*/
+
+	si3b n = OnTrueTime - CurEmulatedTime;
+
+	if (n > 0) {
+		DoEmulateOneTick();
+		++CurEmulatedTime;
+
+		DoneWithDrawingForTick();
+
+		if (n > 8) {
+			/* emulation not fast enough */
+			n = 8;
+			CurEmulatedTime = OnTrueTime - n;
+		}
+
+		if (ExtraTimeNotOver() && (--n > 0)) {
+			/* lagging, catch up */
+
+			EmVideoDisable = trueblnr;
+
+			do {
+				DoEmulateOneTick();
+				++CurEmulatedTime;
+			} while (ExtraTimeNotOver()
+				&& (--n > 0));
+
+			EmVideoDisable = falseblnr;
+		}
+
+		EmLagTime = n;
+	}
+}
+
+LOCALPROC MainEventLoop(void)
+{
+	for (; ; ) {
+		WaitForNextTick();
+		if (ForceMacOff) {
+			return;
+		}
+
+		RunEmulatedTicksToTrueTime();
+
+		DoEmulateExtraTime();
+	}
+}
+
+GLOBALPROC ProgramMain(void)
+{
+	if (InitEmulation())
+	{
+		MainEventLoop();
 	}
 }

@@ -31,6 +31,7 @@
 #include "MYOSGLUE.h"
 #include "EMCONFIG.h"
 #include "GLOBGLUE.h"
+#include "MINEM68K.h"
 #endif
 
 #include "SCSIEMDV.h"
@@ -142,8 +143,8 @@ LOCALPROC SCSI_Check(void)
 
 GLOBALFUNC ui5b SCSI_Access(ui5b Data, blnr WriteMem, CPTR addr)
 {
-	addr *= 2;
-	if (addr < kSCSI_Size) {
+	if (addr < (kSCSI_Size / 2)) {
+		addr *= 2;
 		if (WriteMem) {
 			SCSI[addr + 1] = Data;
 			SCSI_Check();

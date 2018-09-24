@@ -39,6 +39,10 @@
 
 #define HaveXPRAM (CurEmMd >= kEmMd_Plus)
 
+/*
+	ReportAbnormalID unused 0x0805 - 0x08FF
+*/
+
 #if HaveXPRAM
 #define PARAMRAMSize 256
 #else
@@ -84,36 +88,12 @@ LOCALVAR ui5b LastRealDate;
 #define RTCinitPRAM 1
 #endif
 
-#ifndef SpeakerVol /* in 0..7 */
-#if MySoundEnabled
-#define SpeakerVol 7
-#else
-#define SpeakerVol 0
-#endif
-#endif
-
 #ifndef TrackSpeed /* in 0..4 */
 #define TrackSpeed 0
 #endif
 
 #ifndef AlarmOn /* in 0..1 */
 #define AlarmOn 0
-#endif
-
-#ifndef DoubleClickTime /* in 5,8,12 */
-#if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
-#define DoubleClickTime 8
-#else
-#define DoubleClickTime 5
-#endif
-#endif
-
-#ifndef CaretBlinkTime /* in 3,8,15 */
-#if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
-#define CaretBlinkTime 8
-#else
-#define CaretBlinkTime 3
-#endif
 #endif
 
 #ifndef DiskCacheSz /* in 1,2,3,4,6,8,12 */
@@ -123,10 +103,6 @@ LOCALVAR ui5b LastRealDate;
 #else
 #define DiskCacheSz 4
 #endif
-#endif
-
-#ifndef MenuBlink /* in 0..3 */
-#define MenuBlink 3
 #endif
 
 #ifndef StartUpDisk /* in 0..1 */
@@ -139,14 +115,6 @@ LOCALVAR ui5b LastRealDate;
 
 #ifndef MouseScalingOn /* in 0..1 */
 #define MouseScalingOn 0
-#endif
-
-#ifndef AutoKeyThresh /* in 0,3,4,6,A */
-#define AutoKeyThresh 6
-#endif
-
-#ifndef AutoKeyRate /* in 0,6,4,3,1 */
-#define AutoKeyRate 3
 #endif
 
 #define prb_fontHi 0
@@ -265,11 +233,13 @@ GLOBALFUNC blnr RTC_Init(void)
 	RTC.PARAMRAM[0x46] = /* 0x42 */ 0x76; /* 'v' */
 	RTC.PARAMRAM[0x47] = /* 0x32 */ 0x4D; /* 'M' */
 	/* mode */
-#if 0 == vMacScreenDepth
+#if (0 == vMacScreenDepth) || (vMacScreenDepth >= 4)
 	RTC.PARAMRAM[0x48] = 0x80;
 #else
-	RTC.PARAMRAM[0x48] = 0x80;
+	RTC.PARAMRAM[0x48] = 0x81;
 		/* 0x81 doesn't quite work right at boot */
+			/* no, it seems to work now (?) */
+			/* but only if depth <= 3 */
 #endif
 #endif
 
@@ -368,11 +338,11 @@ LOCALFUNC ui3b RTC_Access_Reg(ui3b Data, blnr WriteReg, ui3b TheCmd)
 					RTC.WrProtect = (Data & 0x80) != 0;
 					break; /* Write_Protect Register */
 				default :
-					ReportAbnormal("Write RTC Reg unknown");
+					ReportAbnormalID(0x0801, "Write RTC Reg unknown");
 					break;
 			}
 		} else {
-			ReportAbnormal("Read RTC Reg unknown");
+			ReportAbnormalID(0x0802, "Read RTC Reg unknown");
 		}
 	} else {
 		Data = RTC_Access_PRAM_Reg(Data, WriteReg,
@@ -449,7 +419,7 @@ GLOBALPROC RTCunEnabled_ChangeNtfy(void)
 #ifdef _RTC_Debug
 			printf("aborting, %2x\n", RTC.Counter);
 #endif
-			ReportAbnormal("RTC aborting");
+			ReportAbnormalID(0x0803, "RTC aborting");
 		}
 		RTC.Mode = 0;
 		RTC.DataOut = 0;
@@ -500,7 +470,8 @@ GLOBALPROC RTCdataLine_ChangeNtfy(void)
 				correct.
 			*/
 		} else {
-			ReportAbnormal("write RTC Data unexpected direction");
+			ReportAbnormalID(0x0804,
+				"write RTC Data unexpected direction");
 		}
 	}
 #endif

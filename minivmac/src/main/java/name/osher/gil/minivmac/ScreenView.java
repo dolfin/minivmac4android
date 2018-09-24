@@ -60,12 +60,21 @@ public class ScreenView extends View {
 		setScaled(isScaled());
 	}
 	
-	public void updateScreen(int[] update) {
+	public void updateScreen(int[] update, int top, int left, int bottom, int right) {
 		if (mScreenBits == null || update.length < 4) return;
-		int width = update[3]-update[1];
-		int height = update[2]-update[0];
-		mScreenBits.setPixels(update, 4, width, update[1], update[0], width, height);
-		this.invalidate(); // FIXME invalidate only changed area
+		int width = right - left;
+		int height = bottom - top;
+		mScreenBits.setPixels(update, 0, width, left, top, width, height);
+		this.invalidate(translateScreenXCoord(left), translateScreenYCoord(top),
+				translateScreenXCoord(right), translateScreenYCoord(bottom));
+	}
+
+	private int translateScreenXCoord(int x) {
+		return (int)(x / (mSrcRect.right / (double) mDstRect.width())) + mDstRect.left;
+	}
+
+	private int translateScreenYCoord(int y) {
+		return (int)(y / (mSrcRect.bottom / (double) mDstRect.height())) + mDstRect.top;
 	}
 	
 	protected void onDraw (Canvas canvas) {

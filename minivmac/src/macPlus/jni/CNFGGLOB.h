@@ -8,11 +8,7 @@
 	you know what you're doing.
 */
 
-/* adapt to current compiler/host processor */
-
-#define BigEndianUnaligned 0
-#define LittleEndianUnaligned 0
-#define MayInline inline
+#define MayInline inline __attribute__((always_inline))
 #define MayNotInline __attribute__((noinline))
 #define SmallGlobals 0
 #define cIncludeUnused 0
@@ -32,10 +28,18 @@ typedef unsigned short ui4b;
 typedef short si4b;
 #define HaveRealsi4b 1
 
+#if defined(__x86_64__) || defined(__aarch64__)
+typedef unsigned int ui5b;
+#else
 typedef unsigned long ui5b;
+#endif
 #define HaveRealui5b 1
 
+#if defined(__x86_64__) || defined(__aarch64__)
 typedef long si5b;
+#else
+typedef int si5b;
+#endif
 #define HaveRealsi5b 1
 
 #define HaveRealui6b 0

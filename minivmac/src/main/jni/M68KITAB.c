@@ -54,6 +54,7 @@ enum {
 	kAddrValidControl,
 	kAddrValidControlAlt,
 	kAddrValidAltMem,
+	kAddrValidDataNoCn, /* no constants (immediate data) */
 
 	kNumAddrValids
 };
@@ -64,53 +65,54 @@ enum {
 #define kAddrValidMaskControl    (1 << kAddrValidControl)
 #define kAddrValidMaskControlAlt (1 << kAddrValidControlAlt)
 #define kAddrValidMaskAltMem     (1 << kAddrValidAltMem)
+#define kAddrValidMaskDataNoCn   (1 << kAddrValidDataNoCn)
 
 #define CheckInSet(v, m) (0 != ((1 << (v)) & (m)))
 
 #define kMyAvgCycPerInstr (10 * kCycleScale + (40 * kCycleScale / 64))
 
-LOCALFUNC MayNotInline ui3r GetArgkRegSz(WorkR *p)
+LOCALFUNC ui3r GetAMdRegSz(WorkR *p)
 {
-	ui3r CurArgk;
+	ui3r CurAMd;
 
 	switch (p->opsize) {
 		case 1:
-			CurArgk = kArgkRegB;
+			CurAMd = kAMdRegB;
 			break;
 		case 2:
 		default: /* keep compiler happy */
-			CurArgk = kArgkRegW;
+			CurAMd = kAMdRegW;
 			break;
 		case 4:
-			CurArgk = kArgkRegL;
+			CurAMd = kAMdRegL;
 			break;
 	}
 
-	return CurArgk;
+	return CurAMd;
 }
 
-LOCALFUNC MayNotInline ui3r GetArgkMemSz(WorkR *p)
+LOCALFUNC ui3r GetAMdIndirectSz(WorkR *p)
 {
-	ui3r CurArgk;
+	ui3r CurAMd;
 
 	switch (p->opsize) {
 		case 1:
-			CurArgk = kArgkMemB;
+			CurAMd = kAMdIndirectB;
 			break;
 		case 2:
 		default: /* keep compiler happy */
-			CurArgk = kArgkMemW;
+			CurAMd = kAMdIndirectW;
 			break;
 		case 4:
-			CurArgk = kArgkMemL;
+			CurAMd = kAMdIndirectL;
 			break;
 	}
 
-	return CurArgk;
+	return CurAMd;
 }
 
 #if WantCycByPriOp
-LOCALFUNC MayNotInline ui4r OpEACalcCyc(WorkR *p, ui3r m, ui3r r)
+LOCALFUNC ui4r OpEACalcCyc(WorkR *p, ui3r m, ui3r r)
 {
 	ui4r v;
 
@@ -186,7 +188,7 @@ LOCALFUNC MayNotInline ui4r OpEACalcCyc(WorkR *p, ui3r m, ui3r r)
 #endif
 
 #if WantCycByPriOp
-LOCALFUNC MayNotInline ui4r OpEADestCalcCyc(WorkR *p, ui3r m, ui3r r)
+LOCALFUNC ui4r OpEADestCalcCyc(WorkR *p, ui3r m, ui3r r)
 {
 	ui4r v;
 
@@ -251,55 +253,51 @@ LOCALFUNC MayNotInline ui4r OpEADestCalcCyc(WorkR *p, ui3r m, ui3r r)
 #endif
 
 LOCALPROC SetDcoArgFields(WorkR *p, blnr src,
-	ui3r CurAMd, ui3r CurArgk, ui3r CurArgDat)
+	ui3r CurAMd, ui3r CurArgDat)
 {
-	ui5b *pv = src ? (&p->DecOp.B) : (&p->DecOp.A);
-	ui5r v = *pv;
-
-	SetDcoFldArgDat(v, CurArgDat);
-	SetDcoFldAMd(v, CurAMd);
-	SetDcoFldArgk(v, CurArgk);
-
-	*pv = v;
+	if (src) {
+		p->DecOp.y.v[0].AMd = CurAMd;
+		p->DecOp.y.v[0].ArgDat = CurArgDat;
+	} else {
+		p->DecOp.y.v[1].AMd = CurAMd;
+		p->DecOp.y.v[1].ArgDat = CurArgDat;
+	}
 }
 
-LOCALFUNC MayNotInline blnr CheckValidAddrMode(WorkR *p,
+LOCALFUNC blnr CheckValidAddrMode(WorkR *p,
 	ui3r m, ui3r r, ui3r v, blnr src)
 {
 	ui3r CurAMd = 0; /* init to keep compiler happy */
-	ui3r CurArgk = 0; /* init to keep compiler happy */
 	ui3r CurArgDat = 0;
 	blnr IsOk;
 
 	switch (m) {
 		case 0:
-			CurAMd = kAMdReg;
-			CurArgk = GetArgkRegSz(p);
+			CurAMd = GetAMdRegSz(p);
 			CurArgDat = r;
 			IsOk = CheckInSet(v,
 				kAddrValidMaskAny | kAddrValidMaskData
-					| kAddrValidMaskDataAlt);
+					| kAddrValidMaskDataAlt | kAddrValidMaskDataNoCn);
 			break;
 		case 1:
-			CurAMd = kAMdReg;
-			CurArgk = GetArgkRegSz(p);
+			CurAMd = GetAMdRegSz(p);
 			CurArgDat = r + 8;
 			IsOk = CheckInSet(v, kAddrValidMaskAny);
 			break;
 		case 2:
-			CurAMd = kAMdIndirect;
-			CurArgk = GetArgkMemSz(p);
+			CurAMd = GetAMdIndirectSz(p);
 			CurArgDat = r + 8;
 			IsOk = CheckInSet(v,
 				kAddrValidMaskAny | kAddrValidMaskData
 					| kAddrValidMaskDataAlt | kAddrValidMaskControl
-					| kAddrValidMaskControlAlt | kAddrValidMaskAltMem);
+					| kAddrValidMaskControlAlt | kAddrValidMaskAltMem
+					| kAddrValidMaskDataNoCn);
 			break;
 		case 3:
 			switch (p->opsize) {
 				case 1:
 					if (7 == r) {
-						CurAMd = kAMdAPosIncW;
+						CurAMd = kAMdAPosInc7B;
 					} else {
 						CurAMd = kAMdAPosIncB;
 					}
@@ -312,17 +310,17 @@ LOCALFUNC MayNotInline blnr CheckValidAddrMode(WorkR *p,
 					CurAMd = kAMdAPosIncL;
 					break;
 			}
-			CurArgk = GetArgkMemSz(p);
 			CurArgDat = r + 8;
 			IsOk = CheckInSet(v,
 				kAddrValidMaskAny | kAddrValidMaskData
-					| kAddrValidMaskDataAlt | kAddrValidMaskAltMem);
+					| kAddrValidMaskDataAlt | kAddrValidMaskAltMem
+					| kAddrValidMaskDataNoCn);
 			break;
 		case 4:
 			switch (p->opsize) {
 				case 1:
 					if (7 == r) {
-						CurAMd = kAMdAPreDecW;
+						CurAMd = kAMdAPreDec7B;
 					} else {
 						CurAMd = kAMdAPreDecB;
 					}
@@ -335,65 +333,131 @@ LOCALFUNC MayNotInline blnr CheckValidAddrMode(WorkR *p,
 					CurAMd = kAMdAPreDecL;
 					break;
 			}
-			CurArgk = GetArgkMemSz(p);
 			CurArgDat = r + 8;
 			IsOk = CheckInSet(v,
 				kAddrValidMaskAny | kAddrValidMaskData
-					| kAddrValidMaskDataAlt | kAddrValidMaskAltMem);
+					| kAddrValidMaskDataAlt | kAddrValidMaskAltMem
+					| kAddrValidMaskDataNoCn);
 			break;
 		case 5:
-			CurAMd = kAMdADisp;
-			CurArgk = GetArgkMemSz(p);
+			switch (p->opsize) {
+				case 1:
+					CurAMd = kAMdADispB;
+					break;
+				case 2:
+				default: /* keep compiler happy */
+					CurAMd = kAMdADispW;
+					break;
+				case 4:
+					CurAMd = kAMdADispL;
+					break;
+			}
 			CurArgDat = r + 8;
 			IsOk = CheckInSet(v,
 				kAddrValidMaskAny | kAddrValidMaskData
 					| kAddrValidMaskDataAlt | kAddrValidMaskControl
-					| kAddrValidMaskControlAlt | kAddrValidMaskAltMem);
+					| kAddrValidMaskControlAlt | kAddrValidMaskAltMem
+					| kAddrValidMaskDataNoCn);
 			break;
 		case 6:
-			CurAMd = kAMdAIndex;
-			CurArgk = GetArgkMemSz(p);
+			switch (p->opsize) {
+				case 1:
+					CurAMd = kAMdAIndexB;
+					break;
+				case 2:
+				default: /* keep compiler happy */
+					CurAMd = kAMdAIndexW;
+					break;
+				case 4:
+					CurAMd = kAMdAIndexL;
+					break;
+			}
 			CurArgDat = r + 8;
 			IsOk = CheckInSet(v,
 				kAddrValidMaskAny | kAddrValidMaskData
 					| kAddrValidMaskDataAlt | kAddrValidMaskControl
-					| kAddrValidMaskControlAlt | kAddrValidMaskAltMem);
+					| kAddrValidMaskControlAlt | kAddrValidMaskAltMem
+					| kAddrValidMaskDataNoCn);
 			break;
 		case 7:
 			switch (r) {
 				case 0:
-					CurAMd = kAMdAbsW;
-					CurArgk = GetArgkMemSz(p);
+					switch (p->opsize) {
+						case 1:
+							CurAMd = kAMdAbsWB;
+							break;
+						case 2:
+						default: /* keep compiler happy */
+							CurAMd = kAMdAbsWW;
+							break;
+						case 4:
+							CurAMd = kAMdAbsWL;
+							break;
+					}
 					IsOk = CheckInSet(v,
 						kAddrValidMaskAny | kAddrValidMaskData
 							| kAddrValidMaskDataAlt
 							| kAddrValidMaskControl
 							| kAddrValidMaskControlAlt
-							| kAddrValidMaskAltMem);
+							| kAddrValidMaskAltMem
+							| kAddrValidMaskDataNoCn);
 					break;
 				case 1:
-					CurAMd = kAMdAbsL;
-					CurArgk = GetArgkMemSz(p);
+					switch (p->opsize) {
+						case 1:
+							CurAMd = kAMdAbsLB;
+							break;
+						case 2:
+						default: /* keep compiler happy */
+							CurAMd = kAMdAbsLW;
+							break;
+						case 4:
+							CurAMd = kAMdAbsLL;
+							break;
+					}
 					IsOk = CheckInSet(v,
 						kAddrValidMaskAny | kAddrValidMaskData
 							| kAddrValidMaskDataAlt
 							| kAddrValidMaskControl
 							| kAddrValidMaskControlAlt
-							| kAddrValidMaskAltMem);
+							| kAddrValidMaskAltMem
+							| kAddrValidMaskDataNoCn);
 					break;
 				case 2:
-					CurAMd = kAMdPCDisp;
-					CurArgk = GetArgkMemSz(p);
+					switch (p->opsize) {
+						case 1:
+							CurAMd = kAMdPCDispB;
+							break;
+						case 2:
+						default: /* keep compiler happy */
+							CurAMd = kAMdPCDispW;
+							break;
+						case 4:
+							CurAMd = kAMdPCDispL;
+							break;
+					}
 					IsOk = CheckInSet(v,
 						kAddrValidMaskAny | kAddrValidMaskData
-							| kAddrValidMaskControl);
+							| kAddrValidMaskControl
+							| kAddrValidMaskDataNoCn);
 					break;
 				case 3:
-					CurAMd = kAMdPCIndex;
-					CurArgk = GetArgkMemSz(p);
+					switch (p->opsize) {
+						case 1:
+							CurAMd = kAMdPCIndexB;
+							break;
+						case 2:
+						default: /* keep compiler happy */
+							CurAMd = kAMdPCIndexW;
+							break;
+						case 4:
+							CurAMd = kAMdPCIndexL;
+							break;
+					}
 					IsOk = CheckInSet(v,
 						kAddrValidMaskAny | kAddrValidMaskData
-							| kAddrValidMaskControl);
+							| kAddrValidMaskControl
+							| kAddrValidMaskDataNoCn);
 					break;
 				case 4:
 					switch (p->opsize) {
@@ -408,7 +472,6 @@ LOCALFUNC MayNotInline blnr CheckValidAddrMode(WorkR *p,
 							CurAMd = kAMdImmedL;
 							break;
 					}
-					CurArgk = kArgkCnst;
 					IsOk = CheckInSet(v,
 						kAddrValidMaskAny | kAddrValidMaskData);
 					break;
@@ -423,14 +486,14 @@ LOCALFUNC MayNotInline blnr CheckValidAddrMode(WorkR *p,
 	}
 
 	if (IsOk) {
-		SetDcoArgFields(p, src, CurAMd, CurArgk, CurArgDat);
+		SetDcoArgFields(p, src, CurAMd, CurArgDat);
 	}
 
 	return IsOk;
 }
 
 #if WantCycByPriOp
-LOCALFUNC MayNotInline blnr LeaPeaEACalcCyc(WorkR *p, ui3r m, ui3r r)
+LOCALFUNC blnr LeaPeaEACalcCyc(WorkR *p, ui3r m, ui3r r)
 {
 	ui4r v;
 
@@ -479,31 +542,31 @@ LOCALFUNC blnr IsValidAddrMode(WorkR *p)
 		mode(p), reg(p), kAddrValidAny, falseblnr);
 }
 
-LOCALFUNC MayNotInline blnr CheckDataAltAddrMode(WorkR *p)
+LOCALFUNC blnr CheckDataAltAddrMode(WorkR *p)
 {
 	return CheckValidAddrMode(p,
 		mode(p), reg(p), kAddrValidDataAlt, falseblnr);
 }
 
-LOCALFUNC MayNotInline blnr CheckDataAddrMode(WorkR *p)
+LOCALFUNC blnr CheckDataAddrMode(WorkR *p)
 {
 	return CheckValidAddrMode(p,
 		mode(p), reg(p), kAddrValidData, falseblnr);
 }
 
-LOCALFUNC MayNotInline blnr CheckControlAddrMode(WorkR *p)
+LOCALFUNC blnr CheckControlAddrMode(WorkR *p)
 {
 	return CheckValidAddrMode(p,
 		mode(p), reg(p), kAddrValidControl, falseblnr);
 }
 
-LOCALFUNC MayNotInline blnr CheckControlAltAddrMode(WorkR *p)
+LOCALFUNC blnr CheckControlAltAddrMode(WorkR *p)
 {
 	return CheckValidAddrMode(p,
 		mode(p), reg(p), kAddrValidControlAlt, falseblnr);
 }
 
-LOCALFUNC MayNotInline blnr CheckAltMemAddrMode(WorkR *p)
+LOCALFUNC blnr CheckAltMemAddrMode(WorkR *p)
 {
 	return CheckValidAddrMode(p,
 		mode(p), reg(p), kAddrValidAltMem, falseblnr);
@@ -557,7 +620,7 @@ LOCALFUNC ui5r octdat(ui5r x)
 	}
 }
 
-LOCALPROC MayInline DeCode0(WorkR *p)
+LOCALPROCUSEDONCE DeCode0(WorkR *p)
 {
 	if (b8(p) == 1) {
 		if (mode(p) == 1) {
@@ -581,10 +644,17 @@ LOCALPROC MayInline DeCode0(WorkR *p)
 					break;
 			}
 #endif
-			p->MainClass = kIKindMoveP;
+			if (CheckValidAddrMode(p, 1, reg(p),
+				kAddrValidAny, trueblnr))
+			if (CheckValidAddrMode(p, 0, rg9(p),
+				kAddrValidAny, falseblnr))
+			{
+				p->MainClass = kIKindMoveP0 + b76(p);
+			}
 		} else {
 			/* dynamic bit, Opcode = 0000ddd1ttmmmrrr */
 			if (mode(p) == 0) {
+				p->opsize = 4;
 #if WantCycByPriOp
 				switch (b76(p)) {
 					case 0: /* BTst */
@@ -601,15 +671,19 @@ LOCALPROC MayInline DeCode0(WorkR *p)
 						break;
 				}
 #endif
-				p->MainClass = kIKindBitOpDD;
+				p->MainClass = kIKindBTstL + b76(p);
+				SetDcoArgFields(p, trueblnr, kAMdRegL, rg9(p));
+				SetDcoArgFields(p, falseblnr, kAMdRegL, reg(p));
 			} else {
+				p->opsize = 1;
+				p->MainClass = kIKindBTstB + b76(p);
+				SetDcoArgFields(p, trueblnr, kAMdRegB, rg9(p));
 				if (b76(p) == 0) { /* BTst */
 					if (CheckDataAddrMode(p)) {
 #if WantCycByPriOp
 						p->Cycles = (4 * kCycleScale + RdAvgXtraCyc);
 						p->Cycles += OpEACalcCyc(p, mode(p), reg(p));
 #endif
-						p->MainClass = kIKindBitOpDM;
 					}
 				} else {
 					if (CheckDataAltAddrMode(p)) {
@@ -618,7 +692,6 @@ LOCALPROC MayInline DeCode0(WorkR *p)
 							+ RdAvgXtraCyc + WrAvgXtraCyc);
 						p->Cycles += OpEACalcCyc(p, mode(p), reg(p));
 #endif
-						p->MainClass = kIKindBitOpDM;
 					}
 				}
 			}
@@ -627,6 +700,7 @@ LOCALPROC MayInline DeCode0(WorkR *p)
 		if (rg9(p) == 4) {
 			/* static bit 00001010ssmmmrrr */
 			if (mode(p) == 0) {
+				p->opsize = 4;
 #if WantCycByPriOp
 				switch (b76(p)) {
 					case 0: /* BTst */
@@ -647,21 +721,23 @@ LOCALPROC MayInline DeCode0(WorkR *p)
 						break;
 				}
 #endif
-				p->MainClass = kIKindBitOpND;
+				SetDcoArgFields(p, trueblnr, kAMdImmedB, 0);
+				SetDcoArgFields(p, falseblnr, kAMdRegL, reg(p));
+				p->MainClass = kIKindBTstL + b76(p);
 			} else {
+				p->opsize = 1;
+				SetDcoArgFields(p, trueblnr, kAMdImmedB, 0);
+				p->MainClass = kIKindBTstB + b76(p);
 				if (b76(p) == 0) { /* BTst */
-					if ((mode(p) == 7) && (reg(p) == 4)) {
-						p->MainClass = kIKindIllegal;
-					} else {
-						if (CheckDataAddrMode(p)) {
+					if (CheckValidAddrMode(p,
+						mode(p), reg(p), kAddrValidDataNoCn, falseblnr))
+					{
 #if WantCycByPriOp
-							p->Cycles =
-								(8 * kCycleScale + 2 * RdAvgXtraCyc);
-							p->Cycles +=
-								OpEACalcCyc(p, mode(p), reg(p));
+						p->Cycles =
+							(8 * kCycleScale + 2 * RdAvgXtraCyc);
+						p->Cycles +=
+							OpEACalcCyc(p, mode(p), reg(p));
 #endif
-							p->MainClass = kIKindBitOpNM;
-						}
 					}
 				} else {
 					if (CheckDataAltAddrMode(p)) {
@@ -670,7 +746,6 @@ LOCALPROC MayInline DeCode0(WorkR *p)
 							+ 2 * RdAvgXtraCyc + WrAvgXtraCyc);
 						p->Cycles += OpEACalcCyc(p, mode(p), reg(p));
 #endif
-						p->MainClass = kIKindBitOpNM;
 					}
 				}
 			}
@@ -679,6 +754,19 @@ LOCALPROC MayInline DeCode0(WorkR *p)
 #if Use68020
 			if (rg9(p) < 3) {
 				/* CHK2 or CMP2 00000ss011mmmrrr */
+				switch ((p->opcode >> 9) & 3) {
+					case 0 :
+						p->opsize = 1;
+						break;
+					case 1 :
+						p->opsize = 2;
+						break;
+					case 2 :
+						p->opsize = 4;
+						break;
+				}
+				p->DecOp.y.v[0].ArgDat = p->opsize;
+					/* size */
 				if (CheckControlAddrMode(p)) {
 #if WantCycByPriOp
 					p->Cycles += OpEACalcCyc(p, mode(p), reg(p));
@@ -687,12 +775,26 @@ LOCALPROC MayInline DeCode0(WorkR *p)
 				}
 			} else
 			if (rg9(p) >= 5) {
+				switch ((p->opcode >> 9) & 3) {
+					case 1 :
+						p->opsize = 1;
+						break;
+					case 2 :
+						p->opsize = 2;
+						break;
+					case 3 :
+						p->opsize = 4;
+						break;
+				}
+				p->DecOp.y.v[0].ArgDat = p->opsize;
 				if ((mode(p) == 7) && (reg(p) == 4)) {
 					/* CAS2 00001ss011111100 */
 					p->MainClass = kIKindCAS2;
 				} else {
 					/* CAS 00001ss011mmmrrr */
-					p->MainClass = kIKindCAS;
+					if (CheckDataAltAddrMode(p)) {
+						p->MainClass = kIKindCAS;
+					}
 				}
 			} else
 			if (rg9(p) == 3) {
@@ -714,7 +816,7 @@ LOCALPROC MayInline DeCode0(WorkR *p)
 			FindOpSizeFromb76(p);
 			if (CheckValidAddrMode(p, 7, 4, kAddrValidAny, trueblnr))
 			if (CheckValidAddrMode(p,
-				mode(p), reg(p), kAddrValidDataAlt, falseblnr))
+				mode(p), reg(p), kAddrValidDataNoCn, falseblnr))
 			{
 #if WantCycByPriOp
 				if (0 == mode(p)) {
@@ -733,6 +835,8 @@ LOCALPROC MayInline DeCode0(WorkR *p)
 		} else if (rg9(p) == 7) {
 #if Use68020
 			/* MoveS 00001110ssmmmrrr */
+			FindOpSizeFromb76(p);
+			p->DecOp.y.v[0].ArgDat = p->opsize;
 			if (CheckAltMemAddrMode(p)) {
 #if WantCycByPriOp
 				p->Cycles += OpEACalcCyc(p, mode(p), reg(p));
@@ -746,13 +850,28 @@ LOCALPROC MayInline DeCode0(WorkR *p)
 			if ((mode(p) == 7) && (reg(p) == 4)) {
 				switch (rg9(p)) {
 					case 0:
+#if WantCycByPriOp
+						p->Cycles =
+							(20 * kCycleScale + 3 * RdAvgXtraCyc);
+#endif
+						p->MainClass = (0 != b76(p))
+							? kIKindOrISR : kIKindOrICCR;
+						break;
 					case 1:
+#if WantCycByPriOp
+						p->Cycles =
+							(20 * kCycleScale + 3 * RdAvgXtraCyc);
+#endif
+						p->MainClass = (0 != b76(p))
+							? kIKindAndISR : kIKindAndICCR;
+						break;
 					case 5:
 #if WantCycByPriOp
 						p->Cycles =
 							(20 * kCycleScale + 3 * RdAvgXtraCyc);
 #endif
-						p->MainClass = kIKindBinOpStatusCCR;
+						p->MainClass = (0 != b76(p))
+							? kIKindEorISR : kIKindEorICCR;
 						break;
 					default:
 						p->MainClass = kIKindIllegal;
@@ -940,7 +1059,7 @@ LOCALPROC MayInline DeCode0(WorkR *p)
 	}
 }
 
-LOCALPROC MayInline DeCode1(WorkR *p)
+LOCALPROCUSEDONCE DeCode1(WorkR *p)
 {
 	p->opsize = 1;
 	if (md6(p) == 1) { /* MOVEA */
@@ -964,7 +1083,7 @@ LOCALPROC MayInline DeCode1(WorkR *p)
 	}
 }
 
-LOCALPROC MayInline DeCode2(WorkR *p)
+LOCALPROCUSEDONCE DeCode2(WorkR *p)
 {
 	p->opsize = 4;
 	if (md6(p) == 1) { /* MOVEA */
@@ -978,6 +1097,7 @@ LOCALPROC MayInline DeCode2(WorkR *p)
 			p->Cycles += OpEACalcCyc(p, mode(p), reg(p));
 #endif
 			p->MainClass = kIKindMoveAL;
+			p->DecOp.y.v[1].ArgDat = rg9(p);
 		}
 	} else {
 		if (CheckValidAddrMode(p, mode(p), reg(p),
@@ -995,7 +1115,7 @@ LOCALPROC MayInline DeCode2(WorkR *p)
 	}
 }
 
-LOCALPROC MayInline DeCode3(WorkR *p)
+LOCALPROCUSEDONCE DeCode3(WorkR *p)
 {
 	p->opsize = 2;
 	if (md6(p) == 1) { /* MOVEA */
@@ -1009,6 +1129,7 @@ LOCALPROC MayInline DeCode3(WorkR *p)
 			p->Cycles += OpEACalcCyc(p, mode(p), reg(p));
 #endif
 			p->MainClass = kIKindMoveAW;
+			p->DecOp.y.v[1].ArgDat = rg9(p);
 		}
 	} else {
 		if (CheckValidAddrMode(p, mode(p), reg(p),
@@ -1034,7 +1155,7 @@ LOCALPROC MayInline DeCode3(WorkR *p)
 #define MoveAvgN 3
 #endif
 
-LOCALFUNC MayNotInline ui4r MoveMEACalcCyc(WorkR *p, ui3r m, ui3r r)
+LOCALFUNC ui4r MoveMEACalcCyc(WorkR *p, ui3r m, ui3r r)
 {
 	ui4r v;
 
@@ -1074,14 +1195,19 @@ LOCALFUNC MayNotInline ui4r MoveMEACalcCyc(WorkR *p, ui3r m, ui3r r)
 
 #endif
 
-LOCALPROC MayInline DeCode4(WorkR *p)
+LOCALPROCUSEDONCE DeCode4(WorkR *p)
 {
 	if (b8(p) != 0) {
 		switch (b76(p)) {
 			case 0:
 #if Use68020
 				/* Chk.L 0100ddd100mmmrrr */
-				if (CheckDataAddrMode(p)) {
+				p->opsize = 4;
+				if (CheckValidAddrMode(p, mode(p), reg(p),
+					kAddrValidData, falseblnr))
+				if (CheckValidAddrMode(p, 0, rg9(p),
+					kAddrValidAny, trueblnr))
+				{
 #if WantCycByPriOp
 					p->Cycles += OpEACalcCyc(p, mode(p), reg(p));
 #endif
@@ -1096,7 +1222,12 @@ LOCALPROC MayInline DeCode4(WorkR *p)
 				break;
 			case 2:
 				/* Chk.W 0100ddd110mmmrrr */
-				if (CheckDataAddrMode(p)) {
+				p->opsize = 2;
+				if (CheckValidAddrMode(p, mode(p), reg(p),
+					kAddrValidData, falseblnr))
+				if (CheckValidAddrMode(p, 0, rg9(p),
+					kAddrValidAny, trueblnr))
+				{
 #if WantCycByPriOp
 					p->Cycles = (10 * kCycleScale + RdAvgXtraCyc);
 					p->Cycles += OpEACalcCyc(p, mode(p), reg(p));
@@ -1108,6 +1239,9 @@ LOCALPROC MayInline DeCode4(WorkR *p)
 			default: /* keep compiler happy */
 #if Use68020
 				if ((0 == mode(p)) && (4 == rg9(p))) {
+					/* EXTB.L */
+					SetDcoArgFields(p, falseblnr,
+						kAMdRegL, reg(p));
 					p->MainClass = kIKindEXTBL;
 				} else
 #endif
@@ -1120,6 +1254,7 @@ LOCALPROC MayInline DeCode4(WorkR *p)
 							LeaPeaEACalcCyc(p, mode(p), reg(p));
 #endif
 						p->MainClass = kIKindLea;
+						p->DecOp.y.v[0].ArgDat = rg9(p);
 					}
 				}
 				break;
@@ -1152,6 +1287,7 @@ LOCALPROC MayInline DeCode4(WorkR *p)
 /* reference seems incorrect to say not for 68000 */
 #endif
 					/* Move from SR 0100000011mmmrrr */
+					p->opsize = 2;
 					if (CheckDataAltAddrMode(p)) {
 #if WantCycByPriOp
 						p->Cycles =
@@ -1186,6 +1322,7 @@ LOCALPROC MayInline DeCode4(WorkR *p)
 				} else {
 #if Use68020
 					/* Move from CCR 0100001011mmmrrr */
+					p->opsize = 2;
 					if (CheckDataAltAddrMode(p)) {
 #if WantCycByPriOp
 						p->Cycles += OpEACalcCyc(p, mode(p), reg(p));
@@ -1220,6 +1357,7 @@ LOCALPROC MayInline DeCode4(WorkR *p)
 					}
 				} else {
 					/* Move to CCR 0100010011mmmrrr */
+					p->opsize = 2;
 					if (CheckDataAddrMode(p)) {
 #if WantCycByPriOp
 						p->Cycles = (12 * kCycleScale + RdAvgXtraCyc);
@@ -1252,6 +1390,7 @@ LOCALPROC MayInline DeCode4(WorkR *p)
 					}
 				} else {
 					/* Move from SR 0100011011mmmrrr */
+					p->opsize = 2;
 					if (CheckDataAddrMode(p)) {
 #if WantCycByPriOp
 						if (0 != mode(p)) {
@@ -1273,11 +1412,14 @@ LOCALPROC MayInline DeCode4(WorkR *p)
 #if Use68020
 						if (mode(p) == 1) {
 							/* Link.L 0100100000001rrr */
+							SetDcoArgFields(p, falseblnr,
+								kAMdRegL, reg(p) + 8);
 							p->MainClass = kIKindLinkL;
 						} else
 #endif
 						{
 							/* Nbcd 0100100000mmmrrr */
+							p->opsize = 1;
 							if (CheckDataAltAddrMode(p)) {
 #if WantCycByPriOp
 								if (0 != mode(p)) {
@@ -1302,6 +1444,8 @@ LOCALPROC MayInline DeCode4(WorkR *p)
 								(4 * kCycleScale + RdAvgXtraCyc);
 #endif
 							p->MainClass = kIKindSwap;
+							SetDcoArgFields(p, falseblnr,
+								kAMdRegL, reg(p));
 						} else
 #if Use68020
 						if (mode(p) == 1) {
@@ -1329,9 +1473,12 @@ LOCALPROC MayInline DeCode4(WorkR *p)
 							p->Cycles =
 								(4 * kCycleScale + RdAvgXtraCyc);
 #endif
+							SetDcoArgFields(p, falseblnr,
+								kAMdRegW, reg(p));
 							p->MainClass = kIKindEXTW;
 						} else {
 							/* MOVEM reg to mem 01001d001ssmmmrrr */
+							p->opsize = 2;
 							if (mode(p) == 4) {
 #if WantCycByPriOp
 								p->Cycles =
@@ -1339,6 +1486,8 @@ LOCALPROC MayInline DeCode4(WorkR *p)
 								p->Cycles += MoveAvgN * 4 * kCycleScale
 									+ MoveAvgN * WrAvgXtraCyc;
 #endif
+								SetDcoArgFields(p, falseblnr,
+									kAMdAPreDecL, reg(p) + 8);
 								p->MainClass = kIKindMOVEMRmMW;
 							} else {
 								if (CheckControlAltAddrMode(p)) {
@@ -1349,7 +1498,7 @@ LOCALPROC MayInline DeCode4(WorkR *p)
 										MoveAvgN * 4 * kCycleScale
 											+ MoveAvgN * WrAvgXtraCyc;
 #endif
-									p->MainClass = kIKindMOVEMrm;
+									p->MainClass = kIKindMOVEMrmW;
 								}
 							}
 						}
@@ -1362,27 +1511,25 @@ LOCALPROC MayInline DeCode4(WorkR *p)
 							p->Cycles =
 								(4 * kCycleScale + RdAvgXtraCyc);
 #endif
+							SetDcoArgFields(p, falseblnr,
+								kAMdRegL, reg(p));
 							p->MainClass = kIKindEXTL;
 						} else {
 							/* MOVEM reg to mem 01001d001ssmmmrrr */
-							if (mode(p) == 4) {
 #if WantCycByPriOp
-								p->Cycles = MoveMEACalcCyc(p,
-									mode(p), reg(p));
-								p->Cycles += MoveAvgN * 8 * kCycleScale
-									+ MoveAvgN * 2 * WrAvgXtraCyc;
+							p->Cycles = MoveMEACalcCyc(p,
+								mode(p), reg(p));
+							p->Cycles += MoveAvgN * 8 * kCycleScale
+								+ MoveAvgN * 2 * WrAvgXtraCyc;
 #endif
+							p->opsize = 4;
+							if (mode(p) == 4) {
+								SetDcoArgFields(p, falseblnr,
+									kAMdAPreDecL, reg(p) + 8);
 								p->MainClass = kIKindMOVEMRmML;
 							} else {
 								if (CheckControlAltAddrMode(p)) {
-#if WantCycByPriOp
-									p->Cycles = MoveMEACalcCyc(p,
-										mode(p), reg(p));
-									p->Cycles +=
-										MoveAvgN * 8 * kCycleScale
-										+ MoveAvgN * 2 * WrAvgXtraCyc;
-#endif
-									p->MainClass = kIKindMOVEMrm;
+									p->MainClass = kIKindMOVEMrmL;
 								}
 							}
 						}
@@ -1396,6 +1543,7 @@ LOCALPROC MayInline DeCode4(WorkR *p)
 						p->MainClass = kIKindIllegal;
 					} else {
 						/* Tas 0100101011mmmrrr */
+						p->opsize = 1;
 						if (CheckDataAltAddrMode(p)) {
 #if WantCycByPriOp
 							if (0 != mode(p)) {
@@ -1440,7 +1588,7 @@ LOCALPROC MayInline DeCode4(WorkR *p)
 			case 6:
 				if (((p->opcode >> 7) & 1) == 1) {
 					/* MOVEM mem to reg 0100110011smmmrrr */
-					FindOpSizeFromb76(p);
+					p->opsize = 2 * b76(p) - 2;
 					if (mode(p) == 3) {
 #if WantCycByPriOp
 						p->Cycles = 4 * kCycleScale + RdAvgXtraCyc;
@@ -1453,6 +1601,8 @@ LOCALPROC MayInline DeCode4(WorkR *p)
 								+ MoveAvgN * RdAvgXtraCyc;
 						}
 #endif
+						SetDcoArgFields(p, falseblnr,
+							kAMdAPosIncL, reg(p) + 8);
 						if (b76(p) == 2) {
 							p->MainClass = kIKindMOVEMApRW;
 						} else {
@@ -1472,19 +1622,27 @@ LOCALPROC MayInline DeCode4(WorkR *p)
 									+ MoveAvgN * RdAvgXtraCyc;
 							}
 #endif
-							p->MainClass = kIKindMOVEMmr;
+							if (4 == p->opsize) {
+								p->MainClass = kIKindMOVEMmrL;
+							} else {
+								p->MainClass = kIKindMOVEMmrW;
+							}
 						}
 					}
 				} else {
 #if Use68020
-					if (((p->opcode >> 6) & 1) == 1) {
-						/* DIVU 0100110001mmmrrr 0rrr0s0000000rrr */
-						/* DIVS 0100110001mmmrrr 0rrr1s0000000rrr */
-						p->MainClass = kIKindDivL;
-					} else {
-						/* MULU 0100110000mmmrrr 0rrr0s0000000rrr */
-						/* MULS 0100110000mmmrrr 0rrr1s0000000rrr */
-						p->MainClass = kIKindMulL;
+					p->opsize = 4;
+
+					if (CheckDataAddrMode(p)) {
+						if (((p->opcode >> 6) & 1) == 1) {
+							/* DIVU 0100110001mmmrrr 0rrr0s0000000rrr */
+							/* DIVS 0100110001mmmrrr 0rrr1s0000000rrr */
+							p->MainClass = kIKindDivL;
+						} else {
+							/* MULU 0100110000mmmrrr 0rrr0s0000000rrr */
+							/* MULS 0100110000mmmrrr 0rrr1s0000000rrr */
+							p->MainClass = kIKindMulL;
+						}
 					}
 #else
 					p->MainClass = kIKindIllegal;
@@ -1507,6 +1665,8 @@ LOCALPROC MayInline DeCode4(WorkR *p)
 									+ 4 * RdAvgXtraCyc
 									+ 3 * WrAvgXtraCyc);
 #endif
+								SetDcoArgFields(p, falseblnr,
+									kAMdDat4, (p->opcode & 15) + 32);
 								p->MainClass = kIKindTrap;
 								break;
 							case 2:
@@ -1516,6 +1676,8 @@ LOCALPROC MayInline DeCode4(WorkR *p)
 									+ 2 * RdAvgXtraCyc
 									+ 2 * WrAvgXtraCyc);
 #endif
+								SetDcoArgFields(p, falseblnr,
+									kAMdRegL, reg(p) + 8);
 								if (reg(p) == 6) {
 									p->MainClass = kIKindLinkA6;
 								} else {
@@ -1528,6 +1690,8 @@ LOCALPROC MayInline DeCode4(WorkR *p)
 								p->Cycles = (12 * kCycleScale
 									+ 3 * RdAvgXtraCyc);
 #endif
+								SetDcoArgFields(p, falseblnr,
+									kAMdRegL, reg(p) + 8);
 								if (reg(p) == 6) {
 									p->MainClass = kIKindUnlkA6;
 								} else {
@@ -1540,6 +1704,8 @@ LOCALPROC MayInline DeCode4(WorkR *p)
 								p->Cycles =
 									(4 * kCycleScale + RdAvgXtraCyc);
 #endif
+								SetDcoArgFields(p, falseblnr,
+									kAMdRegL, reg(p) + 8);
 								p->MainClass = kIKindMoveRUSP;
 								break;
 							case 5:
@@ -1548,6 +1714,8 @@ LOCALPROC MayInline DeCode4(WorkR *p)
 								p->Cycles =
 									(4 * kCycleScale + RdAvgXtraCyc);
 #endif
+								SetDcoArgFields(p, falseblnr,
+									kAMdRegL, reg(p) + 8);
 								p->MainClass = kIKindMoveUSPR;
 								break;
 							case 6:
@@ -1622,7 +1790,17 @@ LOCALPROC MayInline DeCode4(WorkR *p)
 							default: /* keep compiler happy */
 #if Use68020
 								/* MOVEC 010011100111101m */
-								p->MainClass = kIKindMoveC;
+								switch (reg(p)) {
+									case 2:
+										p->MainClass = kIKindMoveCEa;
+										break;
+									case 3:
+										p->MainClass = kIKindMoveEaC;
+										break;
+									default:
+										p->MainClass = kIKindIllegal;
+										break;
+								}
 #else
 								p->MainClass = kIKindIllegal;
 #endif
@@ -1741,9 +1919,10 @@ LOCALPROC MayInline DeCode4(WorkR *p)
 	}
 }
 
-LOCALPROC MayInline DeCode5(WorkR *p)
+LOCALPROCUSEDONCE DeCode5(WorkR *p)
 {
 	if (b76(p) == 3) {
+		p->DecOp.y.v[0].ArgDat = (p->opcode >> 8) & 15;
 		if (mode(p) == 1) {
 			/* DBcc 0101cccc11001ddd */
 #if WantCycByPriOp
@@ -1758,6 +1937,7 @@ LOCALPROC MayInline DeCode5(WorkR *p)
 				*/
 #endif
 #endif
+			SetDcoArgFields(p, falseblnr, kAMdRegW, reg(p));
 			if (1 == ((p->opcode >> 8) & 15)) {
 				p->MainClass = kIKindDBF;
 			} else {
@@ -1767,6 +1947,7 @@ LOCALPROC MayInline DeCode5(WorkR *p)
 #if Use68020
 			if ((mode(p) == 7) && (reg(p) >= 2)) {
 				/* TRAPcc 0101cccc11111sss */
+				p->DecOp.y.v[0].ArgDat = reg(p);
 				p->MainClass = kIKindTRAPcc;
 			} else
 #endif
@@ -1796,9 +1977,9 @@ LOCALPROC MayInline DeCode5(WorkR *p)
 		if (mode(p) == 1) {
 			p->opsize = b8(p) * 2 + 2;
 			SetDcoArgFields(p, trueblnr, kAMdDat4,
-				kArgkCnst, octdat(rg9(p)));
-			SetDcoArgFields(p, falseblnr, kAMdReg,
-				kArgkRegL, reg(p) + 8);
+				octdat(rg9(p)));
+			SetDcoArgFields(p, falseblnr, kAMdRegL,
+				reg(p) + 8);
 				/* always long, regardless of opsize */
 			if (b8(p) == 0) {
 #if WantCycByPriOp
@@ -1816,7 +1997,7 @@ LOCALPROC MayInline DeCode5(WorkR *p)
 		} else {
 			FindOpSizeFromb76(p);
 			SetDcoArgFields(p, trueblnr, kAMdDat4,
-				kArgkCnst, octdat(rg9(p)));
+				octdat(rg9(p)));
 			if (CheckValidAddrMode(p,
 				mode(p), reg(p), kAddrValidDataAlt, falseblnr))
 			{
@@ -1856,7 +2037,7 @@ LOCALPROC MayInline DeCode5(WorkR *p)
 	}
 }
 
-LOCALPROC MayInline DeCode6(WorkR *p)
+LOCALPROCUSEDONCE DeCode6(WorkR *p)
 {
 	ui5b cond = (p->opcode >> 8) & 15;
 
@@ -1876,6 +2057,7 @@ LOCALPROC MayInline DeCode6(WorkR *p)
 #endif
 		{
 			p->MainClass = kIKindBsrB;
+			p->DecOp.y.v[1].ArgDat = p->opcode & 255;
 		}
 	} else if (cond == 0) {
 		/* Bra 01100000nnnnnnnn */
@@ -1892,8 +2074,10 @@ LOCALPROC MayInline DeCode6(WorkR *p)
 #endif
 		{
 			p->MainClass = kIKindBraB;
+			p->DecOp.y.v[1].ArgDat = p->opcode & 255;
 		}
 	} else {
+		p->DecOp.y.v[0].ArgDat = cond;
 		/* Bcc 0110ccccnnnnnnnn */
 		if (0 == (p->opcode & 255)) {
 #if WantCycByPriOp
@@ -1922,11 +2106,12 @@ LOCALPROC MayInline DeCode6(WorkR *p)
 #endif
 #endif
 			p->MainClass = kIKindBccB;
+			p->DecOp.y.v[1].ArgDat = p->opcode & 255;
 		}
 	}
 }
 
-LOCALPROC MayInline DeCode7(WorkR *p)
+LOCALPROCUSEDONCE DeCode7(WorkR *p)
 {
 	if (b8(p) == 0) {
 		p->opsize = 4;
@@ -1934,16 +2119,22 @@ LOCALPROC MayInline DeCode7(WorkR *p)
 		p->Cycles = (4 * kCycleScale + RdAvgXtraCyc);
 #endif
 		p->MainClass = kIKindMoveQ;
+		p->DecOp.y.v[0].ArgDat = p->opcode & 255;
+		p->DecOp.y.v[1].ArgDat = rg9(p);
 	} else {
 		p->MainClass = kIKindIllegal;
 	}
 }
 
-LOCALPROC MayInline DeCode8(WorkR *p)
+LOCALPROCUSEDONCE DeCode8(WorkR *p)
 {
 	if (b76(p) == 3) {
 		p->opsize = 2;
-		if (CheckDataAddrMode(p)) {
+		if (CheckValidAddrMode(p, mode(p), reg(p),
+			kAddrValidData, trueblnr))
+		if (CheckValidAddrMode(p, 0, rg9(p),
+			kAddrValidAny, falseblnr))
+		{
 			if (b8(p) == 0) {
 				/* DivU 1000ddd011mmmrrr */
 #if WantCycByPriOp
@@ -2018,20 +2209,81 @@ LOCALPROC MayInline DeCode8(WorkR *p)
 								+ RdAvgXtraCyc);
 						}
 #endif
+						p->opsize = 1;
 						if (mode(p) == 0) {
-							p->MainClass = kIKindSbcdr;
+							if (CheckValidAddrMode(p, 0, reg(p),
+								kAddrValidAny, trueblnr))
+							if (CheckValidAddrMode(p, 0, rg9(p),
+								kAddrValidAny, falseblnr))
+							{
+								p->MainClass = kIKindSbcd;
+							}
 						} else {
-							p->MainClass = kIKindSbcdm;
+							if (CheckValidAddrMode(p, 4, reg(p),
+								kAddrValidAny, trueblnr))
+							if (CheckValidAddrMode(p, 4, rg9(p),
+								kAddrValidAny, falseblnr))
+							{
+								p->MainClass = kIKindSbcd;
+							}
 						}
 						break;
 #if Use68020
 					case 1:
 						/* PACK 1000rrr10100mrrr */
-						p->MainClass = kIKindPack;
+						if (mode(p) == 0) {
+							p->opsize = 2;
+							if (CheckValidAddrMode(p, 0, reg(p),
+								kAddrValidAny, trueblnr))
+							{
+								p->opsize = 1;
+								if (CheckValidAddrMode(p, 0, rg9(p),
+									kAddrValidAny, falseblnr))
+								{
+									p->MainClass = kIKindPack;
+								}
+							}
+						} else {
+							p->opsize = 2;
+							if (CheckValidAddrMode(p, 4, reg(p),
+								kAddrValidAny, trueblnr))
+							{
+								p->opsize = 1;
+								if (CheckValidAddrMode(p, 4, rg9(p),
+									kAddrValidAny, falseblnr))
+								{
+									p->MainClass = kIKindPack;
+								}
+							}
+						}
 						break;
 					case 2:
 						/* UNPK 1000rrr11000mrrr */
-						p->MainClass = kIKindUnpk;
+						if (mode(p) == 0) {
+							p->opsize = 1;
+							if (CheckValidAddrMode(p, 0, reg(p),
+								kAddrValidAny, trueblnr))
+							{
+								p->opsize = 2;
+								if (CheckValidAddrMode(p, 0, rg9(p),
+									kAddrValidAny, falseblnr))
+								{
+									p->MainClass = kIKindUnpk;
+								}
+							}
+						} else {
+							p->opsize = 1;
+							if (CheckValidAddrMode(p, 4, reg(p),
+								kAddrValidAny, trueblnr))
+							{
+								p->opsize = 2;
+								if (CheckValidAddrMode(p, 4, rg9(p),
+									kAddrValidAny, falseblnr))
+								{
+									p->MainClass = kIKindUnpk;
+								}
+							}
+						}
 						break;
 #endif
 					default:
@@ -2066,7 +2318,7 @@ LOCALPROC MayInline DeCode8(WorkR *p)
 	}
 }
 
-LOCALPROC MayInline DeCode9(WorkR *p)
+LOCALPROCUSEDONCE DeCode9(WorkR *p)
 {
 	if (b76(p) == 3) {
 		/* SUBA 1001dddm11mmmrrr */
@@ -2076,7 +2328,7 @@ LOCALPROC MayInline DeCode9(WorkR *p)
 		}
 #endif
 		p->opsize = b8(p) * 2 + 2;
-		SetDcoArgFields(p, falseblnr, kAMdReg, kArgkRegL, rg9(p) + 8);
+		SetDcoArgFields(p, falseblnr, kAMdRegL, rg9(p) + 8);
 			/* always long, regardless of opsize */
 		if (CheckValidAddrMode(p, mode(p), reg(p),
 			kAddrValidAny, trueblnr))
@@ -2189,7 +2441,7 @@ LOCALPROC MayInline DeCode9(WorkR *p)
 	}
 }
 
-LOCALPROC MayInline DeCodeA(WorkR *p)
+LOCALPROCUSEDONCE DeCodeA(WorkR *p)
 {
 #if WantCycByPriOp
 	p->Cycles = (34 * kCycleScale
@@ -2198,7 +2450,7 @@ LOCALPROC MayInline DeCodeA(WorkR *p)
 	p->MainClass = kIKindA;
 }
 
-LOCALPROC MayInline DeCodeB(WorkR *p)
+LOCALPROCUSEDONCE DeCodeB(WorkR *p)
 {
 	if (b76(p) == 3) {
 		/* CMPA 1011ddds11mmmrrr */
@@ -2208,7 +2460,7 @@ LOCALPROC MayInline DeCodeB(WorkR *p)
 		}
 #endif
 		p->opsize = b8(p) * 2 + 2;
-		SetDcoArgFields(p, falseblnr, kAMdReg, kArgkRegL, rg9(p) + 8);
+		SetDcoArgFields(p, falseblnr, kAMdRegL, rg9(p) + 8);
 			/* always long, regardless of opsize */
 		if (CheckValidAddrMode(p, mode(p), reg(p),
 			kAddrValidAny, trueblnr))
@@ -2292,11 +2544,15 @@ LOCALPROC MayInline DeCodeB(WorkR *p)
 	}
 }
 
-LOCALPROC MayInline DeCodeC(WorkR *p)
+LOCALPROCUSEDONCE DeCodeC(WorkR *p)
 {
 	if (b76(p) == 3) {
 		p->opsize = 2;
-		if (CheckDataAddrMode(p)) {
+		if (CheckValidAddrMode(p, mode(p), reg(p),
+			kAddrValidData, trueblnr))
+		if (CheckValidAddrMode(p, 0, rg9(p),
+			kAddrValidAny, falseblnr))
+		{
 #if WantCycByPriOp
 #if WantCloserCyc
 			p->Cycles = (38 * kCycleScale + RdAvgXtraCyc);
@@ -2358,10 +2614,23 @@ LOCALPROC MayInline DeCodeC(WorkR *p)
 								+ RdAvgXtraCyc);
 						}
 #endif
+						p->opsize = 1;
 						if (mode(p) == 0) {
-							p->MainClass = kIKindAbcdr;
+							if (CheckValidAddrMode(p, 0, reg(p),
+								kAddrValidAny, trueblnr))
+							if (CheckValidAddrMode(p, 0, rg9(p),
+								kAddrValidAny, falseblnr))
+							{
+								p->MainClass = kIKindAbcd;
+							}
 						} else {
-							p->MainClass = kIKindAbcdm;
+							if (CheckValidAddrMode(p, 4, reg(p),
+								kAddrValidAny, trueblnr))
+							if (CheckValidAddrMode(p, 4, rg9(p),
+								kAddrValidAny, falseblnr))
+							{
+								p->MainClass = kIKindAbcd;
+							}
 						}
 						break;
 					case 1:
@@ -2369,10 +2638,23 @@ LOCALPROC MayInline DeCodeC(WorkR *p)
 #if WantCycByPriOp
 						p->Cycles = (6 * kCycleScale + RdAvgXtraCyc);
 #endif
+						p->opsize = 4;
 						if (mode(p) == 0) {
-							p->MainClass = kIKindExgdd;
+							if (CheckValidAddrMode(p, 0, rg9(p),
+								kAddrValidAny, trueblnr))
+							if (CheckValidAddrMode(p, 0, reg(p),
+								kAddrValidAny, falseblnr))
+							{
+								p->MainClass = kIKindExg;
+							}
 						} else {
-							p->MainClass = kIKindExgaa;
+							if (CheckValidAddrMode(p, 1, rg9(p),
+								kAddrValidAny, trueblnr))
+							if (CheckValidAddrMode(p, 1, reg(p),
+								kAddrValidAny, falseblnr))
+							{
+								p->MainClass = kIKindExg;
+							}
 						}
 						break;
 					case 2:
@@ -2385,7 +2667,13 @@ LOCALPROC MayInline DeCodeC(WorkR *p)
 							p->Cycles = (6 * kCycleScale
 								+ RdAvgXtraCyc);
 #endif
-							p->MainClass = kIKindExgda;
+							if (CheckValidAddrMode(p, 0, rg9(p),
+								kAddrValidAny, trueblnr))
+							if (CheckValidAddrMode(p, 1, reg(p),
+								kAddrValidAny, falseblnr))
+							{
+								p->MainClass = kIKindExg;
+							}
 						}
 						break;
 				}
@@ -2417,12 +2705,12 @@ LOCALPROC MayInline DeCodeC(WorkR *p)
 	}
 }
 
-LOCALPROC MayInline DeCodeD(WorkR *p)
+LOCALPROCUSEDONCE DeCodeD(WorkR *p)
 {
 	if (b76(p) == 3) {
 		/* ADDA 1101dddm11mmmrrr */
 		p->opsize = b8(p) * 2 + 2;
-		SetDcoArgFields(p, falseblnr, kAMdReg, kArgkRegL, rg9(p) + 8);
+		SetDcoArgFields(p, falseblnr, kAMdRegL, rg9(p) + 8);
 			/* always long, regardless of opsize */
 		if (CheckValidAddrMode(p, mode(p), reg(p),
 			kAddrValidAny, trueblnr))
@@ -2524,104 +2812,167 @@ LOCALPROC MayInline DeCodeD(WorkR *p)
 	}
 }
 
-LOCALPROC MayInline DeCodeE(WorkR *p)
+LOCALFUNC ui5r rolops(WorkR *p, ui5r x)
+{
+	ui5r binop;
+
+	binop = (x << 1);
+	if (! b8(p)) {
+		binop++; /* 'R' */
+	} /* else 'L' */
+
+	return kIKindAslB + 3 * binop + OpSizeOffset(p);
+}
+
+LOCALPROCUSEDONCE DeCodeE(WorkR *p)
 {
 	if (b76(p) == 3) {
 		if ((p->opcode & 0x0800) != 0) {
 #if Use68020
 			/* 11101???11mmmrrr */
-			switch (mode(p)) {
-				case 1:
-				case 3:
-				case 4:
-				default: /* keep compiler happy */
-					p->MainClass = kIKindIllegal;
-					break;
-				case 0:
-				case 2:
-				case 5:
-				case 6:
-					p->MainClass = kIKindBitField;
-					break;
-				case 7:
-					switch (reg(p)) {
-						case 0:
-						case 1:
+			p->DecOp.y.v[0].AMd = mode(p);
+			p->DecOp.y.v[0].ArgDat = (p->opcode >> 8) & 7;
+			if (0 == mode(p)) {
+				SetDcoArgFields(p, falseblnr, kAMdRegL, reg(p));
+				p->MainClass = kIKindBitField;
+			} else {
+				switch ((p->opcode >> 8) & 7) {
+					case 0: /* BFTST */
+					case 1: /* BFEXTU */
+					case 3: /* BFEXTS */
+					case 5: /* BFFFO */
+						if (CheckControlAddrMode(p)) {
 							p->MainClass = kIKindBitField;
-							break;
-						case 2:
-						case 3:
-							switch ((p->opcode >> 8) & 7) {
-								case 0: /* BFTST */
-								case 1: /* BFEXTU */
-								case 3: /* BFEXTS */
-								case 5: /* BFFFO */
-									p->MainClass = kIKindBitField;
-									break;
-								default:
-									p->MainClass = kIKindIllegal;
-									break;
-							}
-							break;
-						default:
-							p->MainClass = kIKindIllegal;
-							break;
-					}
-					break;
+						}
+						break;
+					default: /* BFCHG, BFCLR, BFSET, BFINS */
+						if (CheckControlAltAddrMode(p)) {
+							p->MainClass = kIKindBitField;
+						}
+						break;
+				}
 			}
 #else
 			p->MainClass = kIKindIllegal;
 #endif
 		} else {
+			p->opsize = 2;
 			/* 11100ttd11mmmddd */
 			if (CheckAltMemAddrMode(p)) {
 #if WantCycByPriOp
-				p->Cycles = (8 * kCycleScale
+				p->Cycles = (6 * kCycleScale
+#if ! WantCloserCyc
+					+ 2 * kCycleScale
+#endif
 					+ RdAvgXtraCyc + WrAvgXtraCyc);
 				p->Cycles += OpEACalcCyc(p, mode(p), reg(p));
 #endif
-				p->MainClass = kIKindRolopNM;
+				p->MainClass = rolops(p, rg9(p));
+				SetDcoArgFields(p, trueblnr, kAMdDat4, 1);
 			}
 		}
 	} else {
+		FindOpSizeFromb76(p);
 		if (mode(p) < 4) {
 			/* 1110cccdss0ttddd */
+			if (CheckValidAddrMode(p, 0, reg(p),
+				kAddrValidAny, falseblnr))
+			{
 #if WantCycByPriOp
-			p->Cycles = (octdat(rg9(p)) * (2 * kCycleScale))
-				+ ((4 == p->opsize)
-					? (8 * kCycleScale + RdAvgXtraCyc)
-					: (6 * kCycleScale + RdAvgXtraCyc));
+				p->Cycles = ((4 == p->opsize)
+						? (8 * kCycleScale + RdAvgXtraCyc)
+						: (6 * kCycleScale + RdAvgXtraCyc))
+#if ! WantCloserCyc
+					+ (octdat(rg9(p)) * (2 * kCycleScale))
 #endif
-			p->MainClass = kIKindRolopND;
+					;
+#endif
+				p->MainClass = rolops(p, mode(p) & 3);
+				SetDcoArgFields(p, trueblnr, kAMdDat4, octdat(rg9(p)));
+			}
 		} else {
 			/* 1110rrrdss1ttddd */
+			if (CheckValidAddrMode(p, 0, rg9(p),
+				kAddrValidAny, trueblnr))
+			if (CheckValidAddrMode(p, 0, reg(p),
+				kAddrValidAny, falseblnr))
+			{
 #if WantCycByPriOp
 #if WantCloserCyc
-			p->Cycles = (4 == p->opsize)
-				? (8 * kCycleScale + RdAvgXtraCyc)
-				: (6 * kCycleScale + RdAvgXtraCyc);
+				p->Cycles = ((4 == p->opsize)
+						? (8 * kCycleScale + RdAvgXtraCyc)
+						: (6 * kCycleScale + RdAvgXtraCyc));
 #else
-			p->Cycles = (4 == p->opsize)
-				? ((8 * kCycleScale)
-					+ RdAvgXtraCyc + (8 * (2 * kCycleScale)))
-					/* say average shift count of 8 */
-				: ((6 * kCycleScale)
-					+ RdAvgXtraCyc + (4 * (2 * kCycleScale)));
-					/* say average shift count of 4 */
+				p->Cycles = (4 == p->opsize)
+					? ((8 * kCycleScale)
+						+ RdAvgXtraCyc + (8 * (2 * kCycleScale)))
+						/* say average shift count of 8 */
+					: ((6 * kCycleScale)
+						+ RdAvgXtraCyc + (4 * (2 * kCycleScale)));
+						/* say average shift count of 4 */
 #endif
 #endif
-			p->MainClass = kIKindRolopDD;
+				p->MainClass = rolops(p, mode(p) & 3);
+			}
 		}
 	}
 }
 
-LOCALPROC MayInline DeCodeF(WorkR *p)
+LOCALPROCUSEDONCE DeCodeF(WorkR *p)
 {
 #if WantCycByPriOp
 	p->Cycles =
 		(34 * kCycleScale + 4 * RdAvgXtraCyc + 3 * WrAvgXtraCyc);
 #endif
-	p->MainClass = kIKindF;
+	p->DecOp.y.v[0].AMd =    (p->opcode >> 8) & 0xFF;
+	p->DecOp.y.v[0].ArgDat = (p->opcode     ) & 0xFF;
+#if EmMMU || EmFPU
+	switch (rg9(p)) {
+#if EmMMU
+		case 0:
+			p->MainClass = kIKindMMU;
+			break;
+#endif
+#if EmFPU
+		case 1:
+			switch (md6(p)) {
+				case 0:
+					p->MainClass = kIKindFPUmd60;
+					break;
+				case 1:
+					if (mode(p) == 1) {
+						p->MainClass = kIKindFPUDBcc;
+					} else if (mode(p) == 7) {
+						p->MainClass = kIKindFPUTrapcc;
+					} else {
+						p->MainClass = kIKindFPUScc;
+					}
+					break;
+				case 2:
+					p->MainClass = kIKindFPUFBccW;
+					break;
+				case 3:
+					p->MainClass = kIKindFPUFBccL;
+					break;
+				case 4:
+					p->MainClass = kIKindFPUSave;
+					break;
+				case 5:
+					p->MainClass = kIKindFPURestore;
+					break;
+				default:
+					p->MainClass = kIKindFPUdflt;
+					break;
+			}
+			break;
+#endif
+		default:
+			p->MainClass = kIKindFdflt;
+			break;
+	}
+#else
+	p->MainClass = kIKindFdflt;
+#endif
 }
 
 LOCALPROC DeCodeOneOp(WorkR *p)
@@ -2683,19 +3034,17 @@ LOCALPROC DeCodeOneOp(WorkR *p)
 		p->Cycles = (34 * kCycleScale
 			+ 4 * RdAvgXtraCyc + 3 * WrAvgXtraCyc);
 #endif
-		SetDcoSrcAMd(&p->DecOp, 0);
-		SetDcoSrcArgk(&p->DecOp, 0);
-		SetDcoSrcArgDat(&p->DecOp, 0);
-		SetDcoDstAMd(&p->DecOp, 0);
-		SetDcoDstArgk(&p->DecOp, 0);
-		SetDcoDstArgDat(&p->DecOp, 0);
+		p->DecOp.y.v[0].AMd = 0;
+		p->DecOp.y.v[0].ArgDat = 0;
+		p->DecOp.y.v[1].AMd = 0;
+		p->DecOp.y.v[1].ArgDat = 0;
 	}
 
-	SetDcoMainClas(&p->DecOp, p->MainClass);
+	SetDcoMainClas(&(p->DecOp), p->MainClass);
 #if WantCycByPriOp
-	SetDcoCycles(&p->DecOp, p->Cycles);
+	SetDcoCycles(&(p->DecOp), p->Cycles);
 #else
-	SetDcoCycles(&p->DecOp, kMyAvgCycPerInstr);
+	SetDcoCycles(&(p->DecOp), kMyAvgCycPerInstr);
 #endif
 }
 
@@ -2708,15 +3057,16 @@ GLOBALPROC M68KITAB_setup(DecOpR *p)
 		r.opcode = i;
 		r.MainClass = kIKindIllegal;
 
-		r.DecOp.A = 0;
-		r.DecOp.B = 0;
+		r.DecOp.y.v[0].AMd = 0;
+		r.DecOp.y.v[0].ArgDat = 0;
+		r.DecOp.y.v[1].AMd = 0;
+		r.DecOp.y.v[1].ArgDat = 0;
 #if WantCycByPriOp
 		r.Cycles = kMyAvgCycPerInstr;
 #endif
 
 		DeCodeOneOp(&r);
 
-		p[i].A = r.DecOp.A;
-		p[i].B = r.DecOp.B;
+		p[i] = r.DecOp;
 	}
 }

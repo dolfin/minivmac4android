@@ -81,6 +81,10 @@
 */
 
 
+/*
+	ReportAbnormalID unused 0x0204 - 0x02FF
+*/
+
 
 /* soft float stuff */
 
@@ -203,7 +207,7 @@ Arithmetic Package, Release 2b.
 | The result is stored in the location pointed to by `zPtr'.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALPROC shift32RightJamming( ui5b a, si4r count, ui5b *zPtr )
+LOCALINLINEPROC shift32RightJamming( ui5b a, si4r count, ui5b *zPtr )
 {
 	ui5b z;
 
@@ -229,7 +233,7 @@ MayInline LOCALPROC shift32RightJamming( ui5b a, si4r count, ui5b *zPtr )
 | The result is stored in the location pointed to by `zPtr'.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALPROC shift64RightJamming( ui6b a, si4r count, ui6b *zPtr )
+LOCALINLINEPROC shift64RightJamming( ui6b a, si4r count, ui6b *zPtr )
 {
 	ui6b z;
 
@@ -263,7 +267,7 @@ MayInline LOCALPROC shift64RightJamming( ui6b a, si4r count, ui6b *zPtr )
 | described above, and is returned at the location pointed to by `z1Ptr'.)
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALPROC shift64ExtraRightJamming(
+LOCALINLINEPROC shift64ExtraRightJamming(
 	ui6b a0, ui6b a1, si4r count, ui6b *z0Ptr, ui6b *z1Ptr )
 {
 	ui6b z0, z1;
@@ -299,7 +303,7 @@ MayInline LOCALPROC shift64ExtraRightJamming(
 | which are stored at the locations pointed to by `z0Ptr' and `z1Ptr'.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALPROC shift128Right(
+LOCALINLINEPROC shift128Right(
 	ui6b a0, ui6b a1, si4r count, ui6b *z0Ptr, ui6b *z1Ptr )
 {
 	ui6b z0, z1;
@@ -333,7 +337,7 @@ MayInline LOCALPROC shift128Right(
 | the locations pointed to by `z0Ptr' and `z1Ptr'.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALPROC shift128RightJamming(
+LOCALINLINEPROC shift128RightJamming(
 	ui6b a0, ui6b a1, si4r count, ui6b *z0Ptr, ui6b *z1Ptr )
 {
 	ui6b z0, z1;
@@ -383,7 +387,7 @@ MayInline LOCALPROC shift128RightJamming(
 | `z2Ptr'.)
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALPROC shift128ExtraRightJamming(
+LOCALINLINEPROC shift128ExtraRightJamming(
 	ui6b a0,
 	ui6b a1,
 	ui6b a2,
@@ -439,7 +443,7 @@ MayInline LOCALPROC shift128ExtraRightJamming(
 | pieces which are stored at the locations pointed to by `z0Ptr' and `z1Ptr'.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALPROC shortShift128Left(
+LOCALINLINEPROC shortShift128Left(
 	ui6b a0, ui6b a1, si4r count, ui6b *z0Ptr, ui6b *z1Ptr )
 {
 
@@ -456,7 +460,7 @@ MayInline LOCALPROC shortShift128Left(
 | are stored at the locations pointed to by `z0Ptr' and `z1Ptr'.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALPROC add128(
+LOCALINLINEPROC add128(
 	ui6b a0, ui6b a1, ui6b b0, ui6b b1, ui6b *z0Ptr, ui6b *z1Ptr )
 {
 	ui6b z1;
@@ -474,7 +478,7 @@ MayInline LOCALPROC add128(
 | `z1Ptr', and `z2Ptr'.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALPROC add192(
+LOCALINLINEPROC add192(
 	ui6b a0,
 	ui6b a1,
 	ui6b a2,
@@ -510,7 +514,7 @@ MayInline LOCALPROC add192(
 | `z1Ptr'.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALPROC
+LOCALINLINEPROC
  sub128(
 	 ui6b a0, ui6b a1, ui6b b0, ui6b b1, ui6b *z0Ptr, ui6b *z1Ptr )
 {
@@ -528,7 +532,7 @@ MayInline LOCALPROC
 | pointed to by `z0Ptr', `z1Ptr', and `z2Ptr'.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALPROC
+LOCALINLINEPROC
  sub192(
 	 ui6b a0,
 	 ui6b a1,
@@ -564,7 +568,51 @@ MayInline LOCALPROC
 | `z0Ptr' and `z1Ptr'.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALPROC mul64To128( ui6b a, ui6b b, ui6b *z0Ptr, ui6b *z1Ptr )
+
+#ifndef HaveUi5to6Mul
+#define HaveUi5to6Mul 1
+#endif
+
+#if HaveUi5to6Mul
+LOCALINLINEPROC Ui5to6Mul( ui5b src1, ui5b src2, ui6b *z)
+{
+	*z = ((ui6b) src1) * src2;
+}
+#else
+
+LOCALINLINEPROC Ui6fromHiLo(ui5b hi, ui5b lo, ui6b *z)
+{
+	*z = (((ui6b)(hi)) << 32) + lo;
+#if 0
+	z->lo = hi;
+	z->hi = lo;
+#endif
+}
+
+LOCALPROC Ui5to6Mul( ui5b src1, ui5b src2, ui6b *z)
+{
+	ui4b src1_lo = ui5b_lo(src1);
+	ui4b src2_lo = ui5b_lo(src2);
+	ui4b src1_hi = ui5b_hi(src1);
+	ui4b src2_hi = ui5b_hi(src2);
+
+	ui5b r0 = ( (ui6b) src1_lo ) * src2_lo;
+	ui5b r1 = ( (ui6b) src1_hi ) * src2_lo;
+	ui5b r2 = ( (ui6b) src1_lo ) * src2_hi;
+	ui5b r3 = ( (ui6b) src1_hi ) * src2_hi;
+
+	ui5b ra1 = ui5b_hi(r0) + ui5b_lo(r1) + ui5b_lo(r2);
+
+	ui5b lo = (ui5b_lo(ra1) << 16) | ui5b_lo(r0);
+	ui5b hi = ui5b_hi(ra1) + ui5b_hi(r1) + ui5b_hi(r2) + r3;
+
+	Ui6fromHiLo(hi, lo, z);
+}
+
+#endif
+
+
+LOCALINLINEPROC mul64To128( ui6b a, ui6b b, ui6b *z0Ptr, ui6b *z1Ptr )
 {
 	ui5b aHigh, aLow, bHigh, bLow;
 	ui6b z0, zMiddleA, zMiddleB, z1;
@@ -573,10 +621,12 @@ MayInline LOCALPROC mul64To128( ui6b a, ui6b b, ui6b *z0Ptr, ui6b *z1Ptr )
 	aHigh = a>>32;
 	bLow = b;
 	bHigh = b>>32;
-	z1 = ( (ui6b) aLow ) * bLow;
-	zMiddleA = ( (ui6b) aLow ) * bHigh;
-	zMiddleB = ( (ui6b) aHigh ) * bLow;
-	z0 = ( (ui6b) aHigh ) * bHigh;
+
+	Ui5to6Mul(aLow, bLow, &z1);
+	Ui5to6Mul(aLow, bHigh, &zMiddleA);
+	Ui5to6Mul(aHigh, bLow, &zMiddleB);
+	Ui5to6Mul(aHigh, bHigh, &z0);
+
 	zMiddleA += zMiddleB;
 	z0 += ( ( (ui6b) ( zMiddleA < zMiddleB ) )<<32 ) + ( zMiddleA>>32 );
 	zMiddleA <<= 32;
@@ -594,7 +644,7 @@ MayInline LOCALPROC mul64To128( ui6b a, ui6b b, ui6b *z0Ptr, ui6b *z1Ptr )
 | `z2Ptr'.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALPROC
+LOCALINLINEPROC
  mul128By64To192(
 	 ui6b a0,
 	 ui6b a1,
@@ -622,7 +672,7 @@ MayInline LOCALPROC
 | the locations pointed to by `z0Ptr', `z1Ptr', `z2Ptr', and `z3Ptr'.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALPROC
+LOCALINLINEPROC
  mul128To256(
 	 ui6b a0,
 	 ui6b a1,
@@ -661,6 +711,40 @@ MayInline LOCALPROC
 | unsigned integer is returned.
 *----------------------------------------------------------------------------*/
 
+#ifndef HaveUi6Div
+#define HaveUi6Div 0
+#endif
+
+#if HaveUi6Div
+#define Ui6Div(x, y) ((x) / (y))
+#else
+/*
+	Assuming other 64 bit operations available,
+	like compare, subtract, shift.
+*/
+LOCALFUNC ui6b Ui6Div(ui6b num, ui6b den)
+{
+	ui6b bit = 1;
+	ui6b res = 0;
+
+	while ((den < num) && bit && ! (den & (LIT64(1) << 63))) {
+		den <<= 1;
+		bit <<= 1;
+	}
+
+	while (bit) {
+		if (num >= den) {
+			num -= den;
+			res |= bit;
+		}
+		bit >>= 1;
+		den >>= 1;
+	}
+
+	return res;
+}
+#endif
+
 LOCALFUNC ui6b estimateDiv128To64( ui6b a0, ui6b a1, ui6b b )
 {
 	ui6b b0, b1;
@@ -669,7 +753,7 @@ LOCALFUNC ui6b estimateDiv128To64( ui6b a0, ui6b a1, ui6b b )
 
 	if ( b <= a0 ) return LIT64( 0xFFFFFFFFFFFFFFFF );
 	b0 = b>>32;
-	z = ( b0<<32 <= a0 ) ? LIT64( 0xFFFFFFFF00000000 ) : ( a0 / b0 )<<32;
+	z = ( b0<<32 <= a0 ) ? LIT64( 0xFFFFFFFF00000000 ) : Ui6Div(a0, b0) << 32;
 	mul64To128( b, z, &term0, &term1 );
 	sub128( a0, a1, term0, term1, &rem0, &rem1 );
 	while ( ( (si6b) rem0 ) < 0 ) {
@@ -678,7 +762,7 @@ LOCALFUNC ui6b estimateDiv128To64( ui6b a0, ui6b a1, ui6b b )
 		add128( rem0, rem1, b0, b1, &rem0, &rem1 );
 	}
 	rem0 = ( rem0<<32 ) | ( rem1>>32 );
-	z |= ( b0<<32 <= rem0 ) ? 0xFFFFFFFF : rem0 / b0;
+	z |= ( b0<<32 <= rem0 ) ? 0xFFFFFFFF : Ui6Div(rem0, b0);
 	return z;
 
 }
@@ -718,7 +802,7 @@ LOCALFUNC ui5b estimateSqrt32( si4r aExp, ui5b a )
 		z = ( 0x20000 <= z ) ? 0xFFFF8000 : ( z<<15 );
 		if ( z <= a ) return (ui5b) ( ( (si5b) a )>>1 );
 	}
-	return ( (ui5b) ( ( ( (ui6b) a )<<31 ) / z ) ) + ( z>>1 );
+	return ( (ui5b) Ui6Div( ( ( (ui6b) a )<<31 ), z ) ) + ( z>>1 );
 
 }
 
@@ -790,7 +874,7 @@ LOCALFUNC si3r countLeadingZeros64( ui6b a )
 | Otherwise, returns 0.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALFUNC flag eq128( ui6b a0, ui6b a1, ui6b b0, ui6b b1 )
+LOCALINLINEFUNC flag eq128( ui6b a0, ui6b a1, ui6b b0, ui6b b1 )
 {
 
 	return ( a0 == b0 ) && ( a1 == b1 );
@@ -803,7 +887,7 @@ MayInline LOCALFUNC flag eq128( ui6b a0, ui6b a1, ui6b b0, ui6b b1 )
 | Otherwise, returns 0.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALFUNC flag le128( ui6b a0, ui6b a1, ui6b b0, ui6b b1 )
+LOCALINLINEFUNC flag le128( ui6b a0, ui6b a1, ui6b b0, ui6b b1 )
 {
 
 	return ( a0 < b0 ) || ( ( a0 == b0 ) && ( a1 <= b1 ) );
@@ -816,7 +900,7 @@ MayInline LOCALFUNC flag le128( ui6b a0, ui6b a1, ui6b b0, ui6b b1 )
 | returns 0.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALFUNC flag lt128( ui6b a0, ui6b a1, ui6b b0, ui6b b1 )
+LOCALINLINEFUNC flag lt128( ui6b a0, ui6b a1, ui6b b0, ui6b b1 )
 {
 
 	return ( a0 < b0 ) || ( ( a0 == b0 ) && ( a1 < b1 ) );
@@ -830,7 +914,7 @@ MayInline LOCALFUNC flag lt128( ui6b a0, ui6b a1, ui6b b0, ui6b b1 )
 *----------------------------------------------------------------------------*/
 
 #if cIncludeFPUUnused
-MayInline LOCALFUNC flag ne128( ui6b a0, ui6b a1, ui6b b0, ui6b b1 )
+LOCALINLINEFUNC flag ne128( ui6b a0, ui6b a1, ui6b b0, ui6b b1 )
 {
 
 	return ( a0 != b0 ) || ( a1 != b1 );
@@ -1177,7 +1261,7 @@ LOCALFUNC si5r roundAndPackInt32( flag zSign, ui6b absZ )
 | value `a'.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALFUNC ui6b extractFloatx80Frac( floatx80 a )
+LOCALINLINEFUNC ui6b extractFloatx80Frac( floatx80 a )
 {
 
 	return a.low;
@@ -1189,7 +1273,7 @@ MayInline LOCALFUNC ui6b extractFloatx80Frac( floatx80 a )
 | value `a'.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALFUNC si5r extractFloatx80Exp( floatx80 a )
+LOCALINLINEFUNC si5r extractFloatx80Exp( floatx80 a )
 {
 
 	return a.high & 0x7FFF;
@@ -1201,7 +1285,7 @@ MayInline LOCALFUNC si5r extractFloatx80Exp( floatx80 a )
 | `a'.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALFUNC flag extractFloatx80Sign( floatx80 a )
+LOCALINLINEFUNC flag extractFloatx80Sign( floatx80 a )
 {
 
 	return a.high>>15;
@@ -1231,7 +1315,7 @@ LOCALPROC
 | extended double-precision floating-point value, returning the result.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALFUNC floatx80 packFloatx80( flag zSign, si5r zExp, ui6b zSig )
+LOCALINLINEFUNC floatx80 packFloatx80( flag zSign, si5r zExp, ui6b zSig )
 {
 	floatx80 z;
 
@@ -1460,7 +1544,7 @@ LOCALFUNC floatx80
 | floating-point value `a'.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALFUNC ui6b extractFloat128Frac1( float128 a )
+LOCALINLINEFUNC ui6b extractFloat128Frac1( float128 a )
 {
 
 	return a.low;
@@ -1472,7 +1556,7 @@ MayInline LOCALFUNC ui6b extractFloat128Frac1( float128 a )
 | floating-point value `a'.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALFUNC ui6b extractFloat128Frac0( float128 a )
+LOCALINLINEFUNC ui6b extractFloat128Frac0( float128 a )
 {
 
 	return a.high & LIT64( 0x0000FFFFFFFFFFFF );
@@ -1484,7 +1568,7 @@ MayInline LOCALFUNC ui6b extractFloat128Frac0( float128 a )
 | `a'.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALFUNC si5r extractFloat128Exp( float128 a )
+LOCALINLINEFUNC si5r extractFloat128Exp( float128 a )
 {
 
 	return ( a.high>>48 ) & 0x7FFF;
@@ -1495,7 +1579,7 @@ MayInline LOCALFUNC si5r extractFloat128Exp( float128 a )
 | Returns the sign bit of the quadruple-precision floating-point value `a'.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALFUNC flag extractFloat128Sign( float128 a )
+LOCALINLINEFUNC flag extractFloat128Sign( float128 a )
 {
 
 	return a.high>>63;
@@ -1556,7 +1640,7 @@ LOCALPROC
 | significand.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALFUNC float128
+LOCALINLINEFUNC float128
  packFloat128( flag zSign, si5r zExp, ui6b zSig0, ui6b zSig1 )
 {
 	float128 z;
@@ -2208,6 +2292,13 @@ LOCALFUNC floatx80 floatx80_div( floatx80 a, floatx80 b )
 		*/
 		return packFloatx80( zSign, 0, 0 );
 	}
+	if ( (si6b) bSig >= 0 ) {
+		/*
+			added by pcp. another check.
+			invalid input, most significant bit should be set?
+		*/
+		return packFloatx80( zSign, 0, 0 );
+	}
 	zExp = aExp - bExp + 0x3FFE;
 	rem1 = 0;
 	if ( bSig <= aSig ) {
@@ -2245,7 +2336,7 @@ LOCALFUNC floatx80 floatx80_div( floatx80 a, floatx80 b )
 
 LOCALFUNC floatx80 floatx80_rem( floatx80 a, floatx80 b )
 {
-	flag aSign, bSign, zSign;
+	flag aSign, /* bSign, */ zSign;
 	si5r aExp, bExp, expDiff;
 	ui6b aSig0, aSig1, bSig;
 	ui6b q, term0, term1, alternateASig0, alternateASig1;
@@ -2256,7 +2347,10 @@ LOCALFUNC floatx80 floatx80_rem( floatx80 a, floatx80 b )
 	aSign = extractFloatx80Sign( a );
 	bSig = extractFloatx80Frac( b );
 	bExp = extractFloatx80Exp( b );
-	bSign = extractFloatx80Sign( b );
+	/*
+		not used. should it be?
+		bSign = extractFloatx80Sign( b );
+	*/
 	if ( aExp == 0x7FFF ) {
 		if (    (ui6b) ( aSig0<<1 )
 			 || ( ( bExp == 0x7FFF ) && (ui6b) ( bSig<<1 ) ) ) {
@@ -3026,7 +3120,7 @@ LOCALPROC
 | Returns the fraction bits of the single-precision floating-point value `a'.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALFUNC ui5b extractFloat32Frac( float32 a )
+LOCALINLINEFUNC ui5b extractFloat32Frac( float32 a )
 {
 
 	return a & 0x007FFFFF;
@@ -3037,7 +3131,7 @@ MayInline LOCALFUNC ui5b extractFloat32Frac( float32 a )
 | Returns the exponent bits of the single-precision floating-point value `a'.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALFUNC si4r extractFloat32Exp( float32 a )
+LOCALINLINEFUNC si4r extractFloat32Exp( float32 a )
 {
 
 	return ( a>>23 ) & 0xFF;
@@ -3048,7 +3142,7 @@ MayInline LOCALFUNC si4r extractFloat32Exp( float32 a )
 | Returns the sign bit of the single-precision floating-point value `a'.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALFUNC flag extractFloat32Sign( float32 a )
+LOCALINLINEFUNC flag extractFloat32Sign( float32 a )
 {
 
 	return a>>31;
@@ -3125,7 +3219,7 @@ LOCALFUNC floatx80 float32_to_floatx80( float32 a )
 | significand.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALFUNC float32 packFloat32( flag zSign, si4r zExp, ui5b zSig )
+LOCALINLINEFUNC float32 packFloat32( flag zSign, si4r zExp, ui5b zSig )
 {
 
 	return ( ( (ui5b) zSign )<<31 ) + ( ( (ui5b) zExp )<<23 ) + zSig;
@@ -3253,7 +3347,7 @@ typedef ui6b float64;
 | Returns the fraction bits of the double-precision floating-point value `a'.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALFUNC ui6b extractFloat64Frac( float64 a )
+LOCALINLINEFUNC ui6b extractFloat64Frac( float64 a )
 {
 
 	return a & LIT64( 0x000FFFFFFFFFFFFF );
@@ -3264,7 +3358,7 @@ MayInline LOCALFUNC ui6b extractFloat64Frac( float64 a )
 | Returns the exponent bits of the double-precision floating-point value `a'.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALFUNC si4r extractFloat64Exp( float64 a )
+LOCALINLINEFUNC si4r extractFloat64Exp( float64 a )
 {
 
 	return ( a>>52 ) & 0x7FF;
@@ -3275,7 +3369,7 @@ MayInline LOCALFUNC si4r extractFloat64Exp( float64 a )
 | Returns the sign bit of the double-precision floating-point value `a'.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALFUNC flag extractFloat64Sign( float64 a )
+LOCALINLINEFUNC flag extractFloat64Sign( float64 a )
 {
 
 	return a>>63;
@@ -3373,7 +3467,7 @@ LOCALFUNC floatx80 float64_to_floatx80( float64 a )
 | significand.
 *----------------------------------------------------------------------------*/
 
-MayInline LOCALFUNC float64 packFloat64( flag zSign, si4r zExp, ui6b zSig )
+LOCALINLINEFUNC float64 packFloat64( flag zSign, si4r zExp, ui6b zSig )
 {
 
 	return ( ( (ui6b) zSign )<<63 ) + ( ( (ui6b) zExp )<<52 ) + zSig;
@@ -4953,7 +5047,7 @@ static float128 cos_arr[COS_ARR_SIZE] =
 };
 
 /* 0 <= x <= pi/4 */
-MayInline LOCALFUNC float128 poly_sin(float128 x)
+LOCALINLINEFUNC float128 poly_sin(float128 x)
 {
 	//                 3     5     7     9     11     13     15
 	//                x     x     x     x     x      x      x
@@ -4979,7 +5073,7 @@ MayInline LOCALFUNC float128 poly_sin(float128 x)
 }
 
 /* 0 <= x <= pi/4 */
-MayInline LOCALFUNC float128 poly_cos(float128 x)
+LOCALINLINEFUNC float128 poly_cos(float128 x)
 {
 	//                 2     4     6     8     10     12     14
 	//                x     x     x     x     x      x      x
@@ -4999,13 +5093,13 @@ MayInline LOCALFUNC float128 poly_cos(float128 x)
 	return EvenPoly(x, cos_arr, COS_ARR_SIZE);
 }
 
-MayInline LOCALPROC sincos_invalid(floatx80 *sin_a, floatx80 *cos_a, floatx80 a)
+LOCALINLINEPROC sincos_invalid(floatx80 *sin_a, floatx80 *cos_a, floatx80 a)
 {
 	if (sin_a) *sin_a = a;
 	if (cos_a) *cos_a = a;
 }
 
-MayInline LOCALPROC sincos_tiny_argument(floatx80 *sin_a, floatx80 *cos_a, floatx80 a)
+LOCALINLINEPROC sincos_tiny_argument(floatx80 *sin_a, floatx80 *cos_a, floatx80 a)
 {
 	if (sin_a) *sin_a = a;
 	if (cos_a) *cos_a = floatx80_one;
@@ -6082,12 +6176,14 @@ LOCALPROC myfp_SetFPCR(ui5r v)
 			floatx80_rounding_precision = 64;
 			break;
 		case 3:
-			ReportAbnormal("Bad rounding precision in myfp_SetFPCR");
+			ReportAbnormalID(0x0201,
+				"Bad rounding precision in myfp_SetFPCR");
 			floatx80_rounding_precision = 80;
 			break;
 	}
 	if (0 != (v & 0xF)) {
-		ReportAbnormal("Reserved bits not zero in myfp_SetFPCR");
+		ReportAbnormalID(0x0202,
+			"Reserved bits not zero in myfp_SetFPCR");
 	}
 }
 
@@ -6117,7 +6213,8 @@ LOCALFUNC ui5r myfp_GetFPCR(void)
 	} else if (64 == floatx80_rounding_precision) {
 		v |= (2 << 6);
 	} else {
-		ReportAbnormal("Bad rounding precision in myfp_GetFPCR");
+		ReportAbnormalID(0x0203,
+			"Bad rounding precision in myfp_GetFPCR");
 	}
 
 	return v;

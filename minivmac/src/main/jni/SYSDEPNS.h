@@ -40,7 +40,7 @@ typedef ui5b *ui5p;
 typedef ui5r uimr;
 typedef si5r simr;
 
-#define blnr int
+#define blnr ui3r
 #define trueblnr 1
 #define falseblnr 0
 
@@ -51,6 +51,22 @@ typedef si5r simr;
 /* pascal string, single byte characters */
 #define ps3p ui3p
 
+#ifndef MayInline
+#define MayInline
+#endif
+
+#ifndef MayNotInline
+#define MayNotInline
+#endif
+
+#ifndef my_reg_call
+#define my_reg_call
+#endif
+
+#ifndef my_osglu_call
+#define my_osglu_call
+#endif
+
 #define LOCALVAR static
 #ifdef AllFiles
 #define GLOBALVAR LOCALVAR
@@ -60,13 +76,13 @@ typedef si5r simr;
 #define EXPORTVAR(t, v) extern t v;
 #endif
 
-#define LOCALFUNC static
+#define LOCALFUNC static MayNotInline
 #define FORWARDFUNC LOCALFUNC
 #ifdef AllFiles
 #define GLOBALFUNC LOCALFUNC
 #define EXPORTFUNC LOCALFUNC
 #else
-#define GLOBALFUNC
+#define GLOBALFUNC MayNotInline
 #define EXPORTFUNC extern
 #endif
 #define IMPORTFUNC EXPORTFUNC
@@ -78,3 +94,59 @@ typedef si5r simr;
 #define IMPORTPROC IMPORTFUNC void
 #define FORWARDPROC FORWARDFUNC void
 #define TYPEDEFPROC TYPEDEFFUNC void
+
+#define LOCALINLINEFUNC static MayInline
+#define LOCALINLINEPROC LOCALINLINEFUNC void
+
+#define LOCALFUNCUSEDONCE LOCALINLINEFUNC
+#define LOCALPROCUSEDONCE LOCALINLINEPROC
+
+#define GLOBALOSGLUFUNC GLOBALFUNC my_osglu_call
+#define EXPORTOSGLUFUNC EXPORTFUNC my_osglu_call
+#define GLOBALOSGLUPROC GLOBALFUNC my_osglu_call void
+#define EXPORTOSGLUPROC EXPORTFUNC my_osglu_call void
+	/*
+		For functions in operating system glue that
+		are called by rest of program.
+	*/
+
+/*
+	best type for ui4r that is probably in register
+	(when compiler messes up otherwise)
+*/
+
+#ifndef BigEndianUnaligned
+#define BigEndianUnaligned 0
+#endif
+
+#ifndef LittleEndianUnaligned
+#define LittleEndianUnaligned 0
+#endif
+
+#ifndef ui3rr
+#define ui3rr ui3r
+#endif
+
+#ifndef ui4rr
+#define ui4rr ui4r
+#endif
+
+#ifndef si5rr
+#define si5rr si5r
+#endif
+
+#ifndef my_align_8
+#define my_align_8
+#endif
+
+#ifndef my_cond_rare
+#define my_cond_rare(x) (x)
+#endif
+
+#ifndef Have_ASR
+#define Have_ASR 0
+#endif
+
+#ifndef HaveMySwapUi5r
+#define HaveMySwapUi5r 0
+#endif

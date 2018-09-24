@@ -39,6 +39,10 @@
 
 #include "SONYEMDV.h"
 
+/*
+	ReportAbnormalID unused 0x090B - 0x09FF
+*/
+
 
 LOCALVAR ui5b vSonyMountedMask = 0;
 
@@ -135,7 +139,7 @@ label_1:
 		dst = get_real_address0(byteCount, trueblnr,  dstPtr,
 			&contigDst);
 		if ((0 == contigSrc) || (0 == contigDst)) {
-			ReportAbnormal("MyMoveBytesVM fails");
+			ReportAbnormalID(0x0901, "MyMoveBytesVM fails");
 		} else {
 			contig = (contigSrc < contigDst) ? contigSrc : contigDst;
 			MyMoveBytes(src, dst, contig);
@@ -243,7 +247,7 @@ LOCALPROC Drive_UpdateChecksums(tDrive Drive_No)
 			result = DC42BlockChecksum(Drive_No,
 				DataOffset, DataSize, &dataChecksum);
 			if (mnvm_noErr != result) {
-				ReportAbnormal("Failed to find dataChecksum");
+				ReportAbnormalID(0x0902, "Failed to find dataChecksum");
 				dataChecksum = 0;
 			}
 			do_put_mem_long(Buffer, dataChecksum);
@@ -264,7 +268,8 @@ LOCALPROC Drive_UpdateChecksums(tDrive Drive_No)
 					result = DC42BlockChecksum(Drive_No,
 						TagOffset + 12, TagSize - 12, &tagChecksum);
 					if (mnvm_noErr != result) {
-						ReportAbnormal("Failed to find tagChecksum");
+						ReportAbnormalID(0x0903,
+							"Failed to find tagChecksum");
 						tagChecksum = 0;
 					}
 				}
@@ -366,10 +371,12 @@ LOCALFUNC tMacErr vSonyNextPendingInsert(tDrive *Drive_No)
 									tagChecksum = 0;
 								}
 								if (dataChecksum != dataChecksum0) {
-									ReportAbnormal("bad dataChecksum");
+									ReportAbnormalID(0x0904,
+										"bad dataChecksum");
 								}
 								if (tagChecksum != tagChecksum0) {
-									ReportAbnormal("bad tagChecksum");
+									ReportAbnormalID(0x0905,
+										"bad tagChecksum");
 								}
 #endif
 								DataOffset = DataOffset0;
@@ -420,7 +427,7 @@ LOCALFUNC tMacErr vSonyNextPendingInsert(tDrive *Drive_No)
 	return result;
 }
 
-#define MinTicksBetweenInsert 60
+#define MinTicksBetweenInsert 240
 	/*
 		if call PostEvent too frequently, insert events seem to get lost
 	*/
@@ -447,7 +454,16 @@ GLOBALPROC Sony_Update (void)
 
 				DiskInsertedPsuedoException(MountCallBack, data);
 
-				DelayUntilNextInsert = MinTicksBetweenInsert;
+#if IncludeSonyRawMode
+				if (! vSonyRawMode)
+#endif
+				{
+					DelayUntilNextInsert = MinTicksBetweenInsert;
+					/*
+						but usually will reach kDriveStatus first,
+						where shorten delay.
+					*/
+				}
 			}
 		}
 	}
@@ -879,17 +895,38 @@ struct MyDriverDat_R {
 typedef struct MyDriverDat_R MyDriverDat_R;
 #endif
 
+
+#if CurEmMd <= kEmMd_Twiggy
+
+#define SonyVarsPtr 0x0128 /* TwiggyVars, actually */
+
+#if CurEmMd <= kEmMd_Twig43
+#define MinSonVarsSize 0x000000FA
+#define FirstDriveVarsOffset 0x004A
+#define EachDriveVarsSize 0x0042
+#else
+#define MinSonVarsSize 0x000000E6
+#define FirstDriveVarsOffset 0x004C
+#define EachDriveVarsSize 0x002E
+#endif
+
+#else
+
 #define SonyVarsPtr 0x0134
 
-#define FirstDriveVarsOffset 74
-#define EachDriveVarsSize 66
+#define FirstDriveVarsOffset 0x004A
+#define EachDriveVarsSize 0x0042
 #if CurEmMd <= kEmMd_128K
 #define MinSonVarsSize 0x000000FA
 #else
 #define MinSonVarsSize 0x00000310
 #endif
 
+#endif
+
 #define kcom_checkval 0x841339E2
+
+#define Sony_dolog (dbglog_HAVE && 0)
 
 #if Sony_SupportTags
 LOCALVAR CPTR TheTagBuffer;
@@ -914,9 +951,35 @@ LOCALFUNC tMacErr Sony_Mount(CPTR p)
 	tDrive i = data & 0x0000FFFF;
 	CPTR dvl = DriveVarsLocation(i);
 
-	if (get_vm_byte(dvl + kDiskInPlace) == 0x00) {
+	if (0 == dvl) {
+#if Sony_dolog
+		dbglog_WriteNote("Sony : Mount : no dvl");
+#endif
+
+		result = mnvm_nsDrvErr;
+	} else if (get_vm_byte(dvl + kDiskInPlace) == 0x00) {
 		ui5b L = ImageDataSize[i] >> 9; /* block count */
 
+#if Sony_dolog
+		dbglog_StartLine();
+		dbglog_writeCStr("Sony : Mount : Drive=");
+		dbglog_writeHex(i);
+		dbglog_writeCStr(", L=");
+		dbglog_writeHex(L);
+		dbglog_writeReturn();
+#endif
+
+#if CurEmMd <= kEmMd_Twiggy
+		if (L == 1702) {
+			put_vm_byte(dvl + kTwoSideFmt, 0xFF);
+				/* Drive i Single Format */
+			put_vm_byte(dvl + kNewIntf, 0x00);
+				/* Drive i doesn't use new interface */
+			put_vm_word(dvl + kQType, 0x00); /* Drive Type */
+			put_vm_word(dvl + kDriveErrs, 0x0000);
+				/* Drive i has no errors */
+		} else
+#else
 		if ((L == 800)
 #if CurEmMd > kEmMd_128K
 			|| (L == 1600)
@@ -942,12 +1005,18 @@ LOCALFUNC tMacErr Sony_Mount(CPTR p)
 			put_vm_word(dvl + kQType, 0x00); /* Drive Type */
 			put_vm_word(dvl + kDriveErrs, 0x0000);
 				/* Drive i has no errors */
-		} else {
+		} else
+#endif
+		{
 			put_vm_word(dvl + kQRefNum, 0xFFFE);  /* Driver */
 			put_vm_word(dvl + kQType, 0x01); /* Drive Type */
 			put_vm_word(dvl + kQDrvSz , L);
 			put_vm_word(dvl + kQDrvSz2, L >> 16);
 		}
+
+#if CurEmMd <= kEmMd_Twiggy
+		put_vm_word(dvl + kQFSID, 0x00); /* kQFSID must be 0 for 4.3T */
+#endif
 
 		put_vm_byte(dvl + kWriteProt, data >> 16);
 		put_vm_byte(dvl + kDiskInPlace, 0x01); /* Drive Disk Inserted */
@@ -955,8 +1024,12 @@ LOCALFUNC tMacErr Sony_Mount(CPTR p)
 		put_vm_long(p + ExtnDat_params + 4, i + 1);
 			/* PostEvent Disk Inserted eventMsg */
 		result = mnvm_noErr;
+	} else {
+		/* disk already in place, a mistake has been made */
+#if Sony_dolog
+		dbglog_WriteNote("Sony : Mount : already in place");
+#endif
 	}
-	/* else, if disk already in place, a mistake has been made */
 
 	return result;
 }
@@ -1021,15 +1094,26 @@ LOCALFUNC tMacErr Sony_Prime(CPTR p)
 	CPTR DeviceCtl = get_vm_long(p + ExtnDat_params + 4);
 	tDrive Drive_No = get_vm_word(ParamBlk + kioVRefNum) - 1;
 	ui4r IOTrap = get_vm_word(ParamBlk + kioTrap);
-	ui4r PosMode = get_vm_word(ParamBlk + kioPosMode);
 	CPTR dvl = DriveVarsLocation(Drive_No);
 
-	if (dvl == 0) {
+	if (0 == dvl) {
+#if Sony_dolog
+		dbglog_WriteNote("Sony : Prime : no dvl");
+#endif
+
 		result = mnvm_nsDrvErr;
-	} else if (0xA002 != (IOTrap & 0xF0FE)) {
-		/* not read (0xA002) or write (0xA003) */
+	} else
+#if CurEmMd >= kEmMd_Twiggy
+	if (0xA002 != (IOTrap & 0xF0FE)) {
+#if Sony_dolog
+		dbglog_WriteNote("Sony : Prime : "
+			"not read (0xA002) or write (0xA003)");
+#endif
+
 		result = mnvm_controlErr;
-	} else {
+	} else
+#endif
+	{
 		blnr IsWrite = (0 != (IOTrap & 0x0001));
 		ui3b DiskInPlaceV = get_vm_byte(dvl + kDiskInPlace);
 
@@ -1049,6 +1133,9 @@ LOCALFUNC tMacErr Sony_Prime(CPTR p)
 			}
 		}
 
+#if 0
+		ui4r PosMode = get_vm_word(ParamBlk + kioPosMode);
+
 		if (0 != (PosMode & 64)) {
 #if ExtraAbnormalReports
 			/*
@@ -1056,12 +1143,11 @@ LOCALFUNC tMacErr Sony_Prime(CPTR p)
 				disk with Finder. But not implemented
 				yet.
 			*/
-			ReportAbnormal("read verify mode requested");
+			ReportAbnormalID(0x0906, "read verify mode requested");
 #endif
 			PosMode &= ~ 64;
 		}
 
-#if 0
 		/*
 			Don't use the following code, because
 			according to Apple's Technical Note FL24
@@ -1095,7 +1181,7 @@ LOCALFUNC tMacErr Sony_Prime(CPTR p)
 					+ get_vm_long(DeviceCtl + kdCtlPosition);
 				break;
 			default:
-				ReportAbnormal("unknown PosMode");
+				ReportAbnormalID(0x0907, "unknown PosMode");
 				result = mnvm_paramErr;
 				goto label_fail;
 				break;
@@ -1105,10 +1191,26 @@ LOCALFUNC tMacErr Sony_Prime(CPTR p)
 
 		Sony_Count = get_vm_long(ParamBlk + kioReqCount);
 
+#if Sony_dolog
+		dbglog_StartLine();
+		dbglog_writeCStr("Sony : Prime : Drive=");
+		dbglog_writeHex(Drive_No);
+		dbglog_writeCStr(", IsWrite=");
+		dbglog_writeHex(IsWrite);
+		dbglog_writeCStr(", Start=");
+		dbglog_writeHex(Sony_Start);
+		dbglog_writeCStr(", Count=");
+		dbglog_writeHex(Sony_Count);
+		dbglog_writeReturn();
+#endif
+
 		if ((0 != (Sony_Start & 0x1FF))
 			|| (0 != (Sony_Count & 0x1FF)))
 		{
 			/* only whole blocks allowed */
+#if ExtraAbnormalReports
+			ReportAbnormalID(0x0908, "not blockwise in Sony_Prime");
+#endif
 			result = mnvm_paramErr;
 		} else if (IsWrite && (get_vm_byte(dvl + kWriteProt) != 0)) {
 			result = mnvm_wPrErr;
@@ -1146,8 +1248,16 @@ LOCALFUNC tMacErr Sony_Control(CPTR p)
 	ui4r OpCode = get_vm_word(ParamBlk + kcsCode);
 
 	if (kKillIO == OpCode) {
+#if Sony_dolog
+		dbglog_WriteNote("Sony : Control : kKillIO");
+#endif
+
 		result = mnvm_miscErr;
 	} else if (kSetTagBuffer == OpCode) {
+#if Sony_dolog
+		dbglog_WriteNote("Sony : Control : kSetTagBuffer");
+#endif
+
 #if Sony_SupportTags
 		TheTagBuffer = get_vm_long(ParamBlk + kcsParam);
 		result = mnvm_noErr;
@@ -1155,6 +1265,10 @@ LOCALFUNC tMacErr Sony_Control(CPTR p)
 		result = mnvm_controlErr;
 #endif
 	} else if (kTrackCacheControl == OpCode) {
+#if Sony_dolog
+		dbglog_WriteNote("Sony : Control : kTrackCacheControl");
+#endif
+
 #if CurEmMd <= kEmMd_128K
 		result = mnvm_controlErr;
 #else
@@ -1179,16 +1293,35 @@ LOCALFUNC tMacErr Sony_Control(CPTR p)
 		tDrive Drive_No = get_vm_word(ParamBlk + kioVRefNum) - 1;
 		CPTR dvl = DriveVarsLocation(Drive_No);
 
-		if (dvl == 0) {
+		if (0 == dvl) {
+#if Sony_dolog
+			dbglog_WriteNote("Sony : Control : no dvl");
+#endif
+
 			result = mnvm_nsDrvErr;
 		} else if (get_vm_byte(dvl + kDiskInPlace) == 0) {
+#if Sony_dolog
+			dbglog_WriteNote("Sony : Control : not DiskInPlace");
+#endif
+
 			result = mnvm_offLinErr;
 		} else {
 			switch (OpCode) {
 				case kVerifyDisk :
+#if Sony_dolog
+					dbglog_WriteNote("Sony : Control : kVerifyDisk");
+#endif
+
 					result = mnvm_noErr;
 					break;
 				case kEjectDisk :
+#if Sony_dolog
+					dbglog_StartLine();
+					dbglog_writeCStr("Sony : Control : kEjectDisk : ");
+					dbglog_writeHex(Drive_No);
+					dbglog_writeReturn();
+#endif
+
 					put_vm_byte(dvl + kWriteProt, 0x00);
 						/* Drive Writeable */
 					put_vm_byte(dvl + kDiskInPlace, 0x00);
@@ -1203,9 +1336,23 @@ LOCALFUNC tMacErr Sony_Control(CPTR p)
 					result = Drive_Eject(Drive_No);
 					break;
 				case kFormatDisk :
+#if Sony_dolog
+					dbglog_StartLine();
+					dbglog_writeCStr("Sony : Control : kFormatDisk : ");
+					dbglog_writeHex(Drive_No);
+					dbglog_writeReturn();
+#endif
+
 					result = mnvm_noErr;
 					break;
 				case kDriveIcon :
+#if Sony_dolog
+					dbglog_StartLine();
+					dbglog_writeCStr("Sony : Control : kDriveIcon : ");
+					dbglog_writeHex(Drive_No);
+					dbglog_writeReturn();
+#endif
+
 					if (get_vm_word(dvl + kQType) != 0) {
 						put_vm_long(ParamBlk + kcsParam,
 							my_disk_icon_addr);
@@ -1222,6 +1369,14 @@ LOCALFUNC tMacErr Sony_Control(CPTR p)
 				case kDriveInfo :
 					{
 						ui5b v;
+
+#if Sony_dolog
+						dbglog_StartLine();
+						dbglog_writeCStr(
+							"Sony : Control : kDriveInfo : ");
+						dbglog_writeHex(kDriveIcon);
+						dbglog_writeReturn();
+#endif
 
 						if (get_vm_word(dvl + kQType) != 0) {
 							v = 0x00000001; /* unspecified drive */
@@ -1242,12 +1397,18 @@ LOCALFUNC tMacErr Sony_Control(CPTR p)
 					break;
 #endif
 				default :
+#if Sony_dolog
+					dbglog_StartLine();
+					dbglog_writeCStr("Sony : Control : OpCode : ");
+					dbglog_writeHex(OpCode);
+					dbglog_writeReturn();
+#endif
 #if ExtraAbnormalReports
 					if ((kGetIconID != OpCode)
 						&& (kMediaIcon != OpCode)
 						&& (kDriveInfo != OpCode))
 					{
-						ReportAbnormal(
+						ReportAbnormalID(0x0909,
 							"unexpected OpCode in Sony_Control");
 					}
 #endif
@@ -1275,12 +1436,22 @@ LOCALFUNC tMacErr Sony_Status(CPTR p)
 	/* CPTR DeviceCtl = get_vm_long(p + ExtnDat_params + 4); */
 	ui4r OpCode = get_vm_word(ParamBlk + kcsCode);
 
+#if Sony_dolog
+	dbglog_StartLine();
+	dbglog_writeCStr("Sony : Sony_Status OpCode = ");
+	dbglog_writeHex(OpCode);
+	dbglog_writeReturn();
+#endif
+
 	if (kDriveStatus == OpCode) {
 		tDrive Drive_No = get_vm_word(ParamBlk + kioVRefNum) - 1;
 		CPTR Src = DriveVarsLocation(Drive_No);
 		if (Src == 0) {
 			result = mnvm_nsDrvErr;
 		} else {
+			if (DelayUntilNextInsert > 4) {
+				DelayUntilNextInsert = 4;
+			}
 			MyMoveBytesVM(Src, ParamBlk + kcsParam, 22);
 			result = mnvm_noErr;
 		}
@@ -1289,7 +1460,8 @@ LOCALFUNC tMacErr Sony_Status(CPTR p)
 		if ((kReturnFormatList != OpCode)
 			&& (kDuplicatorVersionSupport != OpCode))
 		{
-			ReportAbnormal("unexpected OpCode in Sony_Control");
+			ReportAbnormalID(0x090A,
+				"unexpected OpCode in Sony_Control");
 		}
 #endif
 		result = mnvm_statusErr;
@@ -1313,6 +1485,10 @@ LOCALFUNC tMacErr Sony_Close(CPTR p)
 
 LOCALFUNC tMacErr Sony_OpenA(CPTR p)
 {
+#if Sony_dolog
+	dbglog_WriteNote("Sony : OpenA");
+#endif
+
 	if (MountCallBack != 0) {
 		return mnvm_opWrErr; /* driver already open */
 	} else {
@@ -1332,6 +1508,10 @@ LOCALFUNC tMacErr Sony_OpenB(CPTR p)
 {
 	si4b i;
 	CPTR dvl;
+
+#if Sony_dolog
+	dbglog_WriteNote("Sony : OpenB");
+#endif
 
 	CPTR SonyVars = get_vm_long(p + ExtnDat_params + 4);
 	/* CPTR ParamBlk = get_vm_long(p + ExtnDat_params + 24); (unused) */
@@ -1401,6 +1581,10 @@ LOCALFUNC tMacErr Sony_OpenB(CPTR p)
 
 LOCALFUNC tMacErr Sony_OpenC(CPTR p)
 {
+#if Sony_dolog
+	dbglog_WriteNote("Sony : OpenC");
+#endif
+
 	MountCallBack = get_vm_long(p + ExtnDat_params + 0)
 #if (CurEmMd == kEmMd_II) || (CurEmMd == kEmMd_IIx)
 		| 0x40000000

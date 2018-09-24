@@ -16,11 +16,9 @@ public class Core {
 	private static final String TAG = "name.osher.gil.minivmac.Core";
 	
 	private int numInsertedDisks = 0;
-	private final int frameSkip = 4;
 	private String[] diskPath;
 	private RandomAccessFile[] diskFile;
-	private Handler tickHandler = null;
-	private Runnable runTickTask = null;
+	private Handler mUiHandler = null;
 	private boolean initOk = false;
 
 	private Context mContext;
@@ -33,9 +31,9 @@ public class Core {
 		Log.e(TAG, "Native crashed!");
 	}
 
-	public Core(Context context) {
+	public Core(Context context, Handler uiHandler) {
 		mContext = context;
-		System.loadLibrary(mContext.getString(R.string.moduleName));
+		mUiHandler = uiHandler;
 	}
 
 	public void setOnUpdateScreenListener(OnUpdateScreenListener listener) {
@@ -51,7 +49,7 @@ public class Core {
 	private native static boolean uninit();
 	
 	// emulation
-	private native static void runTick();
+	private native static void main();
 	private native static void _resumeEmulation();
 	private native static void _pauseEmulation();
 	private native static boolean isPaused();
@@ -59,6 +57,7 @@ public class Core {
 	private native static void setWantMacInterrupt();
 
 	public Boolean initEmulation(Core core, ByteBuffer rom) {
+		System.loadLibrary(mContext.getString(R.string.moduleName));
 		return init(core, rom);
 	}
 
@@ -82,40 +81,33 @@ public class Core {
 			if (!insertDisk(f)) break;
 		}
 		resumeEmulation();
+
+		// start emulation
+		main();
 	}
 	
 	public void resumeEmulation() {
 		if (!initOk) return;
 		if (!isPaused()) return;
 		_resumeEmulation();
-		// setup handler
-		tickHandler = new Handler();
-		runTickTask = new Runnable() {
-			private int frame = 0;
-			public void run() {
-				int[] screenUpdate;
-				runTick();
-				if (++frame == frameSkip) {
-					frame = 0;
-					screenUpdate = getScreenUpdate();
-					if (mOnUpdateScreenListener != null && screenUpdate != null) {
-						mOnUpdateScreenListener.onUpdateScreen(screenUpdate);
-					}
-				}
-				if (tickHandler == null) tickHandler = new Handler();
-				tickHandler.post(runTickTask);
-			}
-		};
-		tickHandler.post(runTickTask);
 	}
 	
 	public void pauseEmulation() {
 		if (!initOk) return;
 		if (isPaused()) return;
 		_pauseEmulation();
-		tickHandler.removeCallbacks(runTickTask);
-		tickHandler = null;
-		runTickTask = null;
+	}
+
+	public void updateScreen(final int top, final int left, final int bottom, final int right) {
+		final int [] screenUpdate = getScreenUpdate();
+		if (mOnUpdateScreenListener != null && screenUpdate != null) {
+			mUiHandler.post(new Runnable() {
+				@Override
+				public void run() {
+					mOnUpdateScreenListener.onUpdateScreen(screenUpdate, top, left, bottom, right);
+				}
+			});
+		}
 	}
 	
 	// mouse
@@ -376,7 +368,7 @@ public class Core {
 	}
 
 	interface OnUpdateScreenListener {
-		void onUpdateScreen(int[] update);
+		void onUpdateScreen(int[] update, int top, int left, int bottom, int right);
 	}
 
 	interface OnDiskEventListener {

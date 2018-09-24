@@ -4,14 +4,14 @@ Properties props = new Properties()
 props.load(new FileInputStream(rootProject.file('release.properties')))
 
 android {
-    compileSdkVersion 25
+    compileSdkVersion 27
     buildToolsVersion '27.0.3'
 
     defaultConfig {
-        versionCode 42
+        versionCode 43
 
-        minSdkVersion 9
-        targetSdkVersion 25
+        minSdkVersion 14
+        targetSdkVersion 27
     }
 
     signingConfigs {
@@ -36,7 +36,7 @@ android {
         macPlus {
             dimension 'machine'
             applicationId 'name.osher.gil.minivmac'
-            versionName '1.4.1'
+            versionName '1.5.0'
 
             ndk {
                 moduleName 'mnvmcoreplus'
@@ -46,7 +46,7 @@ android {
         macII {
             dimension 'machine'
             applicationId 'ninja.gil.miniv.ii'
-            versionName '2.4.1'
+            versionName '2.5.0'
 
             ndk {
                 moduleName 'mnvmcoreii'
@@ -59,10 +59,10 @@ android {
                 abiFilter 'x86'
             }
         }
-        mips {
+        x86_64 {
             dimension 'abi'
             ndk {
-                abiFilter 'mips'
+                abiFilter 'x86_64'
             }
         }
         armv7 {
@@ -71,16 +71,16 @@ android {
                 abiFilter 'armeabi-v7a'
             }
         }
-        arm {
+        arm64 {
             dimension 'abi'
             ndk {
-                abiFilter 'armeabi'
+                abiFilter 'arm64-v8a'
             }
         }
         fat {
             dimension 'abi'
             ndk {
-                abiFilters 'x86', 'armeabi', 'armeabi-v7a', 'mips'
+                abiFilters 'x86', 'x86_64', 'arm64-v8a', 'armeabi-v7a'
             }
         }
     }
@@ -92,9 +92,9 @@ android {
 }
 
 dependencies {
-    implementation 'com.android.support:support-v4:25.3.1'
-    implementation 'com.android.support:appcompat-v7:25.3.1'
-    implementation 'com.android.support:design:25.3.1'
+    implementation 'com.android.support:support-v4:27.1.1'
+    implementation 'com.android.support:appcompat-v7:27.1.1'
+    implementation 'com.android.support:design:27.1.1'
 
     implementation 'com.nononsenseapps:filepicker:4.1.0'
 }

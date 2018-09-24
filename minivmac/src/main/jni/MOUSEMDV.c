@@ -30,6 +30,7 @@
 #include "EMCONFIG.h"
 #include "GLOBGLUE.h"
 #include "SCCEMDEV.h"
+#include "MINEM68K.h"
 #endif
 
 #include "MOUSEMDV.h"

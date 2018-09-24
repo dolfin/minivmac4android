@@ -28,6 +28,7 @@
 #include "MYOSGLUE.h"
 #include "EMCONFIG.h"
 #include "GLOBGLUE.h"
+#include "MINEM68K.h"
 #endif
 
 #include "SNDEMDEV.h"
@@ -115,7 +116,11 @@ GLOBALPROC MacSound_SubTick(int SubTick)
 		(SoundBuffer == 0) ? kSnd_Alt_Buffer :
 #endif
 		kSnd_Main_Buffer;
+#ifndef ln2mtb
 	ui3p addr = addy + (2 * StartOffset) + RAM;
+#else
+	CPTR addr = addy + (2 * StartOffset);
+#endif
 	ui4b SoundInvertTime = GetSoundInvertTime();
 	ui3b SoundVolume = SoundVolb0
 		| (SoundVolb1 << 1)
@@ -145,7 +150,12 @@ label_retry:
 		} else {
 			for (i = 0; i < actL; i++) {
 				/* Copy sound data, high byte of each word */
-				*p++ = *addr
+				*p++ =
+#ifndef ln2mtb
+					*addr
+#else
+					get_vm_byte(addr)
+#endif
 #if 4 == kLn2SoundSampSz
 					<< 8
 #endif
