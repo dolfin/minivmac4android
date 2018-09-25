@@ -34,12 +34,12 @@
 	    <Preference android:title="@string/prefs_start"
 			android:icon="@drawable/ic_help_circle">
 	    	<intent android:action="android.intent.action.VIEW"
-	            android:data="http://minivmac.sourceforge.net/doc/start.html" />
+	            android:data="@string/url_start" />
 		</Preference>
 		<Preference android:title="@string/prefs_home"
 			android:icon="@drawable/ic_web">
 	    	<intent android:action="android.intent.action.VIEW"
-	            android:data="http://gil.theoshers.com" />
+	            android:data="@string/url_homepage" />
 		</Preference>
 	    <Preference 
 	        android:key="pref_about"
