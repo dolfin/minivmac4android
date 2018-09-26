@@ -62,9 +62,10 @@ jclass jClass;
 jmethodID jSonyTransfer, jSonyGetSize, jSonyEject, jSonyGetName, jSonyMakeNewDisk;
 jmethodID jWarnMsg;
 jmethodID jUpdateScreen;
+jmethodID jPlaySound;
 jobject mCore;
 
-static jmethodID nativeCrashed, playSound;
+static jmethodID nativeCrashed;
 
 GLOBALPROC MyMoveBytes(anyp srcPtr, anyp destPtr, si5b byteCount)
 {
@@ -196,7 +197,7 @@ LOCALFUNC blnr CheckDateTime(void)
 #define kSoundBuffers (1 << kLn2SoundBuffers)
 #define kSoundBuffMask (kSoundBuffers - 1)
 
-#define DesiredMinFilledSoundBuffs 4
+#define DesiredMinFilledSoundBuffs 3
 	/*
 		if too big then sound lags behind emulation.
 		if too small then sound will have pauses.
@@ -217,29 +218,84 @@ LOCALFUNC blnr CheckDateTime(void)
 LOCALVAR tpSoundSamp TheSoundBuffer = nullpr;
 LOCALVAR ui4b ThePlayOffset = 0;
 LOCALVAR ui4b TheFillOffset = 0;
-LOCALVAR blnr wantplaying = falseblnr;
 LOCALVAR ui4b MinFilledSoundBuffs = kSoundBuffers;
 LOCALVAR ui4b TheWriteOffset = 0;
 
-GLOBALPROC MySound_EndWrite(ui4r actL)
+#if 4 == kLn2SoundSampSz
+LOCALPROC ConvertSoundBlockToNative(tpSoundSamp p)
 {
+	int i;
+
+	for (i = kOneBuffLen; --i >= 0; ) {
+		*p++ -= 0x8000;
+	}
+}
+#else
+#define ConvertSoundBlockToNative(p)
+#endif
+
+LOCALPROC MySound_WriteOut(void)
+{
+	int retry_count = 32;
+
+	label_retry:
+	if (--retry_count > 0) {
+
+		tpSoundSamp NextPlayPtr;
+		ui4b PlayNowSize = 0;
+		ui4b MaskedFillOffset = ThePlayOffset & kOneBuffMask;
+
+		if (MaskedFillOffset != 0) {
+			/* take care of left overs */
+			PlayNowSize = kOneBuffLen - MaskedFillOffset;
+			NextPlayPtr = TheSoundBuffer + (ThePlayOffset & kAllBuffMask);
+		} else if (0 != ((TheFillOffset - ThePlayOffset) >> kLnOneBuffLen)) {
+			PlayNowSize = kOneBuffLen;
+			NextPlayPtr = TheSoundBuffer + (ThePlayOffset & kAllBuffMask);
+		} else {
+			/* nothing to play now */
+		}
+
+		if (0 != PlayNowSize) {
+			jbyteArray jBuffer = (*jEnv)->NewByteArray(jEnv, PlayNowSize);
+			if (jBuffer != NULL) {
+				(*jEnv)->SetByteArrayRegion(jEnv, jBuffer, 0, PlayNowSize, (jbyte *) NextPlayPtr);
+				int err = (*jEnv)->CallIntMethod(jEnv, mCore, jPlaySound, jBuffer);
+				(*jEnv)->DeleteLocalRef(jEnv, jBuffer);
+				if (err >= 0) {
+					ThePlayOffset += err;
+					goto label_retry;
+				}
+			}
+		}
+	}
+}
+
+LOCALFUNC blnr MySound_EndWrite0(ui4r actL)
+{
+	blnr v;
+
 	TheWriteOffset += actL;
 
-	if (0 == (TheWriteOffset & kOneBuffMask)) {
+	if (0 != (TheWriteOffset & kOneBuffMask)) {
+		v = falseblnr;
+	} else {
 		/* just finished a block */
 
-		if (wantplaying) {
-			TheFillOffset = TheWriteOffset;
+		TheFillOffset = TheWriteOffset;
 
-			(*jEnv)->CallVoidMethod(jEnv, mCore, playSound);
-		} else if (((TheWriteOffset - ThePlayOffset) >> kLnOneBuffLen) < 12) {
-			/* just wait */
-		} else {
-			TheFillOffset = TheWriteOffset;
-			wantplaying = trueblnr;
+		v = trueblnr;
+	}
 
-			(*jEnv)->CallVoidMethod(jEnv, mCore, playSound);
-		}
+	return v;
+}
+
+GLOBALPROC MySound_EndWrite(ui4r actL)
+{
+	if (MySound_EndWrite0(actL)) {
+		ConvertSoundBlockToNative(TheSoundBuffer
+								  + ((TheFillOffset - kOneBuffLen) & kAllBuffMask));
+		MySound_WriteOut();
 	}
 }
 
@@ -262,12 +318,14 @@ GLOBALFUNC tpSoundSamp MySound_BeginWrite(ui4r n, ui4r *actL)
 
 LOCALPROC MySound_SecondNotify(void)
 {
-	if (MinFilledSoundBuffs > DesiredMinFilledSoundBuffs) {
-		IncrNextTime();
-	} else if (MinFilledSoundBuffs < DesiredMinFilledSoundBuffs) {
-		++TrueEmulatedTime;
+	if (MinFilledSoundBuffs <= kSoundBuffers) {
+		if (MinFilledSoundBuffs > DesiredMinFilledSoundBuffs) {
+			IncrNextTime();
+		} else if (MinFilledSoundBuffs < DesiredMinFilledSoundBuffs) {
+			++TrueEmulatedTime;
+		}
+		MinFilledSoundBuffs = kSoundBuffers + 1;
 	}
-	MinFilledSoundBuffs = kSoundBuffers;
 }
 
 #endif
@@ -622,47 +680,16 @@ LOCALPROC MakeNewDiskAtDefault(ui5b L)
 
 /*
  * Class:     name_osher_gil_minivmac_Core
- * Method:    soundBuf
- * Signature: ()[B
+ * Method:    MySound_Start0
+ * Signature: ()V
  */
-JNIEXPORT jbyteArray JNICALL Java_name_osher_gil_minivmac_Core_soundBuf (JNIEnv * env, jclass class) {
-#if MySoundEnabled
-	ui3p NextPlayPtr;
-	ui4b PlayNowSize = 0;
-	ui4b MaskedFillOffset = ThePlayOffset & kOneBuffMask;
-
-	if (MaskedFillOffset != 0) {
-		/* take care of left overs */
-		PlayNowSize = kOneBuffLen - MaskedFillOffset;
-		NextPlayPtr = TheSoundBuffer + (ThePlayOffset & kAllBuffMask);
-	} else if (0 != ((TheFillOffset - ThePlayOffset) >> kLnOneBuffLen)) {
-		PlayNowSize = kOneBuffLen;
-		NextPlayPtr = TheSoundBuffer + (ThePlayOffset & kAllBuffMask);
-	}
-
-	if (0 != PlayNowSize) {
-		jbyteArray result = (*env)->NewByteArray(env, PlayNowSize);
-		if (result == NULL) {
-			 return NULL; /* out of memory error thrown */
-		}
-		(*env)->SetByteArrayRegion(env, result, 0, PlayNowSize , (jbyte*)(NextPlayPtr));
-		return result;
-	}
-#endif
-	return NULL;
+JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_MySound_1Start0 (JNIEnv * env, jclass class) {
+	/* Reset variables */
+	ThePlayOffset = 0;
+	TheFillOffset = 0;
+	TheWriteOffset = 0;
+	MinFilledSoundBuffs = kSoundBuffers + 1;
 }
-
-/*
- * Class:     name_osher_gil_minivmac_Core
- * Method:    setPlayOffset
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_setPlayOffset (JNIEnv * env, jclass class, jint newValue) {
-#if MySoundEnabled
-	ThePlayOffset += newValue;
-#endif
-}
-
 
 #if 0
 #pragma mark -
@@ -1221,6 +1248,7 @@ JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_init (JNIEnv * env,
 		jSonyMakeNewDisk = (*env)->GetMethodID(env, this, "sonyMakeNewDisk", "(ILjava/lang/String;)I");
 		jWarnMsg = (*env)->GetMethodID(env, this, "warnMsg", "(Ljava/lang/String;Ljava/lang/String;)V");
 		jUpdateScreen = (*env)->GetMethodID(env, this, "updateScreen", "(IIII)V");
+		jPlaySound = (*env)->GetMethodID(env, this, "playSound", "([B)I");
 
 		// initialize fields
 		jfieldID sDiskPath, sDiskFile, sNumInsertedDisks, sInitOk;
@@ -1290,8 +1318,6 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
 	jClass = (*jEnv)->FindClass(jEnv, "name/osher/gil/minivmac/Core");
 
 	nativeCrashed = (*jEnv)->GetStaticMethodID(jEnv, jClass, "nativeCrashed", "()V");
-	playSound = (*jEnv)->GetMethodID(jEnv, jClass, "playSound", "()V");
-
 
 	// Try to catch crashes...
 	struct sigaction handler;

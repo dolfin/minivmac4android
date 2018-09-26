@@ -89,6 +89,7 @@ public class Core {
 	public void resumeEmulation() {
 		if (!initOk) return;
 		if (!isPaused()) return;
+		MySound_Start();
 		_resumeEmulation();
 	}
 	
@@ -96,6 +97,7 @@ public class Core {
 		if (!initOk) return;
 		if (isPaused()) return;
 		_pauseEmulation();
+		MySound_Stop();
 	}
 
 	public void updateScreen(final int top, final int left, final int bottom, final int right) {
@@ -152,17 +154,19 @@ public class Core {
 	}
 	
 	// sound
-	private native static byte[] soundBuf();
-	private native static void setPlayOffset(int newValue);
+	private native static void MySound_Start0();
 	
 	private static AudioTrack mAudioTrack;
 
     private static final int SOUND_SAMPLERATE = 22255;
+	private static final int kLn2SoundBuffers = 4;
+	private static final int kLnOneBuffLen = 9;
+	private static final int kLnAllBuffLen = (kLn2SoundBuffers + kLnOneBuffLen);
+	private static final int kAllBuffLen = (1 << kLnAllBuffLen);
 
 	public Boolean MySound_Init() {
         try {
-            int minBufferSize = AudioTrack.getMinBufferSize(SOUND_SAMPLERATE, AudioFormat.CHANNEL_CONFIGURATION_MONO, AudioFormat.ENCODING_PCM_8BIT);
-		    mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, SOUND_SAMPLERATE, AudioFormat.CHANNEL_CONFIGURATION_MONO, AudioFormat.ENCODING_PCM_8BIT, minBufferSize, AudioTrack.MODE_STREAM);
+		    mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, SOUND_SAMPLERATE, AudioFormat.CHANNEL_CONFIGURATION_MONO, AudioFormat.ENCODING_PCM_8BIT, kAllBuffLen, AudioTrack.MODE_STREAM);
 
 	    	mAudioTrack.pause();
 	    	return true;
@@ -172,29 +176,14 @@ public class Core {
 	    }
 	}
 	
-	public void playSound() {
-		for (int i = 0 ; i < 32 ; i++) {
-			byte[] buf = soundBuf();
-			if (buf == null) break;
-			if (mAudioTrack.getPlayState() != AudioTrack.PLAYSTATE_PLAYING)
-			{
-				mAudioTrack.play();
-			}
-			int err = mAudioTrack.write(buf, 0, buf.length);
-			if (err > 0) {
-				setPlayOffset(err);
-			} else {
-				Log.w(TAG, "playSound() mAudioTrack.write() got error " + err);
-				break;
-			}
-		}
-		
-		//mAudioTrack.flush();
-		//mAudioTrack.pause();
+	public int playSound(byte[] buf) {
+		if (mAudioTrack == null) return -1;
+		return mAudioTrack.write(buf, 0, buf.length);
 	}
 
 	public void MySound_Start () {
 		if (mAudioTrack != null) {
+			MySound_Start0();
 			mAudioTrack.play();
 		}
 	}
@@ -202,7 +191,15 @@ public class Core {
 	public void MySound_Stop () {
 		if (mAudioTrack != null) {
 		    mAudioTrack.stop();
-		    mAudioTrack.release();
+		}
+	}
+
+	public void MySound_UnInit () {
+		if (mAudioTrack != null) {
+			AudioTrack deletedTrack = mAudioTrack;
+			mAudioTrack = null;
+			deletedTrack.stop();
+			deletedTrack.release();
 		}
 	}
 	

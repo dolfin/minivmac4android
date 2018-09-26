@@ -355,6 +355,7 @@ public class MiniVMac extends AppCompatActivity
     	super.onPause();
 
     	if (mCore != null && !mCore.hasDisksInserted() && !onActivity) {
+    		mCore.MySound_UnInit();
     		mCore.uninitEmulation();
     		System.exit(0);
     	}
