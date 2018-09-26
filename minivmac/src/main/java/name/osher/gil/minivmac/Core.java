@@ -354,14 +354,19 @@ public class Core {
 	}
 
 	// warnings
-	public void warnMsg(String shortMsg, String longMsg) {
+	public void warnMsg(final String shortMsg, final String longMsg) {
 		pauseEmulation();
 
-		Utils.showWarnMessage(mContext, shortMsg, longMsg, false, new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface di, int i) {
-				resumeEmulation();
-			}
-		});
+        mUiHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                Utils.showWarnMessage(mContext, shortMsg, longMsg, false, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface di, int i) {
+                        resumeEmulation();
+                    }
+                });
+            }
+        });
 	}
 
 	interface OnUpdateScreenListener {

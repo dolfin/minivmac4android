@@ -928,13 +928,17 @@ LOCALPROC CheckSavedMacMsg(void)
 	/* called only on quit, if error saved but not yet reported */
 
 	if (nullpr != SavedBriefMsg) {
-		char briefMsg0[ClStrMaxLength + 1];
+		/*char briefMsg0[ClStrMaxLength + 1];
 		char longMsg0[ClStrMaxLength + 1];
 
 		NativeStrFromCStr(briefMsg0, SavedBriefMsg);
 		NativeStrFromCStr(longMsg0, SavedLongMsg);
 
-		(*jEnv)->CallVoidMethod(jEnv, mCore, jWarnMsg, SavedBriefMsg, SavedLongMsg);
+		jstring jBriefMsg = (*jEnv)->NewStringUTF(jEnv, SavedBriefMsg);
+		jstring jLongMsg = (*jEnv)->NewStringUTF(jEnv, SavedLongMsg);
+		(*jEnv)->CallVoidMethod(jEnv, mCore, jWarnMsg, jBriefMsg, jLongMsg);
+		(*jEnv)->DeleteLocalRef(jEnv, jBriefMsg);
+		(*jEnv)->DeleteLocalRef(jEnv, jLongMsg);*/
 
 		SavedBriefMsg = nullpr;
 	}
@@ -944,22 +948,6 @@ LOCALPROC CheckSavedMacMsg(void)
 #pragma mark -
 #pragma mark Emulation
 #endif
-
-LOCALPROC LeaveSpeedStopped(void)
-{
-#if MySoundEnabled
-	//MySound_Start();
-#endif
-
-	StartUpTimeAdjust();
-}
-
-LOCALPROC EnterSpeedStopped(void)
-{
-#if MySoundEnabled
-	//MySound_Stop();
-#endif
-}
 
 LOCALPROC CheckForSavedTasks(void)
 {
@@ -975,16 +963,6 @@ LOCALPROC CheckForSavedTasks(void)
 
 	if (ForceMacOff) {
 		return;
-	}
-
-	if (CurSpeedStopped != SpeedStopped)
-	{
-		CurSpeedStopped = ! CurSpeedStopped;
-		if (CurSpeedStopped) {
-			EnterSpeedStopped();
-		} else {
-			LeaveSpeedStopped();
-		}
 	}
 
 #if IncludeSonyNew
@@ -1168,6 +1146,7 @@ JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_main (JNIEnv * env, jcl
  */
 JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core__1resumeEmulation (JNIEnv * env, jclass class) {
 	CurSpeedStopped = 0;
+	StartUpTimeAdjust();
 }
 
 /*
