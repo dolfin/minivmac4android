@@ -18,7 +18,6 @@ public class Core {
 	private int numInsertedDisks = 0;
 	private String[] diskPath;
 	private RandomAccessFile[] diskFile;
-	private Handler mUiHandler = null;
 	private boolean initOk = false;
 
 	private Context mContext;
@@ -31,9 +30,8 @@ public class Core {
 		Log.e(TAG, "Native crashed!");
 	}
 
-	public Core(Context context, Handler uiHandler) {
+	public Core(Context context) {
 		mContext = context;
-		mUiHandler = uiHandler;
 	}
 
 	public void setOnUpdateScreenListener(OnUpdateScreenListener listener) {
@@ -103,12 +101,7 @@ public class Core {
 	public void updateScreen(final int top, final int left, final int bottom, final int right) {
 		final int [] screenUpdate = getScreenUpdate();
 		if (mOnUpdateScreenListener != null && screenUpdate != null) {
-			mUiHandler.post(new Runnable() {
-				@Override
-				public void run() {
-					mOnUpdateScreenListener.onUpdateScreen(screenUpdate, top, left, bottom, right);
-				}
-			});
+			mOnUpdateScreenListener.onUpdateScreen(screenUpdate, top, left, bottom, right);
 		}
 	}
 	
@@ -357,16 +350,11 @@ public class Core {
 	public void warnMsg(final String shortMsg, final String longMsg) {
 		pauseEmulation();
 
-        mUiHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                Utils.showWarnMessage(mContext, shortMsg, longMsg, false, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface di, int i) {
-                        resumeEmulation();
-                    }
-                });
-            }
-        });
+		Utils.showWarnMessage(mContext, shortMsg, longMsg, false, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface di, int i) {
+				resumeEmulation();
+			}
+		});
 	}
 
 	interface OnUpdateScreenListener {

@@ -10,13 +10,11 @@ import android.Manifest;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -50,7 +48,7 @@ public class MiniVMac extends AppCompatActivity
 	private final static int TRACKBALL_SENSITIVITY = 8;
 	private final static int KEYCODE_MAC_SHIFT = 56;
 
-	private ScreenView screenView;
+	private ScreenView mScreenView;
 	private Boolean onActivity = false;
 	private Boolean isLandscape = false;
 	private Boolean hasPermission = false;
@@ -66,20 +64,16 @@ public class MiniVMac extends AppCompatActivity
 	private View mLayout;
 
 	private Core mCore;
+	private Handler mUIHandler;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-        
-        // set screen orientation
-        if (Build.VERSION.SDK_INT <= 10)
-        {
-        	setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        }
 
         setContentView(R.layout.activity_mini_vmac);
 		mLayout = findViewById(R.id.main_layout);
-        screenView = (ScreenView)findViewById(R.id.screen);
+        mScreenView = findViewById(R.id.screen);
+        mUIHandler = new Handler(getMainLooper());
 
 		isLandscape = (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
 		toggleFullscreen(isLandscape);
@@ -112,13 +106,14 @@ public class MiniVMac extends AppCompatActivity
             return;
         }
 
+        this.invalidateOptionsMenu();
+
         final MiniVMac thiz = this;
-		final Handler uiHandler = new Handler();
 
 		Thread emulation = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				mCore = new Core(thiz, uiHandler);
+				mCore = new Core(thiz);
 
 				// sound
 				mCore.MySound_Init();
@@ -129,8 +124,14 @@ public class MiniVMac extends AppCompatActivity
 					return;
 				}
 
-				screenView.setTargetScreenSize(mCore.getScreenWidth(), mCore.getScreenHeight());
-				screenView.setOnMouseEventListener(new ScreenView.OnMouseEventListener() {
+				mUIHandler.post(new Runnable() {
+									@Override
+									public void run() {
+										mScreenView.setTargetScreenSize(mCore.getScreenWidth(), mCore.getScreenHeight());
+									}
+								}
+				);
+				mScreenView.setOnMouseEventListener(new ScreenView.OnMouseEventListener() {
 					@Override
 					public void onMouseMove(int x, int y) {
 						mCore.setMousePosition(x, y);
@@ -144,8 +145,14 @@ public class MiniVMac extends AppCompatActivity
 
 				mCore.setOnUpdateScreenListener(new Core.OnUpdateScreenListener() {
 					@Override
-					public void onUpdateScreen(int[] update, int top, int left, int bottom, int right) {
-						screenView.updateScreen(update, top, left, bottom, right);
+					public void onUpdateScreen(final int[] update, final int top, final int left,
+											   final int bottom, final int right) {
+						mUIHandler.post(new Runnable() {
+							@Override
+							public void run() {
+								mScreenView.updateScreen(update, top, left, bottom, right);
+							}
+						});
 					}
 				});
 
@@ -343,8 +350,8 @@ public class MiniVMac extends AppCompatActivity
 		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 		Boolean scalePref = sharedPref.getBoolean(SettingsActivity.KEY_PREF_SCALE, true);
 		Boolean scrollPref = sharedPref.getBoolean(SettingsActivity.KEY_PREF_SCROLL, false);
-		screenView.setScaled(scalePref);
-		screenView.setScroll(scrollPref);
+		mScreenView.setScaled(scalePref);
+		mScreenView.setScroll(scrollPref);
 	}
     
     public void onPause () {
@@ -371,13 +378,13 @@ public class MiniVMac extends AppCompatActivity
 
 	@Override
 	public boolean onKeyDown (int keyCode, @NonNull KeyEvent event) {
-		if (screenView.isScroll()) {
+		if (mScreenView.isScroll()) {
 			switch(keyCode) {
 			case KeyEvent.KEYCODE_DPAD_UP:
 			case KeyEvent.KEYCODE_DPAD_DOWN:
 			case KeyEvent.KEYCODE_DPAD_LEFT:
 			case KeyEvent.KEYCODE_DPAD_RIGHT:
-				screenView.scrollScreen(keyCode, 8);
+				mScreenView.scrollScreen(keyCode, 8);
 				return true;
 			}
 		}
@@ -413,10 +420,10 @@ public class MiniVMac extends AppCompatActivity
 	}
 
 	public boolean onTrackballEvent (MotionEvent event) {
-		if (event.getX() > 0) screenView.scrollScreen(KeyEvent.KEYCODE_DPAD_RIGHT, (int)(TRACKBALL_SENSITIVITY*event.getX()));
-		else if (event.getX() < 0) screenView.scrollScreen(KeyEvent.KEYCODE_DPAD_LEFT, (int)-(TRACKBALL_SENSITIVITY*event.getX()));
-		if (event.getY() > 0) screenView.scrollScreen(KeyEvent.KEYCODE_DPAD_DOWN, (int)(TRACKBALL_SENSITIVITY*event.getY()));
-		else if (event.getY() < 0) screenView.scrollScreen(KeyEvent.KEYCODE_DPAD_UP, (int)-(TRACKBALL_SENSITIVITY*event.getY()));
+		if (event.getX() > 0) mScreenView.scrollScreen(KeyEvent.KEYCODE_DPAD_RIGHT, (int)(TRACKBALL_SENSITIVITY*event.getX()));
+		else if (event.getX() < 0) mScreenView.scrollScreen(KeyEvent.KEYCODE_DPAD_LEFT, (int)-(TRACKBALL_SENSITIVITY*event.getX()));
+		if (event.getY() > 0) mScreenView.scrollScreen(KeyEvent.KEYCODE_DPAD_DOWN, (int)(TRACKBALL_SENSITIVITY*event.getY()));
+		else if (event.getY() < 0) mScreenView.scrollScreen(KeyEvent.KEYCODE_DPAD_UP, (int)-(TRACKBALL_SENSITIVITY*event.getY()));
 
 		return true;
 	}
@@ -469,10 +476,10 @@ public class MiniVMac extends AppCompatActivity
 			for (int i = 0; disks != null && i < disks.length; i++) {
 				String diskName = disks[i].getName();
 				MenuItem m = dm.add(R.id.action_insert_disk, diskName.hashCode(), i+2, diskName.substring(0, diskName.lastIndexOf(".")));
-				m.setEnabled(!mCore.isDiskInserted(disks[i]));
+				m.setEnabled(mCore == null || !mCore.isDiskInserted(disks[i]));
 			}
 		}
-		return true;
+		return super.onPrepareOptionsMenu(menu);
 	}
 	
 	public boolean onOptionsItemSelected (MenuItem item) {

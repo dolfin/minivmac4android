@@ -49,6 +49,10 @@ public class ScreenView extends View {
 		mTargetScreenWidth = width;
 		mTargetScreenHeight = height;
 		mScreenBits = Bitmap.createBitmap(mTargetScreenWidth, mTargetScreenHeight, Bitmap.Config.RGB_565);
+
+		//force re-calculating the layout dimension and the redraw of the view
+		requestLayout();
+		invalidate();
 	}
 
 	public void setOnMouseEventListener(OnMouseEventListener listener) {
@@ -56,7 +60,7 @@ public class ScreenView extends View {
 	}
 	
 	protected void onMeasure (int widthMeasureSpec, int heightMeasureSpec) {
-		setMeasuredDimension(widthMeasureSpec, heightMeasureSpec);
+		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 		setScaled(isScaled());
 	}
 	
