@@ -191,7 +191,8 @@ public class Core {
 		if (mAudioTrack != null) {
 			AudioTrack deletedTrack = mAudioTrack;
 			mAudioTrack = null;
-			deletedTrack.stop();
+			deletedTrack.pause();
+			deletedTrack.flush();
 			deletedTrack.release();
 		}
 	}

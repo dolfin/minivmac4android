@@ -824,8 +824,8 @@ JNIEXPORT jintArray JNICALL Java_name_osher_gil_minivmac_Core_getScreenUpdate (J
 LOCALPROC MyDrawChangesAndClear(void)
 {
 	if (ScreenChangedBottom > ScreenChangedTop) {
-		(*jEnv)->CallVoidMethod(jEnv, mCore, jUpdateScreen, ScreenChangedTop, ScreenChangedLeft,
-								ScreenChangedBottom, ScreenChangedRight);
+		(*jEnv)->CallVoidMethod(jEnv, mCore, jUpdateScreen, (jint)ScreenChangedTop, (jint)ScreenChangedLeft,
+                                (jint)ScreenChangedBottom, (jint)ScreenChangedRight);
 		ScreenClearChanges();
 	}
 }

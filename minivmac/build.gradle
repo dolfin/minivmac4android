@@ -31,7 +31,7 @@ android {
         }
     }
 
-    flavorDimensions 'abi', 'machine'
+    flavorDimensions 'machine'
     productFlavors {
         macPlus {
             dimension 'machine'
@@ -52,38 +52,17 @@ android {
                 moduleName 'mnvmcoreii'
             }
         }
+    }
 
-        x86 {
-            dimension 'abi'
-            ndk {
-                abiFilter 'x86'
-            }
-        }
-        x86_64 {
-            dimension 'abi'
-            ndk {
-                abiFilter 'x86_64'
-            }
-        }
-        armv7 {
-            dimension 'abi'
-            ndk {
-                abiFilter 'armeabi-v7a'
-            }
-        }
-        arm64 {
-            dimension 'abi'
-            ndk {
-                abiFilter 'arm64-v8a'
-            }
-        }
-        fat {
-            dimension 'abi'
-            ndk {
-                abiFilters 'x86', 'x86_64', 'arm64-v8a', 'armeabi-v7a'
-            }
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
+            universalApk true
         }
     }
+
     externalNativeBuild {
         ndkBuild {
             path 'src/Android.mk'
