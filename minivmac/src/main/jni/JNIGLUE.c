@@ -684,11 +684,13 @@ LOCALPROC MakeNewDiskAtDefault(ui5b L)
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_MySound_1Start0 (JNIEnv * env, jclass class) {
+#if MySoundEnabled
 	/* Reset variables */
 	ThePlayOffset = 0;
 	TheFillOffset = 0;
 	TheWriteOffset = 0;
 	MinFilledSoundBuffs = kSoundBuffers + 1;
+#endif
 }
 
 #if 0
@@ -752,13 +754,13 @@ JNIEXPORT jintArray JNICALL Java_name_osher_gil_minivmac_Core_getScreenUpdate (J
 		right = ScreenChangedRight;
 	} else {
 		// No change - return empty array.
-		jintArray jArray = (*jEnv)->NewIntArray(jEnv, 0);
+		jintArray jArray = (*jEnv)->NewIntArray(jEnv, (jsize)0);
 		return jArray;
 	}
 
 	int changesWidth = right - left;
 	int changesHeight = bottom - top;
-	int changesSize = changesWidth * changesHeight;
+	jsize changesSize = changesWidth * changesHeight;
 	int i,x,y;
 
 	// create java array of changes: top, left, bottom, right, pixels...
