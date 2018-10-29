@@ -36,9 +36,9 @@ typedef unsigned long ui5b;
 #define HaveRealui5b 1
 
 #if defined(__x86_64__) || defined(__aarch64__)
-typedef long si5b;
-#else
 typedef int si5b;
+#else
+typedef long si5b;
 #endif
 #define HaveRealsi5b 1
 
