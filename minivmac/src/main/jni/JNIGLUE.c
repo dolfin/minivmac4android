@@ -34,7 +34,6 @@
 
 #include "MYOSGLUE.h"
 #include "STRCONST.h"
-#include "COMOSGLU.h"
 
 #define BLACK 0xFF000000
 #define WHITE 0xFFFFFFFF
@@ -43,12 +42,6 @@
 
 #undef CLAMP
 #define CLAMP(x, lo, hi) (((x) > (hi))? (hi) : (((x) < (lo))? (lo) : (x)))
-
-IMPORTFUNC blnr InitEmulation(void);
-IMPORTPROC DoEmulateOneTick(void);
-IMPORTFUNC blnr ScreenFindChanges(ui3p screencurrentbuff,
-		si3b TimeAdjust, si4b *top, si4b *left, si4b *bottom, si4b *right);
-IMPORTPROC DoEmulateExtraTime(void);
 
 LOCALVAR blnr CurSpeedStopped = trueblnr;
 
@@ -185,6 +178,14 @@ LOCALFUNC blnr CheckDateTime(void)
 	} else {
 		return falseblnr;
 	}
+}
+
+LOCALFUNC blnr InitLocationDat(void)
+{
+    GetCurrentTicks();
+    CurMacDateInSeconds = NewMacDateInSeconds;
+
+    return trueblnr;
 }
 
 #if 0
@@ -335,6 +336,8 @@ LOCALPROC MySound_SecondNotify(void)
 #pragma mark Paramter buffers
 #endif
 
+#include "COMOSGLU.h"
+
 #include "CONTROLM.h"
 
 /* --- parameter buffers --- */
@@ -364,7 +367,7 @@ LOCALFUNC tMacErr PbufNewFromPtr(void *p, ui5b count, tPbuf *r)
 #endif
 
 #if IncludePbufs
-GLOBALFUNC tMacErr PbufNew(ui5b count, tPbuf *r)
+GLOBALOSGLUFUNC tMacErr PbufNew(ui5b count, tPbuf *r)
 {
 	tMacErr err = mnvm_miscErr;
 
@@ -378,7 +381,7 @@ GLOBALFUNC tMacErr PbufNew(ui5b count, tPbuf *r)
 #endif
 
 #if IncludePbufs
-GLOBALPROC PbufDispose(tPbuf i)
+GLOBALOSGLUPROC PbufDispose(tPbuf i)
 {
 	free(PbufDat[i]);
 	PbufDisposeNotify(i);
@@ -399,7 +402,7 @@ LOCALPROC UnInitPbufs(void)
 #endif
 
 #if IncludePbufs
-GLOBALPROC PbufTransfer(ui3p Buffer,
+GLOBALOSGLUPROC PbufTransfer(ui3p Buffer,
 	tPbuf i, ui5r offset, ui5r count, blnr IsWrite)
 {
 	void *p = ((ui3p)PbufDat[i]) + offset;
@@ -411,11 +414,9 @@ GLOBALPROC PbufTransfer(ui3p Buffer,
 }
 #endif
 
-#if 0
-#pragma mark -
-#pragma mark Text translation
-#endif
+/* --- text translation --- */
 
+#if IncludePbufs
 /* this is table for Windows, any changes needed for X? */
 LOCALVAR const ui3b Native2MacRomanTab[] = {
 	0xAD, 0xB0, 0xE2, 0xC4, 0xE3, 0xC9, 0xA0, 0xE0,
@@ -435,8 +436,10 @@ LOCALVAR const ui3b Native2MacRomanTab[] = {
 	0xFD, 0x96, 0x98, 0x97, 0x99, 0x9B, 0x9A, 0xD6,
 	0xBF, 0x9D, 0x9C, 0x9E, 0x9F, 0xFE, 0xFF, 0xD8
 };
+#endif
 
-LOCALFUNC tMacErr NativeTextToMacRomanPbuf(const char *x, tPbuf *r)
+#if IncludePbufs
+LOCALFUNC tMacErr NativeTextToMacRomanPbuf(char *x, tPbuf *r)
 {
 	if (NULL == x) {
 		return mnvm_miscErr;
@@ -466,7 +469,9 @@ LOCALFUNC tMacErr NativeTextToMacRomanPbuf(const char *x, tPbuf *r)
 		}
 	}
 }
+#endif
 
+#if IncludePbufs
 /* this is table for Windows, any changes needed for X? */
 LOCALVAR const ui3b MacRoman2NativeTab[] = {
 	0xC4, 0xC5, 0xC7, 0xC9, 0xD1, 0xD6, 0xDC, 0xE1,
@@ -486,7 +491,9 @@ LOCALVAR const ui3b MacRoman2NativeTab[] = {
 	0xBE, 0xD2, 0xDA, 0xDB, 0xD9, 0xD0, 0x88, 0x98,
 	0xAF, 0xD7, 0xDD, 0xDE, 0xB8, 0xF0, 0xFD, 0xFE
 };
+#endif
 
+#if IncludePbufs
 LOCALFUNC blnr MacRomanTextToNativePtr(tPbuf i, blnr IsFileName,
 	ui3p *r)
 {
@@ -542,6 +549,7 @@ LOCALFUNC blnr MacRomanTextToNativePtr(tPbuf i, blnr IsFileName,
 	}
 	return falseblnr;
 }
+#endif
 
 LOCALPROC NativeStrFromCStr(char *r, char *s)
 {
@@ -1074,6 +1082,22 @@ label_retry:
 LOCALPROC ReserveAllocAll(void)
 {
 	ReserveAllocOneBlock(&ROM, kROM_Size, 5, falseblnr);
+
+    ReserveAllocOneBlock(&screencomparebuff,
+                         vMacScreenNumBytes, 5, trueblnr);
+#if UseControlKeys
+    ReserveAllocOneBlock(&CntrlDisplayBuff,
+                         vMacScreenNumBytes, 5, falseblnr);
+#endif
+#if WantScalingBuff
+    ReserveAllocOneBlock(&ScalingBuff,
+		ScalingBuffsz, 5, falseblnr);
+#endif
+#if WantScalingTabl
+    ReserveAllocOneBlock(&ScalingTabl,
+		ScalingTablsz, 5, falseblnr);
+#endif
+
 #if MySoundEnabled
 	ReserveAllocOneBlock((ui3p *)&TheSoundBuffer,
 		dbhBufferSize, 5, falseblnr);
@@ -1176,26 +1200,17 @@ JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_isPaused (JNIEnv * 
 
 LOCALFUNC blnr LoadMacRom(void * romData, size_t romSize)
 {
+    memcpy(ROM, romData, kROM_Size);
+
 	if (romSize < kROM_Size) {
 		MacMsg(kStrShortROMTitle, kStrShortROMMessage, trueblnr);
 		SpeedStopped = trueblnr;
-		return falseblnr;
-	} else {
-		memcpy(ROM, romData, kROM_Size);
-		return trueblnr;
 	}
+
+    return trueblnr; /* keep launching Mini vMac, regardless */
 }
 
 LOCALFUNC blnr Screen_Init(void) {
-	screencomparebuff = malloc(vMacScreenNumBytes);
-	if (screencomparebuff == NULL)
-		return falseblnr;
-
-#if UseControlKeys
-	CntrlDisplayBuff = malloc(vMacScreenNumBytes);
-	if (CntrlDisplayBuff == NULL)
-		return falseblnr;
-#endif
 
 #if 0 != vMacScreenDepth
     ColorModeWorks = trueblnr;
@@ -1217,8 +1232,8 @@ JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_init (JNIEnv * env,
 
 	if (AllocMyMemory())
 	if (LoadMacRom(romData, romSize))
+    if (InitLocationDat())
 	if (Screen_Init())
-	//if (InitEmulation())
 	{
 		mCore = (*env)->NewGlobalRef(env, core);
 		// get java method IDs
