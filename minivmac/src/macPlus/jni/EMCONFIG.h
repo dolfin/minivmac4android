@@ -160,8 +160,6 @@ enum {
 #define KYBD_ShiftInData VIA1_ShiftOutData
 #define KYBD_ShiftOutData VIA1_ShiftInData
 
-#define kCheckSumRom_Size kROM_Size
-
 #define kExtn_Block_Base 0x00F40000
 #define kExtn_ln2Spc 5
 

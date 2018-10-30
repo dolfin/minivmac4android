@@ -9,7 +9,7 @@
 	<string name="btn_quit">Quit</string>
 	<string name="btn_continue">Continue</string>
 	<string name="btn_ok">OK</string>
-	<string name="aboutText">based on Mini vMac 3.5.8 by Paul C. Pratt\n\nMini vMac contains the work of many people.\nThis version is maintained by:\nGil Osher (http://miniv.gil.ninja)\n\nBased on a version by:\nJesús A. Álvarez (http://namedfork.net)\n\nMini vMac is distributed under the terms of the GNU Public License, version 2.\n\nMini vMac is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.</string>
+	<string name="aboutText">based on Mini vMac 36.04 by Paul C. Pratt\n\nMini vMac contains the work of many people.\nThis version is maintained by:\nGil Osher (http://miniv.gil.ninja)\n\nBased on a version by:\nJesús A. Álvarez (http://namedfork.net)\n\nMini vMac is distributed under the terms of the GNU Public License, version 2.\n\nMini vMac is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.</string>
 	<string name="thirdparty_license">Copyright (c) 2014, Austin Andrews (http://materialdesignicons.com/),\nwith Reserved Font Name Material Design Icons.\nCopyright (c) 2014, Google (http://www.google.com/design/)\nuses the license at https://github.com/google/material-design-icons/blob/master/LICENSE\n\nThis Font Software is licensed under the SIL Open Font License, Version 1.1.\nThis license is copied below, and is also available with a FAQ at:\nhttp://scripts.sil.org/OFL</string>
 	<string name="thirdparty_license_header">Third Party Licenses</string>
 	<string name="version">version</string>

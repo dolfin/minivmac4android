@@ -79,6 +79,7 @@ typedef unsigned long long ui6b;
 #define kLn2SoundSampSz 3
 
 #define dbglog_HAVE 0
+#define WantAbnormalReports 0
 
 #define NumDrives 8
 #define IncludeSonyRawMode 1
@@ -100,3 +101,5 @@ typedef unsigned long long ui6b;
 #define IncludeHostTextClipExchange 0
 #define EnableAutoSlow 1
 #define EmLocalTalk 0
+#define AutoLocation 1
+#define AutoTimeZone 1

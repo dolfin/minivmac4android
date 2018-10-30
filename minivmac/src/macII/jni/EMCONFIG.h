@@ -47,6 +47,9 @@
 #define MenuBlink 0x03
 #define AutoKeyThresh 0x06
 #define AutoKeyRate 0x03
+#define pr_HilColRed 0x0000
+#define pr_HilColGreen 0x0000
+#define pr_HilColBlue 0x0000
 
 
 /* the Wire variables are 1/0, not true/false */
@@ -219,8 +222,6 @@ enum {
 
 #define ADB_ShiftInData VIA1_ShiftOutData
 #define ADB_ShiftOutData VIA1_ShiftInData
-
-#define kCheckSumRom_Size kROM_Size
 
 #define kExtn_Block_Base 0x50F0C000
 #define kExtn_ln2Spc 5

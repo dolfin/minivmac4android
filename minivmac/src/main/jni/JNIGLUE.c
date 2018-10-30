@@ -29,10 +29,13 @@
 
 #include <time.h>
 #include <stdlib.h>
+
 #include "CNFGRAPI.h"
 #include "SYSDEPNS.h"
+#include "ENDIANAC.h"
 
 #include "MYOSGLUE.h"
+
 #include "STRCONST.h"
 
 #define BLACK 0xFF000000
@@ -338,81 +341,9 @@ LOCALPROC MySound_SecondNotify(void)
 
 #include "COMOSGLU.h"
 
+#include "PBUFSTDC.h"
+
 #include "CONTROLM.h"
-
-/* --- parameter buffers --- */
-
-#if IncludePbufs
-LOCALVAR void *PbufDat[NumPbufs];
-#endif
-
-#if IncludePbufs
-LOCALFUNC tMacErr PbufNewFromPtr(void *p, ui5b count, tPbuf *r)
-{
-	tPbuf i;
-	tMacErr err;
-
-	if (! FirstFreePbuf(&i)) {
-		free(p);
-		err = mnvm_miscErr;
-	} else {
-		*r = i;
-		PbufDat[i] = p;
-		PbufNewNotify(i, count);
-		err = mnvm_noErr;
-	}
-
-	return err;
-}
-#endif
-
-#if IncludePbufs
-GLOBALOSGLUFUNC tMacErr PbufNew(ui5b count, tPbuf *r)
-{
-	tMacErr err = mnvm_miscErr;
-
-	void *p = calloc(1, count);
-	if (NULL != p) {
-		err = PbufNewFromPtr(p, count, r);
-	}
-
-	return err;
-}
-#endif
-
-#if IncludePbufs
-GLOBALOSGLUPROC PbufDispose(tPbuf i)
-{
-	free(PbufDat[i]);
-	PbufDisposeNotify(i);
-}
-#endif
-
-#if IncludePbufs
-LOCALPROC UnInitPbufs(void)
-{
-	tPbuf i;
-
-	for (i = 0; i < NumPbufs; ++i) {
-		if (PbufIsAllocated(i)) {
-			PbufDispose(i);
-		}
-	}
-}
-#endif
-
-#if IncludePbufs
-GLOBALOSGLUPROC PbufTransfer(ui3p Buffer,
-	tPbuf i, ui5r offset, ui5r count, blnr IsWrite)
-{
-	void *p = ((ui3p)PbufDat[i]) + offset;
-	if (IsWrite) {
-		(void) memcpy(p, Buffer, count);
-	} else {
-		(void) memcpy(Buffer, p, count);
-	}
-}
-#endif
 
 /* --- text translation --- */
 
@@ -1198,14 +1129,35 @@ JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_isPaused (JNIEnv * 
 #pragma mark Misc
 #endif
 
+LOCALFUNC tMacErr LoadMacRomFrom(void * romData, size_t romSize)
+{
+    tMacErr err;
+
+    if (NULL == romData) {
+        err = mnvm_fnfErr;
+    } else {
+        memcpy(ROM, romData, kROM_Size);
+        if (kROM_Size != romSize) {
+            if (kROM_Size > romSize) {
+                MacMsgOverride(kStrShortROMTitle,
+                               kStrShortROMMessage);
+                err = mnvm_eofErr;
+            }
+        } else {
+            err = ROM_IsValid();
+        }
+    }
+
+    return err;
+}
+
 LOCALFUNC blnr LoadMacRom(void * romData, size_t romSize)
 {
-    memcpy(ROM, romData, kROM_Size);
+    tMacErr err;
 
-	if (romSize < kROM_Size) {
-		MacMsg(kStrShortROMTitle, kStrShortROMMessage, trueblnr);
-		SpeedStopped = trueblnr;
-	}
+    if (mnvm_fnfErr == (err = LoadMacRomFrom(romData, romSize)))
+    {
+    }
 
     return trueblnr; /* keep launching Mini vMac, regardless */
 }
