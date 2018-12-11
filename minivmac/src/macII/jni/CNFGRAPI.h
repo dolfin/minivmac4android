@@ -19,7 +19,7 @@
 #include <unistd.h>
 #include <dlfcn.h>
 
-#define CanGetAppPath 1
+#define CanGetAppPath 0
 #define HaveAppPathLink 1
 #define TheAppPathLink "/proc/self/exe"
 #define HaveSysctlPath 0

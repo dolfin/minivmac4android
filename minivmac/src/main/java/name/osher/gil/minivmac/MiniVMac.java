@@ -118,19 +118,19 @@ public class MiniVMac extends AppCompatActivity
 				// sound
 				mCore.MySound_Init();
 
-				// initialize emulation
-				if (!mCore.initEmulation(mCore, rom)) {
-					Utils.showAlert(thiz, thiz.getString(R.string.errInitEmu), true);
-					return;
-				}
+				mCore.setOnInitScreenListener(new Core.OnInitScreenListener() {
+					@Override
+					public void onInitScreen(final int screenWidth, final int screenHeight) {
+						mUIHandler.post(new Runnable() {
+											@Override
+											public void run() {
+												mScreenView.setTargetScreenSize(screenWidth, screenHeight);
+											}
+										}
+						);
+					}
+				});
 
-				mUIHandler.post(new Runnable() {
-									@Override
-									public void run() {
-										mScreenView.setTargetScreenSize(mCore.getScreenWidth(), mCore.getScreenHeight());
-									}
-								}
-				);
 				mScreenView.setOnMouseEventListener(new ScreenView.OnMouseEventListener() {
 					@Override
 					public void onMouseMove(int x, int y) {
@@ -176,7 +176,9 @@ public class MiniVMac extends AppCompatActivity
 					}
 				});
 
-				mCore.startEmulation();
+				//mCore.resumeEmulation();
+				mCore.initEmulation(mCore, rom);
+				System.exit(0);
 			}
 		});
 		emulation.setName("EmulationThread");
@@ -363,8 +365,7 @@ public class MiniVMac extends AppCompatActivity
 
     	if (mCore != null && !mCore.hasDisksInserted() && !onActivity) {
     		mCore.MySound_UnInit();
-    		mCore.uninitEmulation();
-    		System.exit(0);
+    		mCore.requestMacOff();
     	}
     }
     

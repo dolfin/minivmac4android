@@ -21,6 +21,7 @@ public class Core {
 	private boolean initOk = false;
 
 	private Context mContext;
+	private OnInitScreenListener mOnInitScreenListener;
 	private OnUpdateScreenListener mOnUpdateScreenListener;
 	private OnDiskEventListener mOnDiskEventListener;
 	
@@ -34,6 +35,10 @@ public class Core {
 		mContext = context;
 	}
 
+	public void setOnInitScreenListener(OnInitScreenListener listener) {
+		mOnInitScreenListener = listener;
+	}
+
 	public void setOnUpdateScreenListener(OnUpdateScreenListener listener) {
 		mOnUpdateScreenListener = listener;
 	}
@@ -44,23 +49,18 @@ public class Core {
 	
 	// initialization
 	private native static boolean init(Core core, ByteBuffer rom);
-	private native static boolean uninit();
 	
 	// emulation
-	private native static void main();
 	private native static void _resumeEmulation();
 	private native static void _pauseEmulation();
 	private native static boolean isPaused();
 	private native static void setWantMacReset();
 	private native static void setWantMacInterrupt();
+	private native static void setRequestMacOff();
 
 	public Boolean initEmulation(Core core, ByteBuffer rom) {
 		System.loadLibrary(mContext.getString(R.string.moduleName));
 		return init(core, rom);
-	}
-
-	public Boolean uninitEmulation() {
-		return uninit();
 	}
 
 	public void wantMacReset() {
@@ -69,6 +69,10 @@ public class Core {
 
 	public void wantMacInterrupt() {
 		setWantMacInterrupt();
+	}
+
+	public void requestMacOff() {
+		setRequestMacOff();
 	}
 	
 	public void startEmulation() {
@@ -79,9 +83,6 @@ public class Core {
 			if (!insertDisk(f)) break;
 		}
 		resumeEmulation();
-
-		// start emulation
-		main();
 	}
 	
 	public void resumeEmulation() {
@@ -96,6 +97,14 @@ public class Core {
 		if (isPaused()) return;
 		_pauseEmulation();
 		MySound_Stop();
+	}
+
+	public void initScreen() {
+		final int width = getScreenWidth();
+		final int height = getScreenHeight();
+		if (mOnInitScreenListener != null) {
+			mOnInitScreenListener.onInitScreen(width, height);
+		}
 	}
 
 	public void updateScreen(final int top, final int left, final int bottom, final int right) {
@@ -356,6 +365,10 @@ public class Core {
 				resumeEmulation();
 			}
 		});
+	}
+
+	interface OnInitScreenListener {
+		void onInitScreen(int width, int height);
 	}
 
 	interface OnUpdateScreenListener {

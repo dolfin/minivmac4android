@@ -57,7 +57,7 @@ JNIEnv * jEnv;
 jclass jClass;
 jmethodID jSonyTransfer, jSonyGetSize, jSonyEject, jSonyGetName, jSonyMakeNewDisk;
 jmethodID jWarnMsg;
-jmethodID jUpdateScreen;
+jmethodID jInitScreen, jUpdateScreen;
 jmethodID jPlaySound;
 jobject mCore;
 
@@ -577,6 +577,17 @@ GLOBALFUNC tMacErr vSonyEjectDelete(tDrive Drive_No)
 }
 #endif
 
+LOCALPROC UnInitDrives(void)
+{
+	tDrive i;
+
+	for (i = 0; i < NumDrives; ++i) {
+		if (vSonyIsInserted(i)) {
+			(void) vSonyEject(i);
+		}
+	}
+}
+
 #if IncludeSonyGetName
 GLOBALFUNC tMacErr vSonyGetName(tDrive Drive_No, tPbuf *r)
 {
@@ -890,6 +901,22 @@ LOCALPROC CheckSavedMacMsg(void)
 #pragma mark Emulation
 #endif
 
+LOCALPROC LeaveSpeedStopped(void)
+{
+#if MySoundEnabled
+    //MySound_Start();
+#endif
+
+    StartUpTimeAdjust();
+}
+
+LOCALPROC EnterSpeedStopped(void)
+{
+#if MySoundEnabled
+    //MySound_Stop();
+#endif
+}
+
 LOCALPROC CheckForSavedTasks(void)
 {
 	if (RequestMacOff) {
@@ -905,6 +932,16 @@ LOCALPROC CheckForSavedTasks(void)
 	if (ForceMacOff) {
 		return;
 	}
+
+    if (CurSpeedStopped != SpeedStopped)
+    {
+        CurSpeedStopped = ! CurSpeedStopped;
+        if (CurSpeedStopped) {
+            EnterSpeedStopped();
+        } else {
+            LeaveSpeedStopped();
+        }
+    }
 
 #if IncludeSonyNew
 	if (vSonyNewDiskWanted) {
@@ -1010,6 +1047,12 @@ label_retry:
 
 #include "PROGMAIN.h"
 
+LOCALPROC ZapOSGLUVars(void)
+{
+    //InitDrives();
+    //ZapWinStateVars();
+}
+
 LOCALPROC ReserveAllocAll(void)
 {
 	ReserveAllocOneBlock(&ROM, kROM_Size, 5, falseblnr);
@@ -1089,11 +1132,11 @@ JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_setWantMacInterrupt (JN
 
 /*
  * Class:     name_osher_gil_minivmac_Core
- * Method:    main
+ * Method:    setRequestMacOff
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_main (JNIEnv * env, jclass class) {
-	ProgramMain();
+JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_setRequestMacOff (JNIEnv * env, jclass class) {
+    RequestMacOff = trueblnr;
 }
 
 /*
@@ -1102,8 +1145,8 @@ JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_main (JNIEnv * env, jcl
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core__1resumeEmulation (JNIEnv * env, jclass class) {
-	CurSpeedStopped = 0;
-	StartUpTimeAdjust();
+	CurSpeedStopped = falseblnr;
+	LeaveSpeedStopped();
 }
 
 /*
@@ -1112,7 +1155,8 @@ JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core__1resumeEmulation (JNIE
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core__1pauseEmulation (JNIEnv * env, jclass class) {
-	CurSpeedStopped = 1;
+	CurSpeedStopped = trueblnr;
+	EnterSpeedStopped();
 }
 
 /*
@@ -1171,6 +1215,74 @@ LOCALFUNC blnr Screen_Init(void) {
 	return trueblnr;
 }
 
+LOCALFUNC blnr InitOSGLU(void * romData, size_t romSize)
+{
+    if (AllocMyMemory())
+#if CanGetAppPath
+        if (InitWhereAmI())
+#endif
+#if dbglog_HAVE
+        if (dbglog_open())
+#endif
+        //if (ScanCommandLine())
+        //if (LoadInitialImages())
+        if (LoadMacRom(romData, romSize))
+#if UseActvCode
+            if (ActvCodeInit())
+#endif
+            if (InitLocationDat())
+#if MySoundEnabled
+                //if (MySound_Init())
+#endif
+                if (Screen_Init())
+                    //if (CreateMainWindow())
+                    //if (KC2MKCInit())
+                {
+					(*jEnv)->CallVoidMethod(jEnv, mCore, jInitScreen);
+                    initDone = trueblnr;
+                    return trueblnr;
+                }
+    return falseblnr;
+}
+
+LOCALPROC UnInitOSGLU(void)
+{
+    if (MacMsgDisplayed) {
+        MacMsgDisplayOff();
+    }
+
+    //RestoreKeyRepeat();
+#if MayFullScreen
+    //UngrabMachine();
+#endif
+#if MySoundEnabled
+    //MySound_Stop();
+#endif
+#if MySoundEnabled
+    //MySound_UnInit();
+#endif
+#if IncludeHostTextClipExchange
+    FreeMyClipBuffer();
+#endif
+#if IncludePbufs
+    UnInitPbufs();
+#endif
+    UnInitDrives();
+
+#if dbglog_HAVE
+    dbglog_close();
+#endif
+
+#if CanGetAppPath
+    UninitWhereAmI();
+#endif
+    UnallocMyMemory();
+
+    CheckSavedMacMsg();
+
+    initDone = falseblnr;
+}
+
 /*
  * Class:     name_osher_gil_minivmac_Core
  * Method:    init
@@ -1182,11 +1294,6 @@ JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_init (JNIEnv * env,
 	void * romData = (*env)->GetDirectBufferAddress(env, romBuffer);
 	size_t romSize = (*env)->GetDirectBufferCapacity(env, romBuffer);
 
-	if (AllocMyMemory())
-	if (LoadMacRom(romData, romSize))
-    if (InitLocationDat())
-	if (Screen_Init())
-	{
 		mCore = (*env)->NewGlobalRef(env, core);
 		// get java method IDs
 		jSonyTransfer = (*env)->GetMethodID(env, this, "sonyTransfer", "(ZLjava/nio/ByteBuffer;III)I");
@@ -1195,6 +1302,7 @@ JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_init (JNIEnv * env,
 		jSonyGetName = (*env)->GetMethodID(env, this, "sonyGetName", "(I)Ljava/lang/String;");
 		jSonyMakeNewDisk = (*env)->GetMethodID(env, this, "sonyMakeNewDisk", "(ILjava/lang/String;)I");
 		jWarnMsg = (*env)->GetMethodID(env, this, "warnMsg", "(Ljava/lang/String;Ljava/lang/String;)V");
+	jInitScreen = (*env)->GetMethodID(env, this, "initScreen", "()V");
 		jUpdateScreen = (*env)->GetMethodID(env, this, "updateScreen", "(IIII)V");
 		jPlaySound = (*env)->GetMethodID(env, this, "playSound", "([B)I");
 
@@ -1212,44 +1320,18 @@ JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_init (JNIEnv * env,
 		(*env)->SetObjectField(env, mCore, sDiskPath, diskPath);
 		(*env)->SetObjectField(env, mCore, sDiskFile, diskFile);
 
+	ZapOSGLUVars();
+	if (InitOSGLU(romData, romSize)) {
 		// init ok
 		(*env)->SetBooleanField(env, mCore, sInitOk, JNI_TRUE);
-		initDone = trueblnr;
 
-		return JNI_TRUE;
+		ProgramMain();
 	}
-	return JNI_FALSE;
-}
-
-/*
- * Class:     name_osher_gil_minivmac_Core
- * Method:    uninit
- * Signature: ()V
- */
-JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_uninit (JNIEnv * env, jclass this) {
-
-	if (MacMsgDisplayed) {
-		MacMsgDisplayOff();
-	}
-
-#if MySoundEnabled
-	//MySound_Stop();
-#endif
-#if MySoundEnabled
-	//MySound_UnInit();
-#endif
-#if IncludeHostTextClipExchange
-	FreeMyClipBuffer();
-#endif
-#if IncludePbufs
-	UnInitPbufs();
-#endif
-
-	UnallocMyMemory();
-
-	CheckSavedMacMsg();
-
+	(*env)->SetBooleanField(env, mCore, sInitOk, JNI_FALSE);
+	UnInitOSGLU();
 	(*env)->DeleteGlobalRef(env, mCore);
+
+	return JNI_TRUE;
 }
 
 static struct sigaction old_sa[NSIG];
