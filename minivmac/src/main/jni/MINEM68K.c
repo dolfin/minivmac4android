@@ -4382,7 +4382,7 @@ LOCALPROCUSEDONCE DumpAJump(CPTR toaddr)
 }
 #endif
 
-LOCALPROC my_reg_call m68k_setpc(CPTR newpc)
+__attribute__((optnone)) LOCALPROC my_reg_call m68k_setpc(CPTR newpc)
 {
 #if WantDumpAJump
 	DumpAJump(newpc);
