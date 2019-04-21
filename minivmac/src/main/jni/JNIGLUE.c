@@ -58,7 +58,7 @@ jclass jClass;
 jmethodID jSonyTransfer, jSonyGetSize, jSonyEject, jSonyGetName, jSonyMakeNewDisk;
 jmethodID jWarnMsg;
 jmethodID jInitScreen, jUpdateScreen;
-jmethodID jPlaySound;
+jmethodID jPlaySound, jMySoundStart, jMySoundStop;
 jobject mCore;
 
 static jmethodID nativeCrashed;
@@ -904,7 +904,7 @@ LOCALPROC CheckSavedMacMsg(void)
 LOCALPROC LeaveSpeedStopped(void)
 {
 #if MySoundEnabled
-    //MySound_Start();
+	(*jEnv)->CallVoidMethod(jEnv, mCore, jMySoundStart);
 #endif
 
     StartUpTimeAdjust();
@@ -913,7 +913,7 @@ LOCALPROC LeaveSpeedStopped(void)
 LOCALPROC EnterSpeedStopped(void)
 {
 #if MySoundEnabled
-    //MySound_Stop();
+	(*jEnv)->CallVoidMethod(jEnv, mCore, jMySoundStop);
 #endif
 }
 
@@ -1256,7 +1256,7 @@ LOCALPROC UnInitOSGLU(void)
     //UngrabMachine();
 #endif
 #if MySoundEnabled
-    //MySound_Stop();
+	(*jEnv)->CallVoidMethod(jEnv, mCore, jMySoundStop);
 #endif
 #if MySoundEnabled
     //MySound_UnInit();
@@ -1302,9 +1302,11 @@ JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_init (JNIEnv * env,
 		jSonyGetName = (*env)->GetMethodID(env, this, "sonyGetName", "(I)Ljava/lang/String;");
 		jSonyMakeNewDisk = (*env)->GetMethodID(env, this, "sonyMakeNewDisk", "(ILjava/lang/String;)I");
 		jWarnMsg = (*env)->GetMethodID(env, this, "warnMsg", "(Ljava/lang/String;Ljava/lang/String;)V");
-	jInitScreen = (*env)->GetMethodID(env, this, "initScreen", "()V");
+		jInitScreen = (*env)->GetMethodID(env, this, "initScreen", "()V");
 		jUpdateScreen = (*env)->GetMethodID(env, this, "updateScreen", "(IIII)V");
 		jPlaySound = (*env)->GetMethodID(env, this, "playSound", "([B)I");
+		jMySoundStart = (*env)->GetMethodID(env, this, "MySound_Start", "()V");
+		jMySoundStop = (*env)->GetMethodID(env, this, "MySound_Stop", "()V");
 
 		// initialize fields
 		jfieldID sDiskPath, sDiskFile, sNumInsertedDisks, sInitOk;
