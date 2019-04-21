@@ -370,7 +370,7 @@ LOCALVAR const ui3b Native2MacRomanTab[] = {
 #endif
 
 #if IncludePbufs
-LOCALFUNC tMacErr NativeTextToMacRomanPbuf(char *x, tPbuf *r)
+LOCALFUNC tMacErr NativeTextToMacRomanPbuf(const char *x, tPbuf *r)
 {
 	if (NULL == x) {
 		return mnvm_miscErr;
