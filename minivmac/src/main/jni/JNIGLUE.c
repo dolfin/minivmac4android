@@ -46,6 +46,7 @@
 #undef CLAMP
 #define CLAMP(x, lo, hi) (((x) > (hi))? (hi) : (((x) < (lo))? (lo) : (x)))
 
+LOCALVAR blnr gBackgroundFlag = falseblnr;
 LOCALVAR blnr CurSpeedStopped = trueblnr;
 
 GLOBALVAR ui3b CurMouseButton = falseblnr;
@@ -55,10 +56,10 @@ LOCALVAR blnr initDone = falseblnr;
 // java
 JNIEnv * jEnv;
 jclass jClass;
-jmethodID jSonyTransfer, jSonyGetSize, jSonyEject, jSonyGetName, jSonyMakeNewDisk;
+jmethodID jSonyTransfer, jSonyGetSize, jSonyEject, jSonyGetName, jSonyMakeNewDisk, jSonyInsert2;
 jmethodID jWarnMsg;
 jmethodID jInitScreen, jUpdateScreen;
-jmethodID jPlaySound, jMySoundStart, jMySoundStop;
+jmethodID jMySoundInit, jMySoundUnInit, jPlaySound, jMySoundStart, jMySoundStop;
 jobject mCore;
 
 static jmethodID nativeCrashed;
@@ -604,6 +605,39 @@ GLOBALFUNC tMacErr vSonyGetName(tDrive Drive_No, tPbuf *r)
 }
 #endif
 
+LOCALFUNC blnr Sony_InsertIth(int i)
+{
+    blnr v;
+
+    if ((i > 9) || ! FirstFreeDisk(nullpr)) {
+        v = falseblnr;
+    } else {
+        char s[] = "disk?.dsk";
+
+        s[4] = '0' + i;
+
+        jstring jdiskname = (*jEnv)->NewStringUTF(jEnv, s);
+        v = (*jEnv)->CallBooleanMethod(jEnv, mCore, jSonyInsert2, jdiskname);
+        (*jEnv)->DeleteLocalRef(jEnv, jdiskname);
+
+    }
+
+    return v;
+}
+
+LOCALFUNC blnr LoadInitialImages(void)
+{
+    if (! AnyDiskInserted()) {
+        int i;
+
+        for (i = 1; Sony_InsertIth(i); ++i) {
+            /* stop on first error (including file not found) */
+        }
+    }
+
+    return trueblnr;
+}
+
 #if IncludeSonyNew
 LOCALPROC MakeNewDisk(ui5b L, char *drivename)
 {
@@ -933,7 +967,8 @@ LOCALPROC CheckForSavedTasks(void)
 		return;
 	}
 
-    if (CurSpeedStopped != SpeedStopped)
+    if (CurSpeedStopped != (SpeedStopped ||
+    	(gBackgroundFlag && ! RunInBackground)))
     {
         CurSpeedStopped = ! CurSpeedStopped;
         if (CurSpeedStopped) {
@@ -1145,8 +1180,7 @@ JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_setRequestMacOff (JNIEn
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core__1resumeEmulation (JNIEnv * env, jclass class) {
-	CurSpeedStopped = falseblnr;
-	LeaveSpeedStopped();
+	gBackgroundFlag = falseblnr;
 }
 
 /*
@@ -1155,8 +1189,7 @@ JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core__1resumeEmulation (JNIE
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core__1pauseEmulation (JNIEnv * env, jclass class) {
-	CurSpeedStopped = trueblnr;
-	EnterSpeedStopped();
+	gBackgroundFlag = trueblnr;
 }
 
 /*
@@ -1225,14 +1258,14 @@ LOCALFUNC blnr InitOSGLU(void * romData, size_t romSize)
         if (dbglog_open())
 #endif
         //if (ScanCommandLine())
-        //if (LoadInitialImages())
         if (LoadMacRom(romData, romSize))
+        if (LoadInitialImages())
 #if UseActvCode
             if (ActvCodeInit())
 #endif
             if (InitLocationDat())
 #if MySoundEnabled
-                //if (MySound_Init())
+                if ((*jEnv)->CallBooleanMethod(jEnv, mCore, jMySoundInit))
 #endif
                 if (Screen_Init())
                     //if (CreateMainWindow())
@@ -1259,7 +1292,7 @@ LOCALPROC UnInitOSGLU(void)
 	(*jEnv)->CallVoidMethod(jEnv, mCore, jMySoundStop);
 #endif
 #if MySoundEnabled
-    //MySound_UnInit();
+    (*jEnv)->CallVoidMethod(jEnv, mCore, jMySoundUnInit);
 #endif
 #if IncludeHostTextClipExchange
     FreeMyClipBuffer();
@@ -1301,10 +1334,13 @@ JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_init (JNIEnv * env,
 		jSonyEject = (*env)->GetMethodID(env, this, "sonyEject", "(IZ)I");
 		jSonyGetName = (*env)->GetMethodID(env, this, "sonyGetName", "(I)Ljava/lang/String;");
 		jSonyMakeNewDisk = (*env)->GetMethodID(env, this, "sonyMakeNewDisk", "(ILjava/lang/String;)I");
+        jSonyInsert2 = (*env)->GetMethodID(env, this, "sonyInsert2", "(Ljava/lang/String;)Z");
 		jWarnMsg = (*env)->GetMethodID(env, this, "warnMsg", "(Ljava/lang/String;Ljava/lang/String;)V");
 		jInitScreen = (*env)->GetMethodID(env, this, "initScreen", "()V");
 		jUpdateScreen = (*env)->GetMethodID(env, this, "updateScreen", "(IIII)V");
 		jPlaySound = (*env)->GetMethodID(env, this, "playSound", "([B)I");
+        jMySoundInit = (*env)->GetMethodID(env, this, "MySound_Init", "()Z");
+        jMySoundUnInit = (*env)->GetMethodID(env, this, "MySound_UnInit", "()V");
 		jMySoundStart = (*env)->GetMethodID(env, this, "MySound_Start", "()V");
 		jMySoundStop = (*env)->GetMethodID(env, this, "MySound_Stop", "()V");
 

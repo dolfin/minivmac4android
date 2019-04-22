@@ -75,20 +75,9 @@ public class Core {
 		setRequestMacOff();
 	}
 	
-	public void startEmulation() {
-		if (!initOk) return;
-		// insert initial disks
-		for(int i=0; i < getNumDrives(); i++) {
-			File f = FileManager.getInstance().getDataFile("disk" + i + ".dsk");
-			if (!insertDisk(f)) break;
-		}
-		resumeEmulation();
-	}
-	
 	public void resumeEmulation() {
 		if (!initOk) return;
 		if (!isPaused()) return;
-		MySound_Start();
 		_resumeEmulation();
 	}
 	
@@ -96,7 +85,6 @@ public class Core {
 		if (!initOk) return;
 		if (isPaused()) return;
 		_pauseEmulation();
-		MySound_Stop();
 	}
 
 	public void initScreen() {
@@ -166,7 +154,7 @@ public class Core {
 	private static final int kLnAllBuffLen = (kLn2SoundBuffers + kLnOneBuffLen);
 	private static final int kAllBuffLen = (1 << kLnAllBuffLen);
 
-	public Boolean MySound_Init() {
+	public boolean MySound_Init() {
         try {
 		    mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, SOUND_SAMPLERATE, AudioFormat.CHANNEL_CONFIGURATION_MONO, AudioFormat.ENCODING_PCM_8BIT, kAllBuffLen, AudioTrack.MODE_STREAM);
 
@@ -351,6 +339,11 @@ public class Core {
 	public boolean insertDisk(String path) {
 		return insertDisk(new File(path));
 	}
+
+	public boolean sonyInsert2(String filename) {
+        File f = FileManager.getInstance().getDataFile(filename);
+        return insertDisk(f);
+    }
 	
 	public boolean hasDisksInserted() {
 		return numInsertedDisks > 0;

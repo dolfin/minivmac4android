@@ -115,9 +115,6 @@ public class MiniVMac extends AppCompatActivity
 			public void run() {
 				mCore = new Core(thiz);
 
-				// sound
-				mCore.MySound_Init();
-
 				mCore.setOnInitScreenListener(new Core.OnInitScreenListener() {
 					@Override
 					public void onInitScreen(final int screenWidth, final int screenHeight) {
@@ -364,7 +361,6 @@ public class MiniVMac extends AppCompatActivity
     	super.onPause();
 
     	if (mCore != null && !mCore.hasDisksInserted() && !onActivity) {
-    		mCore.MySound_UnInit();
     		mCore.requestMacOff();
     	}
     }
