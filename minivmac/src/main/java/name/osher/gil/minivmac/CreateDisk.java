@@ -18,6 +18,8 @@ import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.lang.ref.WeakReference;
+
 public class CreateDisk extends Activity {
 	private static final int PROGRESS_DIALOG = 0;
     private ProgressThread progressThread;
@@ -98,35 +100,43 @@ public class CreateDisk extends Activity {
         switch(id) {
         case PROGRESS_DIALOG:
             progressDialog.setProgress(0);
-            progressThread = new ProgressThread(handler);
+            progressThread = new ProgressThread(new ProgressHandler(this));
             progressThread.start();
         }
     }
 
     // Define the Handler that receives messages from the thread and update the progress
-    private final Handler handler = new Handler() {
+	private static class ProgressHandler extends Handler {
+        private final WeakReference<CreateDisk> mActivityRef;
+
+        ProgressHandler(CreateDisk activity) {
+            mActivityRef = new WeakReference<>(activity);
+        }
+
         public void handleMessage(Message msg) {
+            final CreateDisk activity = mActivityRef.get();
+
             int total = msg.arg1;
-            progressDialog.setProgress(total);
-            if (total >= 100){
-                dismissDialog(PROGRESS_DIALOG);
-                progressThread.setState(ProgressThread.STATE_DONE);
-                
-                if (msg.arg2 == RESULT_OK)
-                {
-	    			Intent data = new Intent();
-	    			data.putExtra("diskPath", (String)msg.obj);
-	    			setResult(RESULT_OK, data);
-	    			finish();
-                }
-                else
-                {
-                	Toast toast = Toast.makeText(getApplicationContext(), (Integer)(msg.obj), Toast.LENGTH_LONG);
-                	toast.show();
+            if (activity != null) {
+                activity.progressDialog.setProgress(total);
+
+                if (total >= 100) {
+                    activity.dismissDialog(PROGRESS_DIALOG);
+                    activity.progressThread.setState(ProgressThread.STATE_DONE);
+
+                    if (msg.arg2 == RESULT_OK) {
+                        Intent data = new Intent();
+                        data.putExtra("diskPath", (String) msg.obj);
+                        activity.setResult(RESULT_OK, data);
+                        activity.finish();
+                    } else {
+                        Toast toast = Toast.makeText(activity.getApplicationContext(), (Integer) (msg.obj), Toast.LENGTH_LONG);
+                        toast.show();
+                    }
                 }
             }
         }
-    };
+    }
 
     /** Nested class that performs progress calculations (counting) */
     private class ProgressThread extends Thread {

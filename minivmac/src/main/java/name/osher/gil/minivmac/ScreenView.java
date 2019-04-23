@@ -88,30 +88,33 @@ public class ScreenView extends View {
 	}
 	
 	public boolean onTouchEvent (@NonNull MotionEvent event) {
-		int[] macCoords;
-		macCoords = translateMouseCoords((int)event.getX(), (int)event.getY());
-		switch(event.getAction()) {
-		case MotionEvent.ACTION_DOWN:
-			mListener.onMouseMove(macCoords[0], macCoords[1]);
-			mListener.onMouseClick(true);
-			return true;
-		case MotionEvent.ACTION_MOVE:
-			mListener.onMouseMove(macCoords[0], macCoords[1]);
-            return true;
-		case MotionEvent.ACTION_CANCEL:
-			mListener.onMouseClick(false);
-            return true;
-		case MotionEvent.ACTION_UP:
-			mListener.onMouseMove(macCoords[0], macCoords[1]);
-			mListener.onMouseClick(false);
-            return true;
+		if (mListener != null) {
+			int[] macCoords;
+			macCoords = translateMouseCoords((int) event.getX(), (int) event.getY());
+			switch (event.getAction()) {
+				case MotionEvent.ACTION_DOWN:
+					mListener.onMouseMove(macCoords[0], macCoords[1]);
+					mListener.onMouseClick(true);
+					return true;
+				case MotionEvent.ACTION_MOVE:
+					mListener.onMouseMove(macCoords[0], macCoords[1]);
+					return true;
+				case MotionEvent.ACTION_CANCEL:
+					mListener.onMouseClick(false);
+					return true;
+				case MotionEvent.ACTION_UP:
+					mListener.onMouseMove(macCoords[0], macCoords[1]);
+					mListener.onMouseClick(false);
+					return true;
+			}
 		}
 		return super.onTouchEvent(event);
 	}
 
     @TargetApi(12)
     public boolean onGenericMotionEvent (MotionEvent event) {
-        if (event.getSource() == InputDevice.SOURCE_MOUSE) {
+        if (mListener != null &&
+				event.getSource() == InputDevice.SOURCE_MOUSE) {
             int[] macCoords;
             macCoords = translateMouseCoords((int)event.getX(), (int)event.getY());
 
