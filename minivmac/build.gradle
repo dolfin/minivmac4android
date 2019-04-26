@@ -75,5 +75,5 @@ dependencies {
     implementation 'com.android.support:appcompat-v7:28.0.0'
     implementation 'com.android.support:design:28.0.0'
 
-    implementation 'com.nononsenseapps:filepicker:4.1.0'
+    implementation 'com.nononsenseapps:filepicker:4.2.1'
 }
