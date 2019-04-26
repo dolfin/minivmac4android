@@ -15,6 +15,7 @@ import android.content.res.Configuration;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -22,8 +23,10 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -31,6 +34,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.SubMenu;
 import android.view.View;
+import android.view.Window;
 import android.view.WindowManager;
 
 import com.nononsenseapps.filepicker.FilePickerActivity;
@@ -52,6 +56,8 @@ public class MiniVMac extends AppCompatActivity
 	private Boolean onActivity = false;
 	private Boolean isLandscape = false;
 	private Boolean hasPermission = false;
+	private GestureDetectorCompat mGestureDetector;
+	private boolean mUIVisible = true;
 
 	private KeyboardView mKeyboardView;
 	private Keyboard mQwertyKeyboard;
@@ -73,6 +79,7 @@ public class MiniVMac extends AppCompatActivity
         setContentView(R.layout.activity_mini_vmac);
 		mLayout = findViewById(R.id.main_layout);
         mScreenView = findViewById(R.id.screen);
+		mGestureDetector = new GestureDetectorCompat(this, new SingleTapGestureListener());
         mUIHandler = new Handler(getMainLooper());
 
 		isLandscape = (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
@@ -352,8 +359,9 @@ public class MiniVMac extends AppCompatActivity
 		mScreenView.setScaled(scalePref);
 		mScreenView.setScroll(scrollPref);
 	}
-    
-    public void onPause () {
+
+	@Override
+    protected void onPause () {
 		if (mCore != null) {
 			mCore.pauseEmulation();
 		}
@@ -364,14 +372,15 @@ public class MiniVMac extends AppCompatActivity
     		mCore.requestMacOff();
     	}
     }
-    
-    public void onResume () {
-    	super.onResume();
 
-    	if (mCore != null) {
+	@Override
+	protected void onResume() {
+		super.onResume();
+
+		if (mCore != null) {
 			mCore.resumeEmulation();
 		}
-    }
+	}
 
 	@Override
 	public boolean onKeyDown (int keyCode, @NonNull KeyEvent event) {
@@ -416,6 +425,7 @@ public class MiniVMac extends AppCompatActivity
 		return false;
 	}
 
+	@Override
 	public boolean onTrackballEvent (MotionEvent event) {
 		if (event.getX() > 0) mScreenView.scrollScreen(KeyEvent.KEYCODE_DPAD_RIGHT, (int)(TRACKBALL_SENSITIVITY*event.getX()));
 		else if (event.getX() < 0) mScreenView.scrollScreen(KeyEvent.KEYCODE_DPAD_LEFT, (int)-(TRACKBALL_SENSITIVITY*event.getX()));
@@ -424,7 +434,16 @@ public class MiniVMac extends AppCompatActivity
 
 		return true;
 	}
-	
+
+	@Override
+	public boolean onTouchEvent (@NonNull MotionEvent event) {
+		if (this.mGestureDetector.onTouchEvent(event)) {
+			return true;
+		}
+		return super.onTouchEvent(event);
+	}
+
+
 	public int translateKeyCode (int keyCode) {
 		if (keyCode < 0 || keyCode >= keycodeTranslationTable.length) return -1;
 		return keycodeTranslationTable[keyCode];
@@ -438,18 +457,50 @@ public class MiniVMac extends AppCompatActivity
 		initKeyboard();
 	}
 
+	@Override
+	public void onWindowFocusChanged(boolean hasFocus) {
+		super.onWindowFocusChanged(hasFocus);
+		if (hasFocus) {
+			hideSystemUI();
+		}
+	}
+
+	private void hideSystemUI() {
+		// Enables regular immersive mode.
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			View decorView = getWindow().getDecorView();
+			decorView.setSystemUiVisibility(
+					View.SYSTEM_UI_FLAG_IMMERSIVE
+							// Set the content to appear under the system bars so that the
+							// content doesn't resize when the system bars hide and show.
+							| View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+							| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+							| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+							// Hide the nav bar and status bar
+							| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+							| View.SYSTEM_UI_FLAG_FULLSCREEN);
+			mUIVisible = false;
+		}
+	}
+
+	// Shows the system bars by removing all the flags
+	// except for the ones that make the content appear under the system bars.
+	private void showSystemUI() {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			View decorView = getWindow().getDecorView();
+			decorView.setSystemUiVisibility(
+					View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+							| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+							| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+			mUIVisible = true;
+		}
+	}
+
 	private void toggleFullscreen(Boolean isFullscreen) {
-		ActionBar actionBar = getSupportActionBar();
 		if(isFullscreen) {
 			getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-			if (actionBar != null) {
-				actionBar.hide();
-			}
 		} else {
 			getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-			if (actionBar != null) {
-				actionBar.show();
-			}
 		}
 	}
 
@@ -633,6 +684,23 @@ public class MiniVMac extends AppCompatActivity
 					break;
 			}
 			updateByPrefs();
+		}
+	}
+
+	class SingleTapGestureListener extends GestureDetector.SimpleOnGestureListener {
+		@Override
+		public boolean onDown(MotionEvent event) {
+			return true;
+		}
+
+		@Override
+		public boolean onSingleTapUp(MotionEvent e) {
+			if (mUIVisible) {
+				hideSystemUI();
+			} else {
+				showSystemUI();
+			}
+			return true;
 		}
 	}
 }

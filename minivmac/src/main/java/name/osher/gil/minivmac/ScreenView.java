@@ -88,7 +88,8 @@ public class ScreenView extends View {
 	}
 	
 	public boolean onTouchEvent (@NonNull MotionEvent event) {
-		if (mListener != null) {
+		if (mListener != null &&
+				mDstRect.contains((int) event.getX(), (int) event.getY())) {
 			int[] macCoords;
 			macCoords = translateMouseCoords((int) event.getX(), (int) event.getY());
 			switch (event.getAction()) {
