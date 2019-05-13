@@ -36,6 +36,14 @@
 	<string name="pref_scroll">Scroll</string>
 	<string name="pref_scroll_summ">Use the arrow keys to scroll the screen</string>
 	<string name="pref_control_title">Control</string>
+	<string name="prefs_speed">Speed&#8230;</string>
+	<string name="prefs_speed_0">1x</string>
+	<string name="prefs_speed_1">2x</string>
+	<string name="prefs_speed_2">4x</string>
+	<string name="prefs_speed_3">8x</string>
+	<string name="prefs_speed_4">16x</string>
+	<string name="prefs_speed_5">32x</string>
+	<string name="prefs_speed_A">All Out</string>
 	<string name="prefs_reset">Reset</string>
 	<string name="prefs_interrupt">Interrupt</string>
 	<string name="pref_learn_title">Learn</string>

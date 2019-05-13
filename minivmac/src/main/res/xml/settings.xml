@@ -19,6 +19,13 @@
     <PreferenceCategory 
         android:title="@string/pref_control_title"
         android:key="pref_key_control_settings">
+		<ListPreference
+			android:key="pref_speed"
+			android:title="@string/prefs_speed"
+			android:icon="@drawable/speedometer"
+			android:entries="@array/speed_entries"
+			android:entryValues="@array/speed_values">
+		</ListPreference>
 	    <Preference
 			android:key="pref_reset"
 			android:title="@string/prefs_reset"

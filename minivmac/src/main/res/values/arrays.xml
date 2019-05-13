@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="speed_entries">
+        <item>@string/prefs_speed_0</item>
+        <item>@string/prefs_speed_1</item>
+        <item>@string/prefs_speed_2</item>
+        <item>@string/prefs_speed_3</item>
+        <item>@string/prefs_speed_4</item>
+        <item>@string/prefs_speed_5</item>
+        <item>@string/prefs_speed_A</item>
+    </string-array>
+    <string-array name="speed_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>255</item>
+    </string-array>
+</resources>

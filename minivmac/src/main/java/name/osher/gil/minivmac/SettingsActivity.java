@@ -11,6 +11,7 @@ import android.widget.LinearLayout;
 public class SettingsActivity extends PreferenceActivity {
 	public static final String KEY_PREF_SCALE = "pref_scale";
 	public static final String KEY_PREF_SCROLL = "pref_scroll";
+	public static final String KEY_PREF_SPEED = "pref_speed";
 	public static final String KEY_PREF_RESET = "pref_reset";
 	public static final String KEY_PREF_INTERRUPT = "pref_interrupt";
 	public static final String KEY_PREF_ABOUT = "pref_about";
@@ -56,6 +57,16 @@ public class SettingsActivity extends PreferenceActivity {
 				return true;
 			}
 		} );
+
+		ListPreference pref_speed = (ListPreference) findPreference( KEY_PREF_SPEED );
+		pref_speed.setValue(String.valueOf(Core.getSpeed()));
+		pref_speed.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+			@Override
+			public boolean onPreferenceChange(Preference preference, Object newValue) {
+				Core.setSpeed(Integer.parseInt(newValue.toString()));
+				return true;
+			}
+		});
     }
 
 	@Override

@@ -1201,6 +1201,24 @@ JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_isPaused (JNIEnv * 
 	return CurSpeedStopped?JNI_TRUE:JNI_FALSE;
 }
 
+/*
+ * Class:     name_osher_gil_minivmac_Core
+ * Method:    setSpeed
+ * Signature: (I)V
+ */
+JNIEXPORT void JNICALL Java_name_osher_gil_minivmac_Core_setSpeed (JNIEnv * env, jclass class, jint value) {
+	SpeedValue = (ui3b)value;
+}
+
+/*
+ * Class:     name_osher_gil_minivmac_Core
+ * Method:    getSpeed
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_name_osher_gil_minivmac_Core_getSpeed (JNIEnv * env, jclass class) {
+	return (jint)SpeedValue;
+}
+
 #if 0
 #pragma mark -
 #pragma mark Misc

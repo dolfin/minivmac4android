@@ -54,6 +54,8 @@ public class Core {
 	private native static void _resumeEmulation();
 	private native static void _pauseEmulation();
 	private native static boolean isPaused();
+	public native static void setSpeed(int value);
+	public native static int getSpeed();
 	private native static void setWantMacReset();
 	private native static void setWantMacInterrupt();
 	private native static void setRequestMacOff();
