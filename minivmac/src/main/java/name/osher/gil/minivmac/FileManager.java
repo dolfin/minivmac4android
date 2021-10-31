@@ -1,21 +1,28 @@
 package name.osher.gil.minivmac;
 
 import android.app.Activity;
-import android.os.Environment;
+import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.OpenableColumns;
 import android.util.Log;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * Created by dolfin on 16/12/2015.
  */
 public class FileManager {
     private static final String TAG = "minivmac.FileManager";
+    private final static String[] diskExtensions = {"DSK", "dsk", "img", "IMG"};
 
     private static final int ZERO_BUFFER_SIZE = 2048;
 
@@ -28,9 +35,9 @@ public class FileManager {
         return mInstance;
     }
 
-    public Boolean init() {
+    public Boolean init(Context context) {
         // find data directory
-        mDataDir = new File(Environment.getExternalStorageDirectory(), "minivmac");
+        mDataDir = context.getExternalFilesDir(null);
         return mDataDir.isDirectory() && mDataDir.canRead();
     }
 
@@ -40,6 +47,20 @@ public class FileManager {
 
     public File getDataDir() {
         return mDataDir;
+    }
+
+    public File[] getAvailableDisks () {
+        return mDataDir.listFiles(new FileFilter() {
+            public boolean accept(File pathname) {
+                if (!pathname.isFile()) return false;
+                if (pathname.isDirectory()) return false;
+                String ext = pathname.getName().substring(1 + pathname.getName().lastIndexOf("."));
+                for (String diskExtension : diskExtensions) {
+                    if (diskExtension.equals(ext)) return true;
+                }
+                return false;
+            }
+        });
     }
 
     public boolean makeNewDisk(int size, String fileName, String path, Handler progressHandler) {
@@ -98,6 +119,34 @@ public class FileManager {
             progressHandler.sendMessage(msg);
         }
         return true;
+    }
+
+    public void copy(InputStream in, File dst) throws IOException {
+        if (!dst.exists()) {
+            dst.createNewFile();
+        }
+
+        try (OutputStream out = new FileOutputStream(dst)) {
+            // Transfer bytes from in to out
+            byte[] buf = new byte[1024];
+            int len;
+            while ((len = in.read(buf)) > 0) {
+                out.write(buf, 0, len);
+            }
+        }
+    }
+
+    public void delete(File file) {
+        file.delete();
+    }
+
+    public String getFileName(Context context, Uri uri) {
+        Cursor cursor = context.getContentResolver().query(uri, null, null, null, null);
+        int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+        cursor.moveToFirst();
+        String name = cursor.getString(nameIndex);
+        cursor.close();
+        return name;
     }
 
     private void handleError(File disk, int error, Handler progressHandler) {

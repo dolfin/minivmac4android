@@ -1,7 +1,6 @@
 package name.osher.gil.minivmac;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -19,13 +18,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.view.GestureDetectorCompat;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.NonNull;
+import com.google.android.material.snackbar.Snackbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.view.GestureDetectorCompat;
+import androidx.appcompat.app.AppCompatActivity;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -34,7 +32,6 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.SubMenu;
 import android.view.View;
-import android.view.Window;
 import android.view.WindowManager;
 
 import com.nononsenseapps.filepicker.FilePickerActivity;
@@ -43,7 +40,6 @@ public class MiniVMac extends AppCompatActivity
 		implements ActivityCompat.OnRequestPermissionsResultCallback {
 
 	private final static int[] keycodeTranslationTable = {-1, -1, -1, -1, -1, -1, -1, 0x1D, 0x12, 0x13, 0x14, 0x15, 0x17, 0x16, 0x1A, 0x1C, 0x19, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0x00, 0x0B, 0x08, 0x02, 0x0E, 0x03, 0x05, 0x04, 0x22, 0x26, 0x28, 0x25, 0x2E, 0x2D, 0x1F, 0x23, 0x0C, 0x0F, 0x01, 0x11, 0x20, 0x09, 0x0D, 0x07, 0x10, 0x06, 0x2B, 0x2F, 0x37, 0x37, 0x38, 0x38, 0x30, 0x31, 0x3A, -1, -1, 0x24, 0x33, 0x32, 0x1B, 0x18, 0x21, 0x1E, 0x2A, 0x29, 0x27, 0x2C, 0x37, 0x3A, -1, -1, 0x45, -1, -1, 0x3A, -1, -1, -1, -1, -1, -1, -1};
-	private final static String[] diskExtensions = {"DSK", "dsk", "img", "IMG"};
 	private final static int ACTIVITY_CREATE_DISK = 200;
 	private final static int ACTIVITY_SETTINGS = 201;
 	private final static int ACTIVITY_SELECT_DISK = 202;
@@ -94,7 +90,7 @@ public class MiniVMac extends AppCompatActivity
 	}
 
 	private void initEmulator() {
-		if (!FileManager.getInstance().init()) {
+		if (!FileManager.getInstance().init(this)) {
 			Utils.showAlert(this, String.format(getString(R.string.errNoDataDir), FileManager.getInstance().getDataDir().getPath(),
 					getString(R.string.romFileName)), true);
 		}
@@ -108,8 +104,9 @@ public class MiniVMac extends AppCompatActivity
             romReader.getChannel().read(rom);
             romReader.close();
         } catch (Exception x) {
-            Utils.showAlert(this, String.format(getString(R.string.errNoROM), romFile.getPath(),
-					getString(R.string.romFileName)), true);
+            //Utils.showAlert(this, String.format(getString(R.string.errNoROM), romFile.getPath(),
+			//		getString(R.string.romFileName)),false);
+            showSettings();
             return;
         }
 
@@ -358,6 +355,7 @@ public class MiniVMac extends AppCompatActivity
 		Boolean scrollPref = sharedPref.getBoolean(SettingsActivity.KEY_PREF_SCROLL, false);
 		mScreenView.setScaled(scalePref);
 		mScreenView.setScroll(scrollPref);
+		invalidateOptionsMenu();
 	}
 
 	@Override
@@ -520,7 +518,7 @@ public class MiniVMac extends AppCompatActivity
 		dm.add(0, R.id.action_select_disk, 1, R.string.menu_select_disk);
 		// add disks
 		if (hasPermission) {
-			File[] disks = getAvailableDisks();
+			File[] disks = FileManager.getInstance().getAvailableDisks();
 			for (int i = 0; disks != null && i < disks.length; i++) {
 				String diskName = disks[i].getName();
 				MenuItem m = dm.add(R.id.action_insert_disk, diskName.hashCode(), i+2, diskName.substring(0, diskName.lastIndexOf(".")));
@@ -532,7 +530,7 @@ public class MiniVMac extends AppCompatActivity
 	
 	public boolean onOptionsItemSelected (MenuItem item) {
 		if (item.getGroupId() == R.id.action_insert_disk) {
-			File[] disks = getAvailableDisks();
+			File[] disks = FileManager.getInstance().getAvailableDisks();
             for (File disk : disks) {
                 if (disk.getName().hashCode() == item.getItemId()) {
                     mCore.insertDisk(disk);
@@ -619,20 +617,6 @@ public class MiniVMac extends AppCompatActivity
 	
 	public void interrupt() {
 		mCore.wantMacInterrupt();
-	}
-	
-	public File[] getAvailableDisks () {
-		return FileManager.getInstance().getDataDir().listFiles(new FileFilter() {
-			public boolean accept(File pathname) {
-				if (!pathname.isFile()) return false;
-				if (pathname.isDirectory()) return false;
-				String ext = pathname.getName().substring(1 + pathname.getName().lastIndexOf("."));
-				for (String diskExtension : diskExtensions) {
-					if (diskExtension.equals(ext)) return true;
-				}
-				return false;
-			}
-		});
 	}
 
 	@Override

@@ -1,6 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory 
+	<PreferenceCategory
+		android:title="@string/pref_emulator_title"
+		android:key="pref_key_emulator_settings">
+	<Preference
+		android:key="pref_rom"
+		android:title="@string/pref_rom"
+		android:summary="@string/pref_rom_summ"
+		android:icon="@drawable/ic_chip" />
+		<Preference
+			android:key="pref_disk_manager"
+			android:title="@string/pref_disk_manager"
+			android:icon="@drawable/ic_action_floppy" />
+	</PreferenceCategory>
+	<PreferenceCategory
         android:title="@string/pref_view_title"
         android:key="pref_key_view_settings">
 	    <CheckBoxPreference
@@ -16,7 +29,7 @@
 			android:icon="@drawable/ic_scroll"
 	        android:defaultValue="false" />
     </PreferenceCategory>
-    <PreferenceCategory 
+    <PreferenceCategory
         android:title="@string/pref_control_title"
         android:key="pref_key_control_settings">
 		<ListPreference
@@ -30,12 +43,12 @@
 			android:key="pref_reset"
 			android:title="@string/prefs_reset"
 	    	android:icon="@drawable/ic_reset" />
-	    <Preference 
+	    <Preference
 	        android:key="pref_interrupt"
 	        android:title="@string/prefs_interrupt"
 	        android:icon="@drawable/ic_interrupt" />
 	</PreferenceCategory>
-    <PreferenceCategory 
+    <PreferenceCategory
         android:title="@string/pref_learn_title"
         android:key="pref_key_learn_settings">
 	    <Preference android:title="@string/prefs_start"
@@ -48,7 +61,7 @@
 	    	<intent android:action="android.intent.action.VIEW"
 	            android:data="@string/url_homepage" />
 		</Preference>
-	    <Preference 
+	    <Preference
 	        android:key="pref_about"
 	        android:title="@string/prefs_about"
 	        android:icon="@drawable/icon" />
