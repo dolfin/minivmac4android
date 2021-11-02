@@ -252,8 +252,8 @@ public class Core {
 			ret = -1;
 		}
 
-		if (deleteit) {
-			String path = diskPath[driveNum];
+		String path = diskPath[driveNum];
+		if (deleteit || FileManager.getInstance().isInCache(path)) {
 			File file = new File(path);
 			file.delete();
 		}
@@ -343,7 +343,7 @@ public class Core {
 	}
 
 	public boolean sonyInsert2(String filename) {
-        File f = FileManager.getInstance().getDataFile(filename);
+        File f = FileManager.getInstance().getDisksFile(filename);
         return insertDisk(f);
     }
 	

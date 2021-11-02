@@ -28,18 +28,27 @@
             android:layout_width="match_parent"
             android:layout_height="60dp"
             android:layout_gravity="center"
-            android:gravity="center_horizontal"
+            android:gravity="center_vertical"
             android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/newDisk"
+                style="?android:attr/buttonBarButtonStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="10dp"
+                android:layout_weight=".3"
+                android:text="@string/newDisk" />
 
             <Button
                 android:id="@+id/add"
                 style="?android:attr/buttonBarButtonStyle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="20dp"
-                android:layout_weight=".5"
-                android:text="@string/add"
-                android:layout_marginEnd="20dp" />
+                android:layout_marginRight="10dp"
+                android:layout_marginLeft="10dp"
+                android:layout_weight=".3"
+                android:text="@string/add" />
 
             <Button
                 android:id="@+id/remove"
@@ -47,10 +56,9 @@
                 android:textColor="#CC0000"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="20dp"
-                android:layout_weight=".5"
-                android:text="@string/remove"
-                android:layout_marginEnd="20dp" />
+                android:layout_marginLeft="10dp"
+                android:layout_weight=".3"
+                android:text="@string/remove" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

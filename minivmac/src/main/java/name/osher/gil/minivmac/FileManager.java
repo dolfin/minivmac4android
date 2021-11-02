@@ -1,13 +1,16 @@
 package name.osher.gil.minivmac;
 
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.OpenableColumns;
 import android.util.Log;
+import android.webkit.MimeTypeMap;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -24,10 +27,19 @@ public class FileManager {
     private static final String TAG = "minivmac.FileManager";
     private final static String[] diskExtensions = {"DSK", "dsk", "img", "IMG"};
 
+    private static String DIRECTORY_ROM = "rom";
+    private static String DIRECTORY_DISKS = "disks";
+    private static String DIRECTORY_DOWNLOADS = "downloads";
+
     private static final int ZERO_BUFFER_SIZE = 2048;
 
     private static FileManager mInstance = new FileManager();
     private File mDataDir;
+    private File mCacheDir;
+    private File mRomDir;
+    private File mDisksDir;
+    private File mDownloadDir;
+    private ContentResolver mContentResolver;
 
     private FileManager() { }
 
@@ -36,21 +48,55 @@ public class FileManager {
     }
 
     public Boolean init(Context context) {
+        mContentResolver = context.getContentResolver();
         // find data directory
+        mCacheDir = context.getExternalCacheDir();
         mDataDir = context.getExternalFilesDir(null);
-        return mDataDir.isDirectory() && mDataDir.canRead();
+        mRomDir = new File(mDataDir, DIRECTORY_ROM);
+        mDisksDir = new File(mDataDir, DIRECTORY_DISKS);
+        mDownloadDir = new File(mDataDir, DIRECTORY_DOWNLOADS);
+        if (mDataDir.isDirectory() && mDataDir.canRead() &&
+                mCacheDir.isDirectory() && mCacheDir.canRead()) {
+            mRomDir.mkdirs();
+            mDisksDir.mkdirs();
+            mDownloadDir.mkdirs();
+            return true;
+        }
+        return false;
     }
 
-    public File getDataFile(String name) {
-        return new File(mDataDir, name);
+    public File getCacheFile(String name) {
+        return new File(mCacheDir, name);
+    }
+    public File getCacheDir() {
+        return mCacheDir;
     }
 
-    public File getDataDir() {
-        return mDataDir;
+    public File getRomFile(String name) {
+        return new File(mRomDir, name);
+    }
+    public File getRomDir() {
+        return mRomDir;
+    }
+    public File getDisksFile(String name) {
+        return new File(mDisksDir, name);
+    }
+    public File getDisksDir() {
+        return mDisksDir;
+    }
+    public File getDownloadFile(String name) {
+        return new File(mDownloadDir, name);
+    }
+    public File getDownloadDir() {
+        return mDownloadDir;
+    }
+
+    public Boolean isInCache(String path) {
+        return path.contains(mCacheDir.getAbsolutePath());
     }
 
     public File[] getAvailableDisks () {
-        return mDataDir.listFiles(new FileFilter() {
+        return mDisksDir.listFiles(new FileFilter() {
             public boolean accept(File pathname) {
                 if (!pathname.isFile()) return false;
                 if (pathname.isDirectory()) return false;
@@ -128,7 +174,7 @@ public class FileManager {
 
         try (OutputStream out = new FileOutputStream(dst)) {
             // Transfer bytes from in to out
-            byte[] buf = new byte[1024];
+            byte[] buf = new byte[ZERO_BUFFER_SIZE];
             int len;
             while ((len = in.read(buf)) > 0) {
                 out.write(buf, 0, len);
@@ -140,13 +186,30 @@ public class FileManager {
         file.delete();
     }
 
-    public String getFileName(Context context, Uri uri) {
-        Cursor cursor = context.getContentResolver().query(uri, null, null, null, null);
+    public String getFileName(Uri uri) {
+        Cursor cursor = mContentResolver.query(uri, null, null, null, null);
         int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
         cursor.moveToFirst();
         String name = cursor.getString(nameIndex);
         cursor.close();
         return name;
+    }
+
+    public String getMimeType(Uri uri) {
+        String mimeType = null;
+        if (ContentResolver.SCHEME_CONTENT.equals(uri.getScheme())) {
+            mimeType = mContentResolver.getType(uri);
+        } else {
+            String fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri
+                    .toString());
+            mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(
+                    fileExtension.toLowerCase());
+        }
+        if (mimeType != null) {
+            return mimeType;
+        } else {
+            return "application/octet-stream";
+        }
     }
 
     private void handleError(File disk, int error, Handler progressHandler) {

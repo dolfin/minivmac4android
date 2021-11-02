@@ -155,7 +155,7 @@ public class CreateDisk extends Activity {
 
 			String fileName = String.format("%s.dsk", name.getText().toString().replace(" ", "_"));
             int sizeInBytes = 1024 * (size.getProgress() + 400);
-			FileManager.getInstance().makeNewDisk(sizeInBytes, fileName, FileManager.getInstance().getDataDir().getAbsolutePath(), mHandler);
+			FileManager.getInstance().makeNewDisk(sizeInBytes, fileName, FileManager.getInstance().getDisksDir().getAbsolutePath(), mHandler);
         }
         
         /* sets the current state for the thread,

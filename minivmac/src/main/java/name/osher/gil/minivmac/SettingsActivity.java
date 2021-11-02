@@ -35,7 +35,6 @@ public class SettingsActivity extends PreferenceActivity {
 	public static final int RESULT_RESET = 10;
 	public static final int RESULT_INTERRUPT = 20;
 	public static final int RESULT_ABOUT = 30;
-	public static final int RESULT_DISK_MANAGER = 40;
 	
 	@Override
     public void onCreate(Bundle savedInstanceState) {
@@ -145,7 +144,7 @@ public class SettingsActivity extends PreferenceActivity {
 					return;
 				}
 
-				File dst = FileManager.getInstance().getDataFile(getString(R.string.romFileName));
+				File dst = FileManager.getInstance().getRomFile(getString(R.string.romFileName));
 				try {
 					FileManager.getInstance().copy(romFile, dst);
 				} catch (IOException ex) {
