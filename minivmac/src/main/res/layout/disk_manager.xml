@@ -27,18 +27,28 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginRight="10dp"
-                android:layout_weight=".3"
+                android:layout_weight=".25"
                 android:text="@string/newDisk" />
 
             <Button
-                android:id="@+id/add"
+                android:id="@+id/importDisk"
                 style="?android:attr/buttonBarButtonStyle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginRight="10dp"
                 android:layout_marginLeft="10dp"
-                android:layout_weight=".3"
+                android:layout_weight=".25"
                 android:text="@string/importDisk" />
+
+            <Button
+                android:id="@+id/exportDisk"
+                style="?android:attr/buttonBarButtonStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="10dp"
+                android:layout_marginLeft="10dp"
+                android:layout_weight=".25"
+                android:text="@string/exportDisk" />
 
             <Button
                 android:id="@+id/remove"
@@ -47,7 +57,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="10dp"
-                android:layout_weight=".3"
+                android:layout_weight=".25"
                 android:text="@string/remove" />
         </LinearLayout>
     </LinearLayout>

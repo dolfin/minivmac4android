@@ -31,7 +31,7 @@
 	<string name="name">Name:</string>
 	<string name="size">Size:</string>
 	<string name="create">Create</string>
-	<string name="newDisk">New Disk</string>
+	<string name="newDisk">New&#8230;</string>
 	<string name="importDisk">Import</string>
 	<string name="exportDisk">Export</string>
 	<string name="remove">Remove</string>

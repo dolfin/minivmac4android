@@ -5,6 +5,7 @@ import static android.widget.AdapterView.INVALID_POSITION;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -22,6 +23,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -42,7 +44,8 @@ public class DiskManagerActivity extends AppCompatActivity {
         setContentView(R.layout.disk_manager);
         ListView list = findViewById(R.id.disksList);
         Button newDisk = findViewById(R.id.newDisk);
-        Button add = findViewById(R.id.add);
+        Button importDisk = findViewById(R.id.importDisk);
+        Button exportDisk = findViewById(R.id.exportDisk);
         Button remove = findViewById(R.id.remove);
 
         if (getSupportActionBar() != null) {
@@ -57,7 +60,8 @@ public class DiskManagerActivity extends AppCompatActivity {
         });
 
         newDisk.setOnClickListener(v -> showNewDiskDialog());
-        add.setOnClickListener(v -> showOpenFileDialog());
+        importDisk.setOnClickListener(v -> showOpenFileDialog());
+        exportDisk.setOnClickListener(v -> showShareDialog(list.getCheckedItemPosition()));
         remove.setOnClickListener(v -> removeDiskDialog(list.getCheckedItemPosition()));
 	}
 
@@ -125,24 +129,46 @@ public class DiskManagerActivity extends AppCompatActivity {
         _openFile.launch("application/octet-stream");
     }
 
+    private void showShareDialog(int selectedDiskImage) {
+        if (selectedDiskImage != INVALID_POSITION) {
+            DiskImage di = _adapter.getItem(selectedDiskImage);
+
+            Uri uri = Uri.fromFile(di.getFile());
+            Uri exportUri = FileProvider.getUriForFile(this, String.format("%s.provider", BuildConfig.APPLICATION_ID),
+                    di.getFile(), di.getName());
+            Intent shareIntent = new Intent();
+            shareIntent.setAction(Intent.ACTION_SEND);
+            shareIntent.putExtra(Intent.EXTRA_STREAM, exportUri);
+            shareIntent.setType(FileManager.getInstance().getMimeType(uri));
+            startActivity(Intent.createChooser(shareIntent, getResources().getText(R.string.send_to)));
+        } else {
+            showNoDiskSelectedDialog();
+        }
+    }
+
+    private void showNoDiskSelectedDialog() {
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+        alert.setMessage(R.string.noDiskSelected);
+        alert.setCancelable(true);
+        alert.setNeutralButton(R.string.btn_ok, null);
+        AlertDialog d = alert.create();
+        d.show();
+    }
+
     private void removeDiskDialog(int selectedDiskImage) {
-        android.app.AlertDialog.Builder alert = new android.app.AlertDialog.Builder(this);
-
 	    if (selectedDiskImage != INVALID_POSITION) {
-            DiskImage di = (DiskImage) _adapter.getItem(selectedDiskImage);
+            DiskImage di = _adapter.getItem(selectedDiskImage);
 
+            android.app.AlertDialog.Builder alert = new android.app.AlertDialog.Builder(this);
             alert.setMessage(String.format(getString(R.string.removeDiskWarning), di.toString()));
             alert.setCancelable(true);
             alert.setPositiveButton(R.string.btn_yes, (dialog, which) -> removeDisk(di));
             alert.setNegativeButton(R.string.btn_no, null);
+            AlertDialog d = alert.create();
+            d.show();
         } else {
-            alert.setMessage(R.string.noDiskSelected);
-            alert.setCancelable(true);
-            alert.setNeutralButton(R.string.btn_ok, null);
+            showNoDiskSelectedDialog();
         }
-
-        AlertDialog d = alert.create();
-        d.show();
     }
 
     private void removeDisk(DiskImage diskImage) {
