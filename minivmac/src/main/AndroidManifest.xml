@@ -24,11 +24,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".CreateDisk" />
+        <activity android:name=".CreateDiskActivity"
+            android:label="@string/menu_create_disk"/>
         <activity android:name=".SettingsActivity"
             android:label="@string/menu_settings"
             android:parentActivityName=".MiniVMac" />
-        <activity android:name=".DiskManagerActivity" />
+        <activity android:name=".DiskManagerActivity"
+            android:label="@string/pref_disk_manager"/>
 
         <provider
             android:name="androidx.core.content.FileProvider"

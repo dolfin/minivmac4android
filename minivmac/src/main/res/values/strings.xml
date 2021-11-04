@@ -31,18 +31,24 @@
 	<string name="name">Name:</string>
 	<string name="size">Size:</string>
 	<string name="create">Create</string>
-	<string name="newDisk">New</string>
-	<string name="add">Add</string>
+	<string name="newDisk">New Disk</string>
+	<string name="importDisk">Import</string>
+	<string name="exportDisk">Export</string>
 	<string name="remove">Remove</string>
 	<string name="sizeTextStub">125.00 MiB</string>
 	<string name="creatingDisk">Creating disk. Please wait&#8230;</string>
 	<string name="send_to">Send To</string>
+	<string name="sizeInBytes">%s bytes</string>
+	<string name="sizeInKiB">%s KiB</string>
+	<string name="sizeInMiB">%s MiB</string>
+	<string name="progressInKiB"> %4.0f KiB</string>
+	<string name="progressInMiB"> %3.2f MiB</string>
 
 	<!-- Settings view -->
 	<string name="pref_emulator_title">Emulator</string>
-	<string name="pref_rom">ROM File...</string>
+	<string name="pref_rom">ROM File&#8230;</string>
 	<string name="pref_rom_summ">No ROM file was selected</string>
-	<string name="pref_disk_manager">Disks Images...</string>
+	<string name="pref_disk_manager">Disks Images&#8230;</string>
 	<string name="pref_view_title">View</string>
 	<string name="pref_scale">Scale</string>
 	<string name="pref_scale_summ">Fit target screen to host screen</string>

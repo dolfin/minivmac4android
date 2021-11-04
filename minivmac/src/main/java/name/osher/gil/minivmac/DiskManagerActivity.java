@@ -2,14 +2,13 @@ package name.osher.gil.minivmac;
 
 import static android.widget.AdapterView.INVALID_POSITION;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
@@ -19,8 +18,10 @@ import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.appcompat.widget.Toolbar;
+import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -29,9 +30,8 @@ import java.io.InputStream;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 
-public class DiskManagerActivity extends Activity {
-    private final static int ACTIVITY_SELECT_DISK = 301;
-    private final static int ACTIVITY_CREATE_DISK = 302;
+public class DiskManagerActivity extends AppCompatActivity {
+    private static final String TAG = "name.osher.gil.minivmac.DiskManagerActivity";
 
     private DisksListAdapter _adapter;
 	
@@ -40,13 +40,14 @@ public class DiskManagerActivity extends Activity {
     	super.onCreate(savedInstanceState);
     	
         setContentView(R.layout.disk_manager);
-        ListView list = (ListView) findViewById(R.id.disksList);
-        Button newDisk = (Button) findViewById(R.id.newDisk);
-        Button add = (Button) findViewById(R.id.add);
-        Button remove = (Button) findViewById(R.id.remove);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        ListView list = findViewById(R.id.disksList);
+        Button newDisk = findViewById(R.id.newDisk);
+        Button add = findViewById(R.id.add);
+        Button remove = findViewById(R.id.remove);
 
-        toolbar.setOnClickListener(v -> finish());
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
 
         list.setChoiceMode(AbsListView.CHOICE_MODE_SINGLE);
         _adapter = new DisksListAdapter(this);
@@ -55,12 +56,26 @@ public class DiskManagerActivity extends Activity {
             _adapter.setSelectedIndex(position);
         });
 
-        refreshDisksList();
-
         newDisk.setOnClickListener(v -> showNewDiskDialog());
         add.setOnClickListener(v -> showOpenFileDialog());
         remove.setOnClickListener(v -> removeDiskDialog(list.getCheckedItemPosition()));
 	}
+
+	@Override
+    protected void onResume() {
+	    super.onResume();
+        refreshDisksList();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) // Press Back Icon
+        {
+            finish();
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
 
     private void refreshDisksList() {
         // Initializing a new String Array
@@ -77,49 +92,37 @@ public class DiskManagerActivity extends Activity {
         _adapter.addAll(disks_list);
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == ACTIVITY_SELECT_DISK) {
-            if (resultCode == RESULT_OK && data != null) {
-                Uri contentUri = data.getData();
-                Log.w("DiskManagerActivity", contentUri.toString());
-
-                InputStream diskFile = null;
-                try {
-                    diskFile = this.getContentResolver().openInputStream(contentUri);
-                } catch (FileNotFoundException ex) {
-                    // Unable to open Disk file.
-                    return;
-                }
-                String diskName = FileManager.getInstance().getFileName(contentUri);
-                File dst = FileManager.getInstance().getDisksFile(diskName);
-                try {
-                    FileManager.getInstance().copy(diskFile, dst);
-                } catch (IOException ex) {
-                    // Unable to copy Disk
-                    return;
-                }
-
-                refreshDisksList();
-            }
-        } else if (requestCode == ACTIVITY_CREATE_DISK) {
-            refreshDisksList();
-        }
-    }
-
     private void showNewDiskDialog() {
-        Intent i = new Intent(DiskManagerActivity.this, CreateDisk.class);
-        startActivityForResult(i, ACTIVITY_CREATE_DISK);
+        Intent i = new Intent(DiskManagerActivity.this, CreateDiskActivity.class);
+        startActivity(i);
     }
 
-    private void showOpenFileDialog() {
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("application/octet-stream");
+    private final ActivityResultLauncher<String> _openFile = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+        Log.w("DiskManagerActivity", uri.toString());
 
-        startActivityForResult(intent, ACTIVITY_SELECT_DISK);
+        InputStream diskFile;
+        try {
+            diskFile = this.getContentResolver().openInputStream(uri);
+        } catch (FileNotFoundException ex) {
+            // Unable to open Disk file.
+            Log.e(TAG, String.format("Unable to open file: %s", uri), ex);
+            return;
+        }
+        String diskName = FileManager.getInstance().getFileName(uri);
+        File dst = FileManager.getInstance().getDisksFile(diskName);
+        try {
+            FileManager.getInstance().copy(diskFile, dst);
+        } catch (IOException ex) {
+            // Unable to copy Disk
+            Log.e(TAG, String.format("Unable to copy file: %s", uri), ex);
+            return;
+        }
+
+        refreshDisksList();
+    });
+
+	private void showOpenFileDialog() {
+        _openFile.launch("application/octet-stream");
     }
 
     private void removeDiskDialog(int selectedDiskImage) {
@@ -175,14 +178,14 @@ public class DiskManagerActivity extends Activity {
             DecimalFormat dform = new DecimalFormat("#,###.##");
 	        long rs = _size;
 	        if (rs < 1024) {
-	            return String.format("%s bytes", dform.format(rs));
+	            return String.format(getString(R.string.sizeInBytes), dform.format(rs));
             } else {
 	            rs /= 1024;
 	            if (rs < 1024) {
-	                return String.format("%s Kb", dform.format(rs));
+	                return String.format(getString(R.string.sizeInKiB), dform.format(rs));
                 } else {
                     rs /= 1024;
-                    return String.format("%s Mb", dform.format(rs));
+                    return String.format(getString(R.string.sizeInMiB), dform.format(rs));
                 }
             }
         }
@@ -208,9 +211,9 @@ public class DiskManagerActivity extends Activity {
                 convertView = LayoutInflater.from(getContext()).inflate(R.layout.simple_list_item_2_single_choice, parent, false);
             }
             // Lookup view for data population
-            TextView name = (TextView) convertView.findViewById(R.id.text1);
-            TextView size = (TextView) convertView.findViewById(R.id.text2);
-            RadioButton radioButton = (RadioButton) convertView.findViewById(R.id.radio);
+            TextView name = convertView.findViewById(R.id.text1);
+            TextView size = convertView.findViewById(R.id.text2);
+            RadioButton radioButton = convertView.findViewById(R.id.radio);
             // Populate the data into the template view using the data object
             name.setText(di.getName());
             size.setText(di.getReadableSize());

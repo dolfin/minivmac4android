@@ -3,29 +3,58 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <androidx.appcompat.widget.Toolbar
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        android:id="@+id/toolbar"
-        app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:minHeight="?attr/actionBarSize"
-        app:navigationContentDescription="@string/abc_action_bar_up_description"
-        android:background="?attr/colorPrimary"
-        app:navigationIcon="?attr/homeAsUpIndicator"
-        app:title="@string/menu_create_disk" />
     <RelativeLayout
       android:orientation="vertical"
       android:layout_width="match_parent"
       android:layout_height="match_parent">
-        <SeekBar android:id="@+id/size" android:layout_height="wrap_content" android:layout_width="match_parent" android:layout_below="@+id/name" android:layout_alignLeft="@+id/name" android:layout_marginTop="23dp" android:layout_alignRight="@+id/name"></SeekBar>
-        <TextView android:id="@+id/sizeText" android:text="@string/sizeTextStub" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignBottom="@+id/size" android:layout_alignLeft="@+id/create"></TextView>
-        <TextView android:id="@+id/sizeLabel" android:text="@string/size" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignTop="@+id/size" android:layout_alignLeft="@+id/nameLabel"></TextView>
-        <EditText android:id="@+id/name" android:inputType="text" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignTop="@+id/nameLabel" android:layout_toRightOf="@+id/nameLabel" android:layout_toLeftOf="@+id/create" android:layout_marginLeft="16dp" android:layout_marginRight="16dp">
-            <requestFocus></requestFocus>
+
+        <SeekBar
+            android:id="@+id/size"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_below="@+id/name"
+            android:layout_alignLeft="@+id/name"
+            android:layout_marginTop="23dp"
+            android:layout_alignRight="@+id/name" />
+
+        <TextView
+            android:id="@+id/sizeText"
+            android:text="@string/sizeTextStub"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/size"
+            android:layout_alignLeft="@+id/create" />
+
+        <TextView
+            android:id="@+id/sizeLabel"
+            android:text="@string/size"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/size"
+            android:layout_alignLeft="@+id/nameLabel" />
+        <EditText android:id="@+id/name" android:inputType="text" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignTop="@+id/nameLabel" android:layout_toRightOf="@+id/nameLabel" android:layout_toLeftOf="@+id/create" android:layout_marginLeft="16dp" android:layout_marginRight="16dp"
+            android:importantForAutofill="no">
+
+            <requestFocus />
         </EditText>
-        <TextView android:id="@+id/nameLabel" android:text="@string/name" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentTop="true" android:layout_alignParentLeft="true" android:layout_marginLeft="16dp" android:layout_marginTop="18dp"></TextView>
-        <Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/create" android:text="@string/create" android:layout_alignTop="@+id/name" android:layout_alignParentRight="true" android:layout_marginRight="20dp"></Button>
+
+        <TextView
+            android:id="@+id/nameLabel"
+            android:text="@string/name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:layout_marginLeft="16dp"
+            android:layout_marginTop="18dp" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/create"
+            android:text="@string/create"
+            android:layout_alignTop="@+id/name"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="20dp" />
     </RelativeLayout>
 </LinearLayout>

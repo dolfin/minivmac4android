@@ -1,6 +1,5 @@
 package name.osher.gil.minivmac;
 
-import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -8,9 +7,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import androidx.annotation.NonNull;
-import androidx.appcompat.widget.Toolbar;
-import android.view.View;
-import android.view.View.OnClickListener;
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.SeekBar;
@@ -20,7 +19,7 @@ import android.widget.Toast;
 
 import java.lang.ref.WeakReference;
 
-public class CreateDisk extends Activity {
+public class CreateDiskActivity extends AppCompatActivity {
 	private static final int PROGRESS_DIALOG = 0;
     private ProgressThread progressThread;
     private ProgressDialog progressDialog;
@@ -35,10 +34,14 @@ public class CreateDisk extends Activity {
     	super.onCreate(savedInstanceState);
     	
         setContentView(R.layout.create_disk);
-        sizeText = (TextView)findViewById(R.id.sizeText);
-        name = (EditText)findViewById(R.id.name);
-        size = (SeekBar)findViewById(R.id.size);
-        create = (Button)findViewById(R.id.create);
+        sizeText = findViewById(R.id.sizeText);
+        name = findViewById(R.id.name);
+        size = findViewById(R.id.size);
+        create = findViewById(R.id.create);
+
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
         
         size.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 
@@ -57,36 +60,23 @@ public class CreateDisk extends Activity {
 				String s;
 				double size = progress + 400;
 				if (size < 2048)
-					s = String.format(" %4.0f KiB", size);
+					s = String.format(getString(R.string.progressInKiB), size);
 				else
-					s = String.format(" %3.2f MiB", size / 1024.0);
+					s = String.format(getString(R.string.progressInMiB), size / 1024.0);
 				sizeText.setText(s);
 			}
 		});
         
-        create.setOnClickListener(new OnClickListener() {
-
-			public void onClick(View v) {
-				showDialog(PROGRESS_DIALOG);
-			}
-		});
+        create.setOnClickListener(v -> showDialog(PROGRESS_DIALOG));
         
         size.setMax(128000 - 400);
         size.setProgress(20480 - 400);
-
-		Toolbar bar = (Toolbar)findViewById(R.id.toolbar);
-		bar.setNavigationOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				finish();
-			}
-		});
 	}
    
     protected Dialog onCreateDialog(int id) {
         switch(id) {
         case PROGRESS_DIALOG:
-            progressDialog = new ProgressDialog(CreateDisk.this);
+            progressDialog = new ProgressDialog(CreateDiskActivity.this);
             progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
             progressDialog.setMessage(getApplicationContext().getString(R.string.creatingDisk));
             return progressDialog;
@@ -105,16 +95,26 @@ public class CreateDisk extends Activity {
         }
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) // Press Back Icon
+        {
+            finish();
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
     // Define the Handler that receives messages from the thread and update the progress
 	private static class ProgressHandler extends Handler {
-        private final WeakReference<CreateDisk> mActivityRef;
+        private final WeakReference<CreateDiskActivity> mActivityRef;
 
-        ProgressHandler(CreateDisk activity) {
+        ProgressHandler(CreateDiskActivity activity) {
             mActivityRef = new WeakReference<>(activity);
         }
 
         public void handleMessage(Message msg) {
-            final CreateDisk activity = mActivityRef.get();
+            final CreateDiskActivity activity = mActivityRef.get();
 
             int total = msg.arg1;
             if (activity != null) {

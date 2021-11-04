@@ -3,16 +3,6 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <androidx.appcompat.widget.Toolbar xmlns:app="http://schemas.android.com/apk/res-auto"
-        android:id="@+id/toolbar"
-        app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:minHeight="?attr/actionBarSize"
-        app:navigationContentDescription="@string/abc_action_bar_up_description"
-        android:background="?attr/colorPrimary"
-        app:navigationIcon="?attr/homeAsUpIndicator"
-        app:title="@string/pref_disk_manager" />
     <LinearLayout
       android:orientation="vertical"
       android:layout_width="match_parent"
@@ -48,7 +38,7 @@
                 android:layout_marginRight="10dp"
                 android:layout_marginLeft="10dp"
                 android:layout_weight=".3"
-                android:text="@string/add" />
+                android:text="@string/importDisk" />
 
             <Button
                 android:id="@+id/remove"
