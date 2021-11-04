@@ -63,6 +63,7 @@
 	<string name="prefs_start">How to start&#8230;</string>
 	<string name="prefs_home">Visit our website&#8230;</string>
 	<string name="prefs_about">About</string>
+	<string name="rom_load_error">Unable to load this ROM file. Please choose a valid ROM file.</string>
 
 	<!-- URLs -->
 	<string name="url_homepage">http://miniv.gil.ninja/</string>
