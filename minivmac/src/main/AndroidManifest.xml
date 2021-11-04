@@ -16,6 +16,7 @@
             android:name=".MiniVMac"
             android:configChanges="orientation|keyboardHidden|screenSize|screenLayout"
             android:exported="true"
+            android:launchMode="singleTop"
             android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -24,7 +25,9 @@
             </intent-filter>
         </activity>
         <activity android:name=".CreateDisk" />
-        <activity android:name=".SettingsActivity" />
+        <activity android:name=".SettingsActivity"
+            android:label="@string/menu_settings"
+            android:parentActivityName=".MiniVMac" />
         <activity android:name=".DiskManagerActivity" />
 
         <provider

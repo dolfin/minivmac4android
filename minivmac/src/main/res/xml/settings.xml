@@ -1,69 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
 	<PreferenceCategory
-		android:title="@string/pref_emulator_title"
-		android:key="pref_key_emulator_settings">
+		app:title="@string/pref_emulator_title"
+		app:key="pref_key_emulator_settings">
 	<Preference
-		android:key="pref_rom"
-		android:title="@string/pref_rom"
-		android:summary="@string/pref_rom_summ"
-		android:icon="@drawable/ic_chip" />
-		<Preference
-			android:key="pref_disk_manager"
-			android:title="@string/pref_disk_manager"
-			android:icon="@drawable/ic_action_floppy" />
+		app:key="pref_rom"
+		app:title="@string/pref_rom"
+		app:summary="@string/pref_rom_summ"
+		app:icon="@drawable/ic_chip" />
+	<Preference
+		app:key="pref_disk_manager"
+		app:title="@string/pref_disk_manager"
+		app:icon="@drawable/ic_action_floppy" />
 	</PreferenceCategory>
 	<PreferenceCategory
-        android:title="@string/pref_view_title"
-        android:key="pref_key_view_settings">
-	    <CheckBoxPreference
-	        android:key="pref_scale"
-	        android:title="@string/pref_scale"
-	        android:summary="@string/pref_scale_summ"
-	        android:icon="@drawable/ic_scale"
-	        android:defaultValue="true" />
-	    <CheckBoxPreference
-	        android:key="pref_scroll"
-	        android:title="@string/pref_scroll"
-	        android:summary="@string/pref_scroll_summ"
-			android:icon="@drawable/ic_scroll"
-	        android:defaultValue="false" />
+		app:title="@string/pref_view_title"
+		app:key="pref_key_view_settings">
+	    <SwitchPreferenceCompat
+			app:key="pref_scale"
+			app:title="@string/pref_scale"
+			app:summary="@string/pref_scale_summ"
+			app:icon="@drawable/ic_scale"
+			app:defaultValue="true" />
+	    <SwitchPreferenceCompat
+			app:key="pref_scroll"
+			app:title="@string/pref_scroll"
+			app:summary="@string/pref_scroll_summ"
+			app:icon="@drawable/ic_scroll"
+			app:defaultValue="false" />
     </PreferenceCategory>
     <PreferenceCategory
-        android:title="@string/pref_control_title"
-        android:key="pref_key_control_settings">
+		app:title="@string/pref_control_title"
+		app:key="pref_key_control_settings">
 		<ListPreference
-			android:key="pref_speed"
-			android:title="@string/prefs_speed"
-			android:icon="@drawable/speedometer"
-			android:entries="@array/speed_entries"
-			android:entryValues="@array/speed_values">
+			app:key="pref_speed"
+			app:title="@string/prefs_speed"
+			app:icon="@drawable/speedometer"
+			app:entries="@array/speed_entries"
+			app:entryValues="@array/speed_values">
 		</ListPreference>
 	    <Preference
-			android:key="pref_reset"
-			android:title="@string/prefs_reset"
-	    	android:icon="@drawable/ic_reset" />
+			app:key="pref_reset"
+			app:title="@string/prefs_reset"
+			app:icon="@drawable/ic_reset" />
 	    <Preference
-	        android:key="pref_interrupt"
-	        android:title="@string/prefs_interrupt"
-	        android:icon="@drawable/ic_interrupt" />
+			app:key="pref_interrupt"
+			app:title="@string/prefs_interrupt"
+			app:icon="@drawable/ic_interrupt" />
 	</PreferenceCategory>
     <PreferenceCategory
-        android:title="@string/pref_learn_title"
-        android:key="pref_key_learn_settings">
-	    <Preference android:title="@string/prefs_start"
-			android:icon="@drawable/ic_help_circle">
-	    	<intent android:action="android.intent.action.VIEW"
-	            android:data="@string/url_start" />
+		app:title="@string/pref_learn_title"
+		app:key="pref_key_learn_settings">
+	    <Preference app:title="@string/prefs_start"
+			app:key="pref_website_start"
+			app:icon="@drawable/ic_help_circle">
 		</Preference>
-		<Preference android:title="@string/prefs_home"
-			android:icon="@drawable/ic_web">
-	    	<intent android:action="android.intent.action.VIEW"
-	            android:data="@string/url_homepage" />
+		<Preference app:title="@string/prefs_home"
+			app:key="pref_website"
+			app:icon="@drawable/ic_web">
 		</Preference>
 	    <Preference
-	        android:key="pref_about"
-	        android:title="@string/prefs_about"
-	        android:icon="@drawable/icon" />
+			app:key="pref_about"
+			app:title="@string/prefs_about"
+			app:icon="@drawable/icon" />
 	</PreferenceCategory>
 </PreferenceScreen>

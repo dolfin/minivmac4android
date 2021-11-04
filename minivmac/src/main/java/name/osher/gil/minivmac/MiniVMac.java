@@ -21,6 +21,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import com.google.android.material.snackbar.Snackbar;
 import androidx.core.app.ActivityCompat;
@@ -29,6 +32,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.view.GestureDetectorCompat;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -41,10 +45,9 @@ import android.view.WindowManager;
 
 public class MiniVMac extends AppCompatActivity
 		implements ActivityCompat.OnRequestPermissionsResultCallback {
+	private static final String TAG = "name.osher.gil.minivmac.MiniVMac";
 
 	private final static int[] keycodeTranslationTable = {-1, -1, -1, -1, -1, -1, -1, 0x1D, 0x12, 0x13, 0x14, 0x15, 0x17, 0x16, 0x1A, 0x1C, 0x19, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0x00, 0x0B, 0x08, 0x02, 0x0E, 0x03, 0x05, 0x04, 0x22, 0x26, 0x28, 0x25, 0x2E, 0x2D, 0x1F, 0x23, 0x0C, 0x0F, 0x01, 0x11, 0x20, 0x09, 0x0D, 0x07, 0x10, 0x06, 0x2B, 0x2F, 0x37, 0x37, 0x38, 0x38, 0x30, 0x31, 0x3A, -1, -1, 0x24, 0x33, 0x32, 0x1B, 0x18, 0x21, 0x1E, 0x2A, 0x29, 0x27, 0x2C, 0x37, 0x3A, -1, -1, 0x45, -1, -1, 0x3A, -1, -1, -1, -1, -1, -1, -1};
-	private final static int ACTIVITY_SETTINGS = 201;
-	private final static int ACTIVITY_IMPORT_FILE = 202;
 	private final static int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
 	private final static int TRACKBALL_SENSITIVITY = 8;
 	private final static int KEYCODE_MAC_SHIFT = 56;
@@ -358,8 +361,8 @@ public class MiniVMac extends AppCompatActivity
 
 	private void updateByPrefs() {
 		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-		Boolean scalePref = sharedPref.getBoolean(SettingsActivity.KEY_PREF_SCALE, true);
-		Boolean scrollPref = sharedPref.getBoolean(SettingsActivity.KEY_PREF_SCROLL, false);
+		Boolean scalePref = sharedPref.getBoolean(SettingsFragment.KEY_PREF_SCALE, true);
+		Boolean scrollPref = sharedPref.getBoolean(SettingsFragment.KEY_PREF_SCROLL, false);
 		mScreenView.setScaled(scalePref);
 		mScreenView.setScroll(scrollPref);
 	}
@@ -564,21 +567,66 @@ public class MiniVMac extends AppCompatActivity
 		dialog.show();
 	}
 
+	private final ActivityResultLauncher<String> _importFile = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+		onActivity = false;
+
+		InputStream diskFile;
+		try {
+			diskFile = this.getContentResolver().openInputStream(uri);
+		} catch (FileNotFoundException ex) {
+			// Unable to open Disk file.
+			Log.e(TAG, String.format("Unable to open file: %s", uri), ex);
+			return;
+		}
+		String diskName = FileManager.getInstance().getFileName(uri);
+		File dst = FileManager.getInstance().getCacheFile(diskName);
+		try {
+			FileManager.getInstance().copy(diskFile, dst);
+		} catch (IOException ex) {
+			// Unable to copy Disk
+			Log.e(TAG, String.format("Unable to copy file: %s", uri), ex);
+			return;
+		}
+		dst.setWritable(false);
+		mCore.insertDisk(dst);
+	});
+
 	public void showSelectDisk() {
 		if (FileManager.getInstance().getDisksDir() == null) return;
 
 		onActivity = true;
-		Intent i = new Intent(Intent.ACTION_GET_CONTENT);
-		i.addCategory(Intent.CATEGORY_OPENABLE);
-		i.setType("*/*");
-
-		startActivityForResult(i, ACTIVITY_IMPORT_FILE);
+		_importFile.launch("*/*");
 	}
+
+	private final ActivityResultLauncher<Intent> _settings = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+		int resultCode = result.getResultCode();
+
+		onActivity = false;
+
+		if (!mEmulatorStarted) {
+			initEmulator();
+			return;
+		}
+
+		switch (resultCode) {
+			case SettingsFragment.RESULT_RESET:
+				reset();
+				break;
+			case SettingsFragment.RESULT_INTERRUPT:
+				interrupt();
+				break;
+			case SettingsFragment.RESULT_ABOUT:
+				showAbout();
+				break;
+		}
+		invalidateOptionsMenu();
+		updateByPrefs();
+	});
 	
 	public void showSettings() {
 		onActivity = true;
 		Intent i = new Intent(MiniVMac.this, SettingsActivity.class);
-		startActivityForResult(i, ACTIVITY_SETTINGS);
+		_settings.launch(i);
 	}
 	
 	public void toggleKeyboard() {
@@ -598,60 +646,6 @@ public class MiniVMac extends AppCompatActivity
 	
 	public void interrupt() {
 		mCore.wantMacInterrupt();
-	}
-
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data)
-	{
-		super.onActivityResult(requestCode, resultCode, data);
-		
-		onActivity = false;
-		
-		if (requestCode == ACTIVITY_IMPORT_FILE && resultCode == RESULT_OK)
-		{
-			if (data != null) {
-				Uri contentUri = data.getData();
-
-				InputStream diskFile = null;
-				try {
-					diskFile = this.getContentResolver().openInputStream(contentUri);
-				} catch (FileNotFoundException ex) {
-					// Unable to open Disk file.
-					return;
-				}
-				String diskName = FileManager.getInstance().getFileName(contentUri);
-				File dst = FileManager.getInstance().getCacheFile(diskName);
-				try {
-					FileManager.getInstance().copy(diskFile, dst);
-				} catch (IOException ex) {
-					// Unable to copy Disk
-					return;
-				}
-				dst.setWritable(false);
-				mCore.insertDisk(dst);
-			}
-		}
-		else if (requestCode == ACTIVITY_SETTINGS)
-		{
-			if (!mEmulatorStarted) {
-				initEmulator();
-				return;
-			}
-
-			switch (resultCode) {
-				case SettingsActivity.RESULT_RESET:
-					reset();
-					break;
-				case SettingsActivity.RESULT_INTERRUPT:
-					interrupt();
-					break;
-				case SettingsActivity.RESULT_ABOUT:
-					showAbout();
-					break;
-			}
-			invalidateOptionsMenu();
-			updateByPrefs();
-		}
 	}
 
 	class SingleTapGestureListener extends GestureDetector.SimpleOnGestureListener {

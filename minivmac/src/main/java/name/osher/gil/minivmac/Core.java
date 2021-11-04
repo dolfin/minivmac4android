@@ -24,7 +24,9 @@ public class Core {
 	private OnInitScreenListener mOnInitScreenListener;
 	private OnUpdateScreenListener mOnUpdateScreenListener;
 	private OnDiskEventListener mOnDiskEventListener;
-	
+
+	private static Boolean mIsInitialized = false;
+
 	public static void nativeCrashed()
 	{
 		// TODO: Add Error handeling here.
@@ -60,8 +62,13 @@ public class Core {
 	private native static void setWantMacInterrupt();
 	private native static void setRequestMacOff();
 
+	public static Boolean isInitialized() {
+		return mIsInitialized;
+	}
+
 	public Boolean initEmulation(Core core, ByteBuffer rom) {
 		System.loadLibrary(mContext.getString(R.string.moduleName));
+		mIsInitialized = true;
 		return init(core, rom);
 	}
 
