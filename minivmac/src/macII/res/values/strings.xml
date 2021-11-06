@@ -4,4 +4,5 @@
     <string name="romFileName">MacII.ROM</string>
     <string name="aboutTitle">A Macintosh II Emulator for Android based on Mini vMac</string>
     <string name="moduleName">mnvmcoreii</string>
+    <string name="model">Macintosh II</string>
 </resources>

@@ -102,24 +102,28 @@ public class DiskManagerActivity extends AppCompatActivity {
     }
 
     private final ActivityResultLauncher<String> _openFile = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
-        Log.w("DiskManagerActivity", uri.toString());
+        if (uri != null) {
+            Log.w("DiskManagerActivity", uri.toString());
 
-        InputStream diskFile;
-        try {
-            diskFile = this.getContentResolver().openInputStream(uri);
-        } catch (FileNotFoundException ex) {
-            // Unable to open Disk file.
-            Log.e(TAG, String.format("Unable to open file: %s", uri), ex);
-            return;
-        }
-        String diskName = FileManager.getInstance().getFileName(uri);
-        File dst = FileManager.getInstance().getDisksFile(diskName);
-        try {
-            FileManager.getInstance().copy(diskFile, dst);
-        } catch (IOException ex) {
-            // Unable to copy Disk
-            Log.e(TAG, String.format("Unable to copy file: %s", uri), ex);
-            return;
+            InputStream diskFile;
+            try {
+                diskFile = this.getContentResolver().openInputStream(uri);
+            } catch (FileNotFoundException ex) {
+                // Unable to open Disk file.
+                Log.e(TAG, String.format("Unable to open file: %s", uri), ex);
+                return;
+            }
+            String diskName = FileManager.getInstance().getFileName(uri);
+            File dst = FileManager.getInstance().getDisksFile(diskName);
+            try {
+                FileManager.getInstance().copy(diskFile, dst);
+            } catch (IOException ex) {
+                // Unable to copy Disk
+                Log.e(TAG, String.format("Unable to copy file: %s", uri), ex);
+                return;
+            }
+        } else {
+            Log.i(TAG, String.format("No file was selected."));
         }
 
         refreshDisksList();

@@ -20,6 +20,7 @@ public class SettingsActivity extends AppCompatActivity {
         if (item.getItemId() == android.R.id.home) // Press Back Icon
         {
             finish();
+            return true;
         }
 
         return super.onOptionsItemSelected(item);

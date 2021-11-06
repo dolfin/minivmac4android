@@ -3,17 +3,23 @@ package name.osher.gil.minivmac;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Toast;
 
 public class SettingsFragment extends PreferenceFragmentCompat {
@@ -40,17 +46,21 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 			new ActivityResultCallback<Uri>() {
 				@Override
 				public void onActivityResult(Uri uri) {
-					Log.i(TAG, String.format("Selected ROM file: %s", uri.toString()));
-					Preference pref_rom = findPreference(KEY_PREF_ROM);
+					if (uri != null) {
+						Log.i(TAG, String.format("Selected ROM file: %s", uri.toString()));
+						Preference pref_rom = findPreference(KEY_PREF_ROM);
 
-					RomManager romManager = new RomManager();
-					if (romManager.loadRom(getContext(), uri)) {
-						pref_rom.setSummary(romManager.getRomName());
-						SharedPreferences.Editor edit = _preferences.edit();
-						edit.putString(KEY_PREF_ROM, romManager.getRomName());
-						edit.apply();
+						RomManager romManager = new RomManager();
+						if (romManager.loadRom(getContext(), uri)) {
+							pref_rom.setSummary(romManager.getRomName());
+							SharedPreferences.Editor edit = _preferences.edit();
+							edit.putString(KEY_PREF_ROM, romManager.getRomName());
+							edit.apply();
+						} else {
+							Toast.makeText(getContext(), R.string.rom_load_error, Toast.LENGTH_LONG).show();
+						}
 					} else {
-						Toast.makeText(getContext(), R.string.rom_load_error, Toast.LENGTH_LONG).show();
+						Log.i(TAG, String.format("No file was selected."));
 					}
 				}
 			});

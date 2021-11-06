@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#7E8D98"
+    android:gravity="center">
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical">
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/logo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="10pt"
+            app:srcCompat="@drawable/ic_logo" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/welcome_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="10pt"
+            android:text="@string/welcome_title"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="#212121"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/welcome_desc"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="10pt"
+            android:autoLink="all"
+            android:text="@string/welcome_desc"
+            android:textColor="#212121" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/browse"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="10pt"
+            android:text="@string/welcome_browse" />
+    </androidx.appcompat.widget.LinearLayoutCompat>
+</androidx.core.widget.NestedScrollView>
