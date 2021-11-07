@@ -5,7 +5,6 @@ import static android.widget.AdapterView.INVALID_POSITION;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -23,7 +22,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.FileProvider;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -33,7 +31,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 public class DiskManagerActivity extends AppCompatActivity {
-    private static final String TAG = "name.osher.gil.minivmac.DiskManagerActivity";
+    private static final String TAG = "minivmac.DiskManagerAct";
 
     private DisksListAdapter _adapter;
 	
@@ -55,9 +53,7 @@ public class DiskManagerActivity extends AppCompatActivity {
         list.setChoiceMode(AbsListView.CHOICE_MODE_SINGLE);
         _adapter = new DisksListAdapter(this);
         list.setAdapter(_adapter);
-        list.setOnItemClickListener((parent, view, position, id) -> {
-            _adapter.setSelectedIndex(position);
-        });
+        list.setOnItemClickListener((parent, view, position, id) -> _adapter.setSelectedIndex(position));
 
         newDisk.setOnClickListener(v -> showNewDiskDialog());
         importDisk.setOnClickListener(v -> showOpenFileDialog());
@@ -123,7 +119,7 @@ public class DiskManagerActivity extends AppCompatActivity {
                 return;
             }
         } else {
-            Log.i(TAG, String.format("No file was selected."));
+            Log.i(TAG, "No file was selected.");
         }
 
         refreshDisksList();
@@ -136,15 +132,10 @@ public class DiskManagerActivity extends AppCompatActivity {
     private void showShareDialog(int selectedDiskImage) {
         if (selectedDiskImage != INVALID_POSITION) {
             DiskImage di = _adapter.getItem(selectedDiskImage);
+            File file = di.getFile();
+            String name = di.getName();
 
-            Uri uri = Uri.fromFile(di.getFile());
-            Uri exportUri = FileProvider.getUriForFile(this, String.format("%s.provider", BuildConfig.APPLICATION_ID),
-                    di.getFile(), di.getName());
-            Intent shareIntent = new Intent();
-            shareIntent.setAction(Intent.ACTION_SEND);
-            shareIntent.putExtra(Intent.EXTRA_STREAM, exportUri);
-            shareIntent.setType(FileManager.getInstance().getMimeType(uri));
-            startActivity(Intent.createChooser(shareIntent, getResources().getText(R.string.send_to)));
+            Utils.showShareDialog(this, file, name);
         } else {
             showNoDiskSelectedDialog();
         }

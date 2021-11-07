@@ -14,7 +14,7 @@ import android.view.MotionEvent;
 
 public class MiniVMac extends AppCompatActivity
 		implements ActivityCompat.OnRequestPermissionsResultCallback {
-	private static final String TAG = "name.osher.gil.minivmac.MiniVMac";
+	private static final String TAG = "minivmac.MiniVMac";
 
 	private Fragment _currentFragment;
 	
@@ -48,7 +48,7 @@ public class MiniVMac extends AppCompatActivity
 	}
 
 	public void showEmulator() {
-		_currentFragment = new EmulatorFragment();;
+		_currentFragment = new EmulatorFragment();
 		getSupportFragmentManager()
 				.beginTransaction()
 				.replace(android.R.id.content, _currentFragment)

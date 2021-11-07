@@ -3,27 +3,21 @@ package name.osher.gil.minivmac;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Toast;
 
 public class SettingsFragment extends PreferenceFragmentCompat {
-	private static final String TAG = "name.osher.gil.minivmac.SettingsFragment";
+	private static final String TAG = "minivmac.SettingsFrag";
 
 	public static final String KEY_PREF_ROM = "pref_rom";
 	public static final String KEY_PREF_DISK_MANAGER = "pref_disk_manager";
@@ -51,7 +45,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 						Preference pref_rom = findPreference(KEY_PREF_ROM);
 
 						RomManager romManager = new RomManager();
-						if (romManager.loadRom(getContext(), uri)) {
+						if (romManager.loadRom(requireContext(), uri)) {
 							pref_rom.setSummary(romManager.getRomName());
 							SharedPreferences.Editor edit = _preferences.edit();
 							edit.putString(KEY_PREF_ROM, romManager.getRomName());
@@ -60,7 +54,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 							Toast.makeText(getContext(), R.string.rom_load_error, Toast.LENGTH_LONG).show();
 						}
 					} else {
-						Log.i(TAG, String.format("No file was selected."));
+						Log.i(TAG, "No file was selected.");
 					}
 				}
 			});
@@ -103,24 +97,24 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 
         Preference pref_about = findPreference( KEY_PREF_ABOUT );
         pref_about.setOnPreferenceClickListener(preference -> {
-			getActivity().setResult(RESULT_ABOUT);
-			getActivity().finish();
+			requireActivity().setResult(RESULT_ABOUT);
+			requireActivity().finish();
 			return true;
 		});
 
 		Preference pref_reset = findPreference( KEY_PREF_RESET );
 		pref_reset.setEnabled(BuildConfig.FLAVOR.equals("macPlus") && Core.isInitialized());
 		pref_reset.setOnPreferenceClickListener(preference -> {
-			getActivity().setResult(RESULT_RESET);
-			getActivity().finish();
+			requireActivity().setResult(RESULT_RESET);
+			requireActivity().finish();
 			return true;
 		});
 
 		Preference pref_interrupt = findPreference( KEY_PREF_INTERRUPT );
 		pref_interrupt.setEnabled(BuildConfig.FLAVOR.equals("macPlus") && Core.isInitialized());
 		pref_interrupt.setOnPreferenceClickListener(preference -> {
-			getActivity().setResult(RESULT_INTERRUPT);
-			getActivity().finish();
+			requireActivity().setResult(RESULT_INTERRUPT);
+			requireActivity().finish();
 			return true;
 		});
 

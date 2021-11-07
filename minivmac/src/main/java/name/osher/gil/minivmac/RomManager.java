@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class RomManager {
-    private static final String TAG = "name.osher.gil.minivmac.RomManager";
+    private static final String TAG = "minivmac.RomManager";
 
     private static final int ROM_SIZE_MAC_PLUS = 0x20000;
     private static final int ROM_SIZE_MAC_II   = 0x40000;

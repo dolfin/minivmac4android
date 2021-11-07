@@ -1,6 +1,5 @@
 package name.osher.gil.minivmac;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -111,18 +110,16 @@ public class ScreenView extends View {
 		return super.onTouchEvent(event);
 	}
 
-    @TargetApi(12)
     public boolean onGenericMotionEvent (MotionEvent event) {
         if (mListener != null &&
 				event.getSource() == InputDevice.SOURCE_MOUSE) {
             int[] macCoords;
             macCoords = translateMouseCoords((int)event.getX(), (int)event.getY());
 
-            switch (event.getAction()) {
-                case MotionEvent.ACTION_HOVER_MOVE:
-                    mListener.onMouseMove(macCoords[0], macCoords[1]);
-                    return true;
-            }
+			if (event.getAction() == MotionEvent.ACTION_HOVER_MOVE) {
+				mListener.onMouseMove(macCoords[0], macCoords[1]);
+				return true;
+			}
         }
 
         return super.onGenericMotionEvent(event);

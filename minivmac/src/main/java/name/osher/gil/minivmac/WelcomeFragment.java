@@ -19,7 +19,7 @@ import androidx.fragment.app.Fragment;
 
 
 public class WelcomeFragment extends Fragment {
-    private static final String TAG = "name.osher.gil.minivmac.WelcomeFragment";
+    private static final String TAG = "minivmac.WelcomeFrag";
 
     ActivityResultLauncher<String> _getRom = registerForActivityResult(new ActivityResultContracts.GetContent(),
             uri -> {
@@ -27,17 +27,17 @@ public class WelcomeFragment extends Fragment {
                     Log.i(TAG, String.format("Selected ROM file: %s", uri.toString()));
 
                     RomManager romManager = new RomManager();
-                    if (romManager.loadRom(getContext(), uri)) {
+                    if (romManager.loadRom(requireContext(), uri)) {
                         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
                         SharedPreferences.Editor edit = sharedPref.edit();
                         edit.putString(SettingsFragment.KEY_PREF_ROM, romManager.getRomName());
                         edit.apply();
-                        ((MiniVMac)getActivity()).showEmulator();
+                        ((MiniVMac)requireActivity()).showEmulator();
                     } else {
                         Toast.makeText(getContext(), R.string.rom_load_error, Toast.LENGTH_LONG).show();
                     }
                 } else {
-                    Log.i(TAG, String.format("No file was selected."));
+                    Log.i(TAG, "No file was selected.");
                 }
             });
 
@@ -51,9 +51,7 @@ public class WelcomeFragment extends Fragment {
         welcome_desc.setText(String.format(getString(R.string.welcome_desc), getString(R.string.model)));
 
         AppCompatButton browse = root.findViewById(R.id.browse);
-        browse.setOnClickListener(v -> {
-            _getRom.launch("application/octet-stream");
-        });
+        browse.setOnClickListener(v -> _getRom.launch("application/octet-stream"));
 
         return root;
     }

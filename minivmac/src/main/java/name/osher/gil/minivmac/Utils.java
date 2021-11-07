@@ -3,10 +3,19 @@ package name.osher.gil.minivmac;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.net.Uri;
 import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
 import android.text.util.Linkify;
 import android.widget.TextView;
+
+import androidx.core.content.FileProvider;
+
+import java.io.File;
+import java.util.List;
 
 /**
  * Created by dolfin on 16/12/2015.
@@ -24,11 +33,7 @@ public class Utils {
         alert.setMessage(s);
         alert.setCancelable(false);
         if (end) {
-            alert.setNegativeButton(R.string.btn_quit, new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface di, int i) {
-                    System.exit(0);
-                }
-            });
+            alert.setNegativeButton(R.string.btn_quit, (di, i) -> System.exit(0));
         } else {
             alert.setNeutralButton(R.string.btn_ok, listener);
         }
@@ -45,15 +50,29 @@ public class Utils {
         AlertDialog.Builder alert = new AlertDialog.Builder(context);
         alert.setTitle(title);
         alert.setMessage(msg);
-        alert.setNegativeButton(R.string.btn_quit, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface di, int i) {
-                System.exit(0);
-            }
-        });
+        alert.setNegativeButton(R.string.btn_quit, (di, i) -> System.exit(0));
         if (!end) {
             alert.setPositiveButton(R.string.btn_continue, contListener);
         }
 
         alert.show();
+    }
+
+    public static void showShareDialog(Context context, File file, String name) {
+        Uri uri = Uri.fromFile(file);
+        Uri exportUri = FileProvider.getUriForFile(context, String.format("%s.provider", BuildConfig.APPLICATION_ID),
+                file, name);
+        Intent shareIntent = new Intent();
+        shareIntent.setAction(Intent.ACTION_SEND);
+        shareIntent.putExtra(Intent.EXTRA_STREAM, exportUri);
+        shareIntent.setType(FileManager.getInstance().getMimeType(uri));
+
+        Intent chooser = Intent.createChooser(shareIntent, context.getResources().getText(R.string.send_to));
+        List<ResolveInfo> resInfoList = context.getPackageManager().queryIntentActivities(chooser, PackageManager.MATCH_DEFAULT_ONLY);
+        for (ResolveInfo resolveInfo : resInfoList) {
+            String packageName = resolveInfo.activityInfo.packageName;
+            context.grantUriPermission(packageName, exportUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        }
+        context.startActivity(chooser);
     }
 }

@@ -5,15 +5,13 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
-import android.os.Handler;
 import android.util.Log;
 
 public class Core {
-	private static final String TAG = "name.osher.gil.minivmac.Core";
+	private static final String TAG = "minivmac.Core";
 	
 	private int numInsertedDisks = 0;
 	private String[] diskPath;
@@ -165,7 +163,7 @@ public class Core {
 
 	public boolean MySound_Init() {
         try {
-		    mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, SOUND_SAMPLERATE, AudioFormat.CHANNEL_CONFIGURATION_MONO, AudioFormat.ENCODING_PCM_8BIT, kAllBuffLen, AudioTrack.MODE_STREAM);
+		    mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, SOUND_SAMPLERATE, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_8BIT, kAllBuffLen, AudioTrack.MODE_STREAM);
 
 	    	mAudioTrack.pause();
 	    	return true;
@@ -214,9 +212,9 @@ public class Core {
 	public int sonyTransfer(boolean isWrite, ByteBuffer buf, int driveNum, int start, int length) {
 		if (diskFile[driveNum] == null) return -1;
 		try {
+			byte[] bytes = new byte[length];
 			if (isWrite)
 			{
-				byte[] bytes = new byte[length];
 				buf.rewind();
 				buf.get(bytes);
 				diskFile[driveNum].seek(start);
@@ -225,7 +223,6 @@ public class Core {
 			}
 			else
 			{
-				byte[] bytes = new byte[length];
 				diskFile[driveNum].seek(start);
 				int actualLength = diskFile[driveNum].read(bytes);
 				buf.rewind();
@@ -260,7 +257,7 @@ public class Core {
 		}
 
 		String path = diskPath[driveNum];
-		if (deleteit || FileManager.getInstance().isInCache(path)) {
+		if (deleteit) {
 			File file = new File(path);
 			file.delete();
 		}
@@ -362,11 +359,7 @@ public class Core {
 	public void warnMsg(final String shortMsg, final String longMsg) {
 		pauseEmulation();
 
-		Utils.showWarnMessage(mContext, shortMsg, longMsg, false, new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface di, int i) {
-				resumeEmulation();
-			}
-		});
+		Utils.showWarnMessage(mContext, shortMsg, longMsg, false, (di, i) -> resumeEmulation());
 	}
 
 	interface OnInitScreenListener {
@@ -378,8 +371,8 @@ public class Core {
 	}
 
 	interface OnDiskEventListener {
-		void onDiskInserted(String filename);
-		void onDiskEjected(String filename);
+		void onDiskInserted(String path);
+		void onDiskEjected(String path);
 		void onCreateDisk(int size, String filename);
 	}
 }

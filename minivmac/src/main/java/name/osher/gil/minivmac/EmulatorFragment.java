@@ -8,8 +8,6 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -30,7 +28,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.FileProvider;
 import androidx.core.view.GestureDetectorCompat;
 import androidx.fragment.app.Fragment;
 
@@ -44,7 +41,7 @@ import java.util.List;
 
 public class EmulatorFragment extends Fragment
         implements IOnIOEventListener {
-    private static final String TAG = "name.osher.gil.minivmac.EmulatorFragment";
+    private static final String TAG = "minivmac.EmulatorFrag";
 
     private final static int[] keycodeTranslationTable = {-1, -1, -1, -1, -1, -1, -1, 0x1D, 0x12, 0x13, 0x14, 0x15, 0x17, 0x16, 0x1A, 0x1C, 0x19, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0x00, 0x0B, 0x08, 0x02, 0x0E, 0x03, 0x05, 0x04, 0x22, 0x26, 0x28, 0x25, 0x2E, 0x2D, 0x1F, 0x23, 0x0C, 0x0F, 0x01, 0x11, 0x20, 0x09, 0x0D, 0x07, 0x10, 0x06, 0x2B, 0x2F, 0x37, 0x37, 0x38, 0x38, 0x30, 0x31, 0x3A, -1, -1, 0x24, 0x33, 0x32, 0x1B, 0x18, 0x21, 0x1E, 0x2A, 0x29, 0x27, 0x2C, 0x37, 0x3A, -1, -1, 0x45, -1, -1, 0x3A, -1, -1, -1, -1, -1, -1, -1};
     private final static int TRACKBALL_SENSITIVITY = 8;
@@ -109,82 +106,55 @@ public class EmulatorFragment extends Fragment
             return;
         }
 
-        getActivity().invalidateOptionsMenu();
+        requireActivity().invalidateOptionsMenu();
 
-        Thread emulation = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                mCore = new Core(getContext());
+        Thread emulation = new Thread(() -> {
+            mCore = new Core(getContext());
 
-                mCore.setOnInitScreenListener(new Core.OnInitScreenListener() {
-                    @Override
-                    public void onInitScreen(final int screenWidth, final int screenHeight) {
-                        mUIHandler.post(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                mScreenView.setTargetScreenSize(screenWidth, screenHeight);
-                                            }
-                                        }
-                        );
-                    }
-                });
+            mCore.setOnInitScreenListener((screenWidth, screenHeight) -> mUIHandler.post(() -> mScreenView.setTargetScreenSize(screenWidth, screenHeight)
+            ));
 
-                mScreenView.setOnMouseEventListener(new ScreenView.OnMouseEventListener() {
-                    @Override
-                    public void onMouseMove(int x, int y) {
-                        mCore.setMousePosition(x, y);
-                    }
+            mScreenView.setOnMouseEventListener(new ScreenView.OnMouseEventListener() {
+                @Override
+                public void onMouseMove(int x, int y) {
+                    mCore.setMousePosition(x, y);
+                }
 
-                    @Override
-                    public void onMouseClick(boolean down) {
-                        mCore.setMouseBtn(down);
-                    }
-                });
+                @Override
+                public void onMouseClick(boolean down) {
+                    mCore.setMouseBtn(down);
+                }
+            });
 
-                mCore.setOnUpdateScreenListener(new Core.OnUpdateScreenListener() {
-                    @Override
-                    public void onUpdateScreen(final int[] update, final int top, final int left,
-                                               final int bottom, final int right) {
-                        mUIHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                mScreenView.updateScreen(update, top, left, bottom, right);
-                            }
-                        });
-                    }
-                });
+            mCore.setOnUpdateScreenListener((update, top, left, bottom, right) -> mUIHandler.post(() -> mScreenView.updateScreen(update, top, left, bottom, right)));
 
-                mCore.setOnDiskEventListener(new Core.OnDiskEventListener() {
+            mCore.setOnDiskEventListener(new Core.OnDiskEventListener() {
 
-                    @Override
-                    public void onDiskInserted(String filename) {
-                        getActivity().invalidateOptionsMenu();
+                @Override
+                public void onDiskInserted(String path) {
+                    requireActivity().invalidateOptionsMenu();
+                }
+
+                @Override
+                public void onDiskEjected(String path) {
+                    if (FileManager.getInstance().isInDownloads(path)) {
+                        File f = new File(path);
+                        Utils.showShareDialog(getContext(), f, f.getName());
                     }
 
-                    @Override
-                    public void onDiskEjected(String filename) {
-                        getActivity().invalidateOptionsMenu();
-                    }
+                    requireActivity().invalidateOptionsMenu();
+                }
 
-                    @Override
-                    public void onCreateDisk(int size, String filename) {
-                        mCore.makeNewDisk(size, FileManager.getInstance().getDownloadDir().getAbsolutePath(), filename);
-                        mCore.notifyDiskCreated();
-                        Uri uri = Uri.fromFile(FileManager.getInstance().getDownloadFile(filename));
-                        Uri exportUri = FileProvider.getUriForFile(getContext(), String.format("%s.provider", BuildConfig.APPLICATION_ID),
-                                FileManager.getInstance().getDownloadFile(filename), filename);
-                        Intent shareIntent = new Intent();
-                        shareIntent.setAction(Intent.ACTION_SEND);
-                        shareIntent.putExtra(Intent.EXTRA_STREAM, exportUri);
-                        shareIntent.setType(FileManager.getInstance().getMimeType(uri));
-                        startActivity(Intent.createChooser(shareIntent, getResources().getText(R.string.send_to)));
-                    }
-                });
+                @Override
+                public void onCreateDisk(int size, String filename) {
+                    mCore.makeNewDisk(size, FileManager.getInstance().getDownloadDir().getAbsolutePath(), filename);
+                    Core.notifyDiskCreated();
+                }
+            });
 
-                //mCore.resumeEmulation();
-                mCore.initEmulation(mCore, rom);
-                System.exit(0);
-            }
+            //mCore.resumeEmulation();
+            mCore.initEmulation(mCore, rom);
+            System.exit(0);
         });
         mEmulatorStarted = true;
         emulation.setName("EmulationThread");
@@ -205,7 +175,7 @@ public class EmulatorFragment extends Fragment
         mKeyboardView.setOnKeyboardActionListener(mOnKeyboardActionListener);
     }
 
-    private KeyboardView.OnKeyboardActionListener mOnKeyboardActionListener = new KeyboardView.OnKeyboardActionListener() {
+    private final KeyboardView.OnKeyboardActionListener mOnKeyboardActionListener = new KeyboardView.OnKeyboardActionListener() {
 
         @Override public void onKey(int primaryCode, int[] keyCodes) {
             if (mKeyboardView != null) {
@@ -300,8 +270,8 @@ public class EmulatorFragment extends Fragment
 
     private void updateByPrefs() {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
-        Boolean scalePref = sharedPref.getBoolean(SettingsFragment.KEY_PREF_SCALE, true);
-        Boolean scrollPref = sharedPref.getBoolean(SettingsFragment.KEY_PREF_SCROLL, false);
+        boolean scalePref = sharedPref.getBoolean(SettingsFragment.KEY_PREF_SCALE, true);
+        boolean scrollPref = sharedPref.getBoolean(SettingsFragment.KEY_PREF_SCROLL, false);
         mScreenView.setScaled(scalePref);
         mScreenView.setScroll(scrollPref);
     }
@@ -404,7 +374,7 @@ public class EmulatorFragment extends Fragment
     }
 
     @Override
-    public void onConfigurationChanged(Configuration newConfig) {
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         isLandscape = (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE);
         toggleFullscreen(isLandscape);
@@ -413,44 +383,40 @@ public class EmulatorFragment extends Fragment
 
     private void hideSystemUI() {
         // Enables regular immersive mode.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            View decorView = getActivity().getWindow().getDecorView();
-            decorView.setSystemUiVisibility(
-                    View.SYSTEM_UI_FLAG_IMMERSIVE
-                            // Set the content to appear under the system bars so that the
-                            // content doesn't resize when the system bars hide and show.
-                            | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                            // Hide the nav bar and status bar
-                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                            | View.SYSTEM_UI_FLAG_FULLSCREEN);
-            mUIVisible = false;
-        }
+        View decorView = requireActivity().getWindow().getDecorView();
+        decorView.setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_IMMERSIVE
+                        // Set the content to appear under the system bars so that the
+                        // content doesn't resize when the system bars hide and show.
+                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        // Hide the nav bar and status bar
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN);
+        mUIVisible = false;
     }
 
     // Shows the system bars by removing all the flags
     // except for the ones that make the content appear under the system bars.
     private void showSystemUI() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            View decorView = getActivity().getWindow().getDecorView();
-            decorView.setSystemUiVisibility(
-                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
-            mUIVisible = true;
-        }
+        View decorView = requireActivity().getWindow().getDecorView();
+        decorView.setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+        mUIVisible = true;
     }
 
     private void toggleFullscreen(Boolean isFullscreen) {
         if(isFullscreen) {
-            getActivity().getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            requireActivity().getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         } else {
-            getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            requireActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         }
     }
 
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    public void onCreateOptionsMenu(@NonNull Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.minivmac_actions, menu);
     }
 
@@ -503,25 +469,29 @@ public class EmulatorFragment extends Fragment
     private final ActivityResultLauncher<String> _importFile = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
         onActivity = false;
 
-        InputStream diskFile;
-        try {
-            diskFile = getActivity().getContentResolver().openInputStream(uri);
-        } catch (FileNotFoundException ex) {
-            // Unable to open Disk file.
-            Log.e(TAG, String.format("Unable to open file: %s", uri), ex);
-            return;
+        if (uri != null) {
+            InputStream diskFile;
+            try {
+                diskFile = requireActivity().getContentResolver().openInputStream(uri);
+            } catch (FileNotFoundException ex) {
+                // Unable to open Disk file.
+                Log.e(TAG, String.format("Unable to open file: %s", uri), ex);
+                return;
+            }
+            String diskName = FileManager.getInstance().getFileName(uri);
+            File dst = FileManager.getInstance().getCacheFile(diskName);
+            try {
+                FileManager.getInstance().copy(diskFile, dst);
+            } catch (IOException ex) {
+                // Unable to copy Disk
+                Log.e(TAG, String.format("Unable to copy file: %s", uri), ex);
+                return;
+            }
+            dst.setWritable(false);
+            mCore.insertDisk(dst);
+        } else {
+            Log.i(TAG, "No file was selected.");
         }
-        String diskName = FileManager.getInstance().getFileName(uri);
-        File dst = FileManager.getInstance().getCacheFile(diskName);
-        try {
-            FileManager.getInstance().copy(diskFile, dst);
-        } catch (IOException ex) {
-            // Unable to copy Disk
-            Log.e(TAG, String.format("Unable to copy file: %s", uri), ex);
-            return;
-        }
-        dst.setWritable(false);
-        mCore.insertDisk(dst);
     });
 
     public void showSelectDisk() {
@@ -552,7 +522,7 @@ public class EmulatorFragment extends Fragment
                 showAbout();
                 break;
         }
-        getActivity().invalidateOptionsMenu();
+        requireActivity().invalidateOptionsMenu();
         updateByPrefs();
     });
 

@@ -1,11 +1,9 @@
 package name.osher.gil.minivmac;
 
-import name.osher.gil.minivmac.R;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.view.View;
 import android.widget.TextView;
 
 public class AboutDialog extends Dialog {
@@ -19,12 +17,7 @@ public class AboutDialog extends Dialog {
     private void initDialog() {
         setContentView(R.layout.about);
         setTitle(R.string.aboutTitle);
-        findViewById(R.id.versionText).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                setBuildDisplay(!showBuild);
-            }
-        });
+        findViewById(R.id.versionText).setOnClickListener(view -> setBuildDisplay(!showBuild));
         setBuildDisplay(false);
     }
 

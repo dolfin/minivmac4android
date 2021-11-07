@@ -5,7 +5,6 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.OpenableColumns;
@@ -13,7 +12,6 @@ import android.util.Log;
 import android.webkit.MimeTypeMap;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -25,16 +23,15 @@ import java.io.OutputStream;
  */
 public class FileManager {
     private static final String TAG = "minivmac.FileManager";
-    private final static String[] diskExtensions = {"DSK", "dsk", "img", "IMG"};
+    private static final String[] diskExtensions = {"DSK", "dsk", "img", "IMG"};
 
-    private static String DIRECTORY_ROM = "rom";
-    private static String DIRECTORY_DISKS = "disks";
-    private static String DIRECTORY_DOWNLOADS = "downloads";
+    private static final String DIRECTORY_ROM = "rom";
+    private static final String DIRECTORY_DISKS = "disks";
+    private static final String DIRECTORY_DOWNLOADS = "downloads";
 
     private static final int ZERO_BUFFER_SIZE = 2048;
 
-    private static FileManager mInstance = new FileManager();
-    private File mDataDir;
+    private static final FileManager mInstance = new FileManager();
     private File mCacheDir;
     private File mRomDir;
     private File mDisksDir;
@@ -51,11 +48,11 @@ public class FileManager {
         mContentResolver = context.getContentResolver();
         // find data directory
         mCacheDir = context.getExternalCacheDir();
-        mDataDir = context.getExternalFilesDir(null);
-        mRomDir = new File(mDataDir, DIRECTORY_ROM);
-        mDisksDir = new File(mDataDir, DIRECTORY_DISKS);
-        mDownloadDir = new File(mDataDir, DIRECTORY_DOWNLOADS);
-        if (mDataDir.isDirectory() && mDataDir.canRead() &&
+        File dataDir = context.getExternalFilesDir(null);
+        mRomDir = new File(dataDir, DIRECTORY_ROM);
+        mDisksDir = new File(dataDir, DIRECTORY_DISKS);
+        mDownloadDir = new File(mCacheDir, DIRECTORY_DOWNLOADS);
+        if (dataDir.isDirectory() && dataDir.canRead() &&
                 mCacheDir.isDirectory() && mCacheDir.canRead()) {
             mRomDir.mkdirs();
             mDisksDir.mkdirs();
@@ -67,9 +64,6 @@ public class FileManager {
 
     public File getCacheFile(String name) {
         return new File(mCacheDir, name);
-    }
-    public File getCacheDir() {
-        return mCacheDir;
     }
 
     public File getRomFile(String name) {
@@ -94,24 +88,28 @@ public class FileManager {
     public Boolean isInCache(String path) {
         return path.contains(mCacheDir.getAbsolutePath());
     }
+    public Boolean isInDownloads(String path) {
+        return path.contains(mDownloadDir.getAbsolutePath());
+    }
 
     public File[] getAvailableDisks () {
-        return mDisksDir.listFiles(new FileFilter() {
-            public boolean accept(File pathname) {
-                if (!pathname.isFile()) return false;
-                if (pathname.isDirectory()) return false;
-                String ext = pathname.getName().substring(1 + pathname.getName().lastIndexOf("."));
-                for (String diskExtension : diskExtensions) {
-                    if (diskExtension.equals(ext)) return true;
-                }
-                return false;
+        return mDisksDir.listFiles(pathname -> {
+            if (!pathname.isFile()) return false;
+            if (pathname.isDirectory()) return false;
+            String ext = pathname.getName().substring(1 + pathname.getName().lastIndexOf("."));
+            for (String diskExtension : diskExtensions) {
+                if (diskExtension.equals(ext)) return true;
             }
+            return false;
         });
     }
 
     public boolean makeNewDisk(int size, String fileName, String path, Handler progressHandler) {
         File disk = new File(path, fileName);
         try {
+            if (disk.exists() && isInCache(disk.getAbsolutePath())) {
+                disk.delete();
+            }
             if (!disk.createNewFile())
             {
                 // Error show file exist warning
@@ -140,7 +138,7 @@ public class FileManager {
         try {
             int sizeLeft = size;
             while (sizeLeft > 0) {
-                int i = (sizeLeft > ZERO_BUFFER_SIZE) ? ZERO_BUFFER_SIZE : sizeLeft;
+                int i = Math.min(sizeLeft, ZERO_BUFFER_SIZE);
                 writer.write(buffer, 0, i);
                 sizeLeft -= i;
 
@@ -168,8 +166,13 @@ public class FileManager {
     }
 
     public void copy(InputStream in, File dst) throws IOException {
-        if (!dst.exists()) {
-            dst.createNewFile();
+        if (dst.exists()) {
+            dst.delete();
+        }
+
+        dst.createNewFile();
+        if (isInCache(dst.getAbsolutePath())) {
+            dst.deleteOnExit();
         }
 
         try (OutputStream out = new FileOutputStream(dst)) {
@@ -196,7 +199,7 @@ public class FileManager {
     }
 
     public String getMimeType(Uri uri) {
-        String mimeType = null;
+        String mimeType;
         if (ContentResolver.SCHEME_CONTENT.equals(uri.getScheme())) {
             mimeType = mContentResolver.getType(uri);
         } else {
