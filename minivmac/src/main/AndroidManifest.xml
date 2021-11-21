@@ -28,7 +28,7 @@
             android:label="@string/menu_settings"
             android:parentActivityName=".MiniVMac" />
         <activity android:name=".DiskManagerActivity"
-            android:label="@string/pref_disk_manager"/>
+            android:label="@string/disk_manager_title"/>
 
         <provider
             android:name="androidx.core.content.FileProvider"

@@ -32,6 +32,7 @@ public class FileManager {
     private static final int ZERO_BUFFER_SIZE = 2048;
 
     private static final FileManager mInstance = new FileManager();
+    private boolean mIsInitialized = false;
     private File mCacheDir;
     private File mRomDir;
     private File mDisksDir;
@@ -57,10 +58,13 @@ public class FileManager {
             mRomDir.mkdirs();
             mDisksDir.mkdirs();
             mDownloadDir.mkdirs();
+            mIsInitialized = true;
             return true;
         }
         return false;
     }
+
+    public boolean isInitialized() {return mIsInitialized;}
 
     public File getCacheFile(String name) {
         return new File(mCacheDir, name);

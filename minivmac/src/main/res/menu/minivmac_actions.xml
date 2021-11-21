@@ -10,12 +10,15 @@
         android:title="@string/menu_insert_disk"
         minivmac:showAsAction="ifRoom">
         <menu>
-            <item android:id="@+id/action_create_disk"
-                android:icon="@drawable/disk_floppy_color"
-                android:title="@string/menu_create_disk" />
-            <item android:id="@+id/action_import_file"
-                  android:icon="@drawable/disk_floppy_color"
-                  android:title="@string/menu_select_disk" />
+            <group android:id="@+id/actions_grp">
+                <item android:id="@+id/action_manage_disks"
+                    android:icon="@drawable/ic_floppy"
+                    android:title="@string/menu_manage_disks" />
+                <item android:id="@+id/action_import_file"
+                      android:icon="@drawable/ic_import"
+                      android:title="@string/menu_import_file" />
+            </group>
+            <group android:id="@+id/disks_group" />
         </menu>
     </item>
     <item android:id="@+id/action_settings"

@@ -78,6 +78,9 @@ public class DiskManagerActivity extends AppCompatActivity {
     }
 
     private void refreshDisksList() {
+	    if (!FileManager.getInstance().isInitialized()) {
+	        FileManager.getInstance().init(this);
+        }
         // Initializing a new String Array
         File[] disks = FileManager.getInstance().getAvailableDisks();
 

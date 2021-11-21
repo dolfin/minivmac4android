@@ -29,6 +29,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.view.GestureDetectorCompat;
+import androidx.core.view.MenuCompat;
 import androidx.fragment.app.Fragment;
 
 import java.io.File;
@@ -422,21 +423,20 @@ public class EmulatorFragment extends Fragment
 
     public void onPrepareOptionsMenu(Menu menu) {
         SubMenu dm = menu.findItem(R.id.action_insert_disk).getSubMenu();
-        dm.clear();
-        dm.setHeaderIcon(R.drawable.disk_floppy_color);
-        // add create disk
-        dm.add(0, R.id.action_import_file, 0, R.string.menu_select_disk);
+        MenuCompat.setGroupDividerEnabled(dm,true);
+        dm.removeGroup(R.id.disks_group);
         // add disks
         File[] disks = FileManager.getInstance().getAvailableDisks();
         for (int i = 0; disks != null && i < disks.length; i++) {
             String diskName = disks[i].getName();
-            MenuItem m = dm.add(R.id.action_insert_disk, diskName.hashCode(), i+1, diskName.substring(0, diskName.lastIndexOf(".")));
+            MenuItem m = dm.add(R.id.disks_group, diskName.hashCode(), i+2, diskName.substring(0, diskName.lastIndexOf(".")));
             m.setEnabled(mCore == null || !mCore.isDiskInserted(disks[i]));
+            m.setIcon(R.drawable.ic_disk_floppy);
         }
     }
 
     public boolean onOptionsItemSelected (MenuItem item) {
-        if (item.getGroupId() == R.id.action_insert_disk) {
+        if (item.getGroupId() == R.id.disks_group) {
             File[] disks = FileManager.getInstance().getAvailableDisks();
             for (File disk : disks) {
                 if (disk.getName().hashCode() == item.getItemId()) {
@@ -451,6 +451,9 @@ public class EmulatorFragment extends Fragment
             case R.id.action_keyboard:
                 toggleKeyboard();
                 break;
+            case R.id.action_manage_disks:
+                showDiskManager();
+                break;
             case R.id.action_import_file:
                 showSelectDisk();
                 break;
@@ -464,6 +467,19 @@ public class EmulatorFragment extends Fragment
     private void showAbout() {
         Dialog dialog = new AboutDialog(getContext());
         dialog.show();
+    }
+
+    private final ActivityResultLauncher<Intent> _diskManager = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+        onActivity = false;
+        requireActivity().invalidateOptionsMenu();
+    });
+
+    public void showDiskManager() {
+        if (!FileManager.getInstance().isInitialized()) return;
+
+        onActivity = true;
+        Intent i = new Intent(getActivity(), DiskManagerActivity.class);
+        _diskManager.launch(i);
     }
 
     private final ActivityResultLauncher<String> _importFile = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
@@ -495,7 +511,7 @@ public class EmulatorFragment extends Fragment
     });
 
     public void showSelectDisk() {
-        if (FileManager.getInstance().getDisksDir() == null) return;
+        if (!FileManager.getInstance().isInitialized()) return;
 
         onActivity = true;
         _importFile.launch("*/*");

@@ -10,8 +10,8 @@
 		app:icon="@drawable/ic_chip" />
 	<Preference
 		app:key="pref_disk_manager"
-		app:title="@string/pref_disk_manager"
-		app:icon="@drawable/ic_action_floppy" />
+		app:title="@string/menu_manage_disks"
+		app:icon="@drawable/ic_floppy" />
 	</PreferenceCategory>
 	<PreferenceCategory
 		app:title="@string/pref_view_title"
@@ -35,7 +35,7 @@
 		<ListPreference
 			app:key="pref_speed"
 			app:title="@string/prefs_speed"
-			app:icon="@drawable/speedometer"
+			app:icon="@drawable/ic_speedometer"
 			app:entries="@array/speed_entries"
 			app:entryValues="@array/speed_values">
 		</ListPreference>

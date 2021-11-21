@@ -5,7 +5,8 @@
 	<string name="menu_insert_disk">Insert Disk</string>
 	<string name="menu_keyboard">Keyboard</string>
 	<string name="menu_create_disk">Create a new disk&#8230;</string>
-	<string name="menu_select_disk">Import file&#8230;</string>
+	<string name="menu_import_file">Import file&#8230;</string>
+	<string name="menu_manage_disks">Manage Disks&#8230;</string>
 	<string name="btn_quit">Quit</string>
 	<string name="btn_continue">Continue</string>
 	<string name="btn_ok">OK</string>
@@ -30,6 +31,7 @@
 	<string name="errTooManyDisks">I can not mount that many Disk Images. Try ejecting one.</string>
 	<string name="name">Name:</string>
 	<string name="size">Size:</string>
+	<string name="disk_manager_title">Disk Images</string>
 	<string name="create">Create</string>
 	<string name="newDisk">New&#8230;</string>
 	<string name="importDisk">Import</string>
@@ -48,7 +50,6 @@
 	<string name="pref_emulator_title">Emulator</string>
 	<string name="pref_rom">ROM File&#8230;</string>
 	<string name="pref_rom_summ">No ROM file was selected</string>
-	<string name="pref_disk_manager">Disks Images&#8230;</string>
 	<string name="pref_view_title">View</string>
 	<string name="pref_scale">Scale</string>
 	<string name="pref_scale_summ">Fit target screen to host screen</string>
