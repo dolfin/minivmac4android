@@ -3,6 +3,7 @@ package name.osher.gil.minivmac;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.TypedArray;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -121,11 +122,30 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 		ListPreference pref_speed = findPreference( KEY_PREF_SPEED );
 		pref_speed.setEnabled(Core.isInitialized());
 		if (Core.isInitialized()) {
-			//pref_speed.setValue(String.valueOf(Core.getSpeed()));
+			int speed = Core.getSpeed();
+			pref_speed.setValue(String.valueOf(speed));
+			pref_speed.setSummary(getSpeedString(speed));
 		}
 		pref_speed.setOnPreferenceChangeListener((preference, newValue) -> {
-			Core.setSpeed(Integer.parseInt(newValue.toString()));
+			int speed = Integer.parseInt(newValue.toString());
+			Core.setSpeed(speed);
+			pref_speed.setSummary(getSpeedString(speed));
 			return true;
 		});
     }
+
+	private String getSpeedString(int speed) {
+		String summary = "";
+		TypedArray speeds_ent = getContext().getResources().obtainTypedArray(R.array.speed_entries);
+		TypedArray speeds_val = getContext().getResources().obtainTypedArray(R.array.speed_values);
+		for (int i = 0 ; i < speeds_val.length() ; i++) {
+			int val = speeds_val.getInt(i, -1);
+			if (val == speed) {
+				summary = speeds_ent.getString(i);
+			}
+		}
+		speeds_ent.recycle();
+		speeds_val.recycle();
+		return summary;
+	}
 }
