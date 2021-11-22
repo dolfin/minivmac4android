@@ -23,7 +23,7 @@
 	<string name="permissionsExplain">Mini vMac need access to your external storage in order to read the ROM file and to read and write to the disk images.</string>
 	<string name="errNoPermissions">Sorry, but Mini vMac must have external storage permissions to start.</string>
 	<string name="errNoDataDir">Cannot read data directory: %1$s\n\nThis directory should contain a ROM file named \&quot;%2$s\&quot; and the disk images.\n\nPlease refer https://www.gryphel.com/c/minivmac/start.html for more info.</string>
-	<string name="errNoROM">Cannot find ROM file: %1$s\n\nThis file should be named \&quot;%2$s\&quot; and should be put on a folder named \&quot;minivmac\&quot; on you external SD card, together with the disk images.\n\nPlease refer https://www.gryphel.com/c/minivmac/start.html for more info.</string>
+	<string name="errNoROM">Error loading ROM file.\n\n Please choose a new file from the settings menu.</string>
 	<string name="errInitEmu">Sorry, Could not initialize emulation</string>
 	<string name="errCreateDisk">Sorry, I couldn\'t create the disk because an I/O error occurred. Make sure you got enough space on your SD card.</string>
 	<string name="errFileExist">File already exists. Please choose a different disk name.</string>

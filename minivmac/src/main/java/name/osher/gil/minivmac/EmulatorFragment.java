@@ -12,7 +12,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -28,7 +27,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.view.GestureDetectorCompat;
 import androidx.core.view.MenuCompat;
 import androidx.fragment.app.Fragment;
 
@@ -51,8 +49,6 @@ public class EmulatorFragment extends Fragment
     private ScreenView mScreenView;
     private Boolean onActivity = false;
     private Boolean isLandscape = false;
-    private GestureDetectorCompat mGestureDetector;
-    private boolean mUIVisible = true;
     private Boolean mEmulatorStarted = false;
 
     private KeyboardView mKeyboardView;
@@ -77,7 +73,6 @@ public class EmulatorFragment extends Fragment
         onActivity = false;
         mScreenView = root.findViewById(R.id.screen);
         mKeyboardView = root.findViewById(R.id.keyboard);
-        mGestureDetector = new GestureDetectorCompat(getContext(), new EmulatorFragment.SingleTapGestureListener());
         mUIHandler = new Handler(getMainLooper());
 
         isLandscape = (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
@@ -101,9 +96,12 @@ public class EmulatorFragment extends Fragment
             romReader.getChannel().read(rom);
             romReader.close();
         } catch (Exception x) {
-            //Utils.showAlert(this, String.format(getString(R.string.errNoROM), romFile.getPath(),
-            //		getString(R.string.romFileName)),false);
-            showSettings();
+            SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
+            SharedPreferences.Editor edit = sharedPref.edit();
+            edit.remove(SettingsFragment.KEY_PREF_ROM);
+            edit.apply();
+            Utils.showAlert(getContext(), String.format(getString(R.string.errNoROM)), false,
+                    (dialog, which) -> showSettings());
             return;
         }
 
@@ -352,23 +350,6 @@ public class EmulatorFragment extends Fragment
         return true;
     }
 
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        if (hasFocus) {
-            if (mUIVisible) {
-                showSystemUI();
-            } else {
-                hideSystemUI();
-            }
-        }
-    }
-
-    @Override
-    public boolean onTouchEvent (@NonNull MotionEvent event) {
-        return this.mGestureDetector.onTouchEvent(event);
-    }
-
-
     public int translateKeyCode (int keyCode) {
         if (keyCode < 0 || keyCode >= keycodeTranslationTable.length) return -1;
         return keycodeTranslationTable[keyCode];
@@ -380,33 +361,6 @@ public class EmulatorFragment extends Fragment
         isLandscape = (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE);
         toggleFullscreen(isLandscape);
         initKeyboard();
-    }
-
-    private void hideSystemUI() {
-        // Enables regular immersive mode.
-        View decorView = requireActivity().getWindow().getDecorView();
-        decorView.setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_IMMERSIVE
-                        // Set the content to appear under the system bars so that the
-                        // content doesn't resize when the system bars hide and show.
-                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        // Hide the nav bar and status bar
-                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_FULLSCREEN);
-        mUIVisible = false;
-    }
-
-    // Shows the system bars by removing all the flags
-    // except for the ones that make the content appear under the system bars.
-    private void showSystemUI() {
-        View decorView = requireActivity().getWindow().getDecorView();
-        decorView.setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
-        mUIVisible = true;
     }
 
     private void toggleFullscreen(Boolean isFullscreen) {
@@ -565,23 +519,6 @@ public class EmulatorFragment extends Fragment
 
     public void interrupt() {
         mCore.wantMacInterrupt();
-    }
-
-    class SingleTapGestureListener extends GestureDetector.SimpleOnGestureListener {
-        @Override
-        public boolean onDown(MotionEvent event) {
-            return true;
-        }
-
-        @Override
-        public boolean onSingleTapUp(MotionEvent e) {
-            if (mUIVisible) {
-                hideSystemUI();
-            } else {
-                showSystemUI();
-            }
-            return true;
-        }
     }
 }
 
