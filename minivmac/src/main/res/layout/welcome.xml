@@ -26,15 +26,36 @@
             android:textSize="24sp"
             android:textStyle="bold"
             android:textColor="#212121"/>
-
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="left"
+        android:padding="10pt"
+        android:orientation="vertical">
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/welcome_desc"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:padding="10pt"
             android:autoLink="all"
             android:text="@string/welcome_desc"
             android:textColor="#212121" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/migration_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/migration_title"
+            android:paddingTop="5pt"
+            android:textStyle="bold"
+            android:textColor="#212121" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/migration_desc"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/migration_desc"
+            android:textColor="#212121" />
+    </androidx.appcompat.widget.LinearLayoutCompat>
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/browse"

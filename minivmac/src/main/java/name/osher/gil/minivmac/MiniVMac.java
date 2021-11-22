@@ -45,7 +45,7 @@ public class MiniVMac extends AppCompatActivity
 		// Check if ROM file was already provided and copied to the ROM directory
 		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 		if (sharedPref.getString(SettingsFragment.KEY_PREF_ROM, null) == null) {
-			// If not, show the wlecome screen
+			// If not, show the welcome screen
 			showWelcome();
 		} else {
 			// Else, start the emulator
@@ -102,6 +102,9 @@ public class MiniVMac extends AppCompatActivity
 		return super.onTrackballEvent(event);
 	}
 
+	/*
+	 * Show / Hide System UI logic
+	 */
 	@Override
 	public boolean onTouchEvent (@NonNull MotionEvent event) {
 		if (this.mGestureDetector.onTouchEvent(event)) {

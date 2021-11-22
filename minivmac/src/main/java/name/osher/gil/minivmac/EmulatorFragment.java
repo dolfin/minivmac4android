@@ -392,10 +392,12 @@ public class EmulatorFragment extends Fragment
     public boolean onOptionsItemSelected (MenuItem item) {
         if (item.getGroupId() == R.id.disks_group) {
             File[] disks = FileManager.getInstance().getAvailableDisks();
-            for (File disk : disks) {
-                if (disk.getName().hashCode() == item.getItemId()) {
-                    mCore.insertDisk(disk);
-                    return true;
+            if (disks != null) {
+                for (File disk : disks) {
+                    if (disk.getName().hashCode() == item.getItemId()) {
+                        mCore.insertDisk(disk);
+                        return true;
+                    }
                 }
             }
             // disk not found

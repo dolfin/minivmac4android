@@ -11,6 +11,8 @@ import android.provider.OpenableColumns;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
 
+import androidx.annotation.Nullable;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -96,6 +98,7 @@ public class FileManager {
         return path.contains(mDownloadDir.getAbsolutePath());
     }
 
+    @Nullable
     public File[] getAvailableDisks () {
         return mDisksDir.listFiles(pathname -> {
             if (!pathname.isFile()) return false;

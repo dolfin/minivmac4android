@@ -49,6 +49,8 @@ public class WelcomeFragment extends Fragment {
         welcome_title.setText(String.format(getString(R.string.welcome_title), getString(R.string.app_name)));
         AppCompatTextView welcome_desc = root.findViewById(R.id.welcome_desc);
         welcome_desc.setText(String.format(getString(R.string.welcome_desc), getString(R.string.model)));
+        AppCompatTextView migration_title = root.findViewById(R.id.migration_title);
+        migration_title.setText(String.format(getString(R.string.migration_title), getString(R.string.app_name)));
 
         AppCompatButton browse = root.findViewById(R.id.browse);
         browse.setOnClickListener(v -> _getRom.launch("application/octet-stream"));

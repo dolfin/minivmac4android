@@ -72,9 +72,11 @@
 	<string name="prefs_about">About</string>
 	<string name="rom_load_error">Unable to load this ROM file. Please choose a valid ROM file.</string>
 
-	<string name="welcome_title">Welcome to %s!</string>
+	<string name="welcome_title">Welcome to %s</string>
 	<string name="welcome_desc">For this emulator to work, a valid %s ROM file must be provided. Please click the \"Browse&#8230;\" button to select the file from your device.\n\nPlease refer https://www.gryphel.com/c/minivmac/start.html for more info.\n
 	</string>
+	<string name="migration_title">If you are migrating from an older version of %s:</string>
+	<string name="migration_desc">Due to the new Android permissions model, the app will no longer be able to read the ROM file and disks images from your external SD card. You will have to manually select your ROM file using the \"Browse&#8230;\" button below and then manually import all your disks from the \"Manage Disks\" screen.\nThe ROM file and disk images will be copied to the local app storage on your device. </string>
 	<string name="welcome_browse">Browse&#8230;</string>
 
 	<!-- URLs -->

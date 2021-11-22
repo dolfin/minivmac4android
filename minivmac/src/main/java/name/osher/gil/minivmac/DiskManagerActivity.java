@@ -86,9 +86,11 @@ public class DiskManagerActivity extends AppCompatActivity {
 
         ArrayList<DiskImage> disks_list = new ArrayList<>();
 
-        for (File disk : disks) {
-            DiskImage di = new DiskImage(disk, disk.getName());
-            disks_list.add(di);
+        if (disks != null) {
+            for (File disk : disks) {
+                DiskImage di = new DiskImage(disk, disk.getName());
+                disks_list.add(di);
+            }
         }
 
         _adapter.clear();
