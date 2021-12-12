@@ -7,7 +7,7 @@ android {
     compileSdkVersion 31
 
     defaultConfig {
-        versionCode 47
+        versionCode 48
 
         minSdkVersion 19
         targetSdkVersion 31
@@ -35,7 +35,7 @@ android {
         macPlus {
             dimension 'machine'
             applicationId 'name.osher.gil.minivmac'
-            versionName '1.6.0'
+            versionName '1.6.1'
 
             ndk {
                 moduleName 'mnvmcoreplus'
@@ -45,7 +45,7 @@ android {
         macII {
             dimension 'machine'
             applicationId 'ninja.gil.miniv.ii'
-            versionName '2.6.0'
+            versionName '2.6.1'
 
             ndk {
                 moduleName 'mnvmcoreii'
