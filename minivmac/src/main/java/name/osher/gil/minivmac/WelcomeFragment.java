@@ -1,5 +1,6 @@
 package name.osher.gil.minivmac;
 
+import android.content.ActivityNotFoundException;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -53,7 +54,14 @@ public class WelcomeFragment extends Fragment {
         migration_title.setText(String.format(getString(R.string.migration_title), getString(R.string.app_name)));
 
         AppCompatButton browse = root.findViewById(R.id.browse);
-        browse.setOnClickListener(v -> _getRom.launch("application/octet-stream"));
+        browse.setOnClickListener(v -> {
+            try {
+                _getRom.launch("application/octet-stream");
+            } catch (ActivityNotFoundException ex) {
+                Log.wtf(TAG, "Unable to load GetContent activity.", ex);
+                Toast.makeText(getContext(), getString(R.string.browse_error), Toast.LENGTH_LONG).show();
+            }
+        });
 
         return root;
     }

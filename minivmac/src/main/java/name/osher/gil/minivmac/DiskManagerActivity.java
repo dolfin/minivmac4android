@@ -136,7 +136,13 @@ public class DiskManagerActivity extends AppCompatActivity {
 
     private void showShareDialog(int selectedDiskImage) {
         if (selectedDiskImage != INVALID_POSITION) {
-            DiskImage di = _adapter.getItem(selectedDiskImage);
+            DiskImage di;
+            try {
+                di = _adapter.getItem(selectedDiskImage);
+            } catch (IndexOutOfBoundsException ex) {
+                Log.e(TAG, String.format("showShareDialog: Invalid position %d", selectedDiskImage), ex);
+                return;
+            }
             File file = di.getFile();
             String name = di.getName();
 
@@ -157,7 +163,13 @@ public class DiskManagerActivity extends AppCompatActivity {
 
     private void removeDiskDialog(int selectedDiskImage) {
 	    if (selectedDiskImage != INVALID_POSITION) {
-            DiskImage di = _adapter.getItem(selectedDiskImage);
+            DiskImage di;
+            try {
+                di = _adapter.getItem(selectedDiskImage);
+            } catch (IndexOutOfBoundsException ex) {
+                Log.e(TAG, String.format("removeDiskDialog: Invalid position %d", selectedDiskImage), ex);
+                return;
+            }
 
             android.app.AlertDialog.Builder alert = new android.app.AlertDialog.Builder(this);
             alert.setMessage(String.format(getString(R.string.removeDiskWarning), di.toString()));
@@ -222,7 +234,7 @@ public class DiskManagerActivity extends AppCompatActivity {
     }
 
     public class DisksListAdapter extends ArrayAdapter<DiskImage> {
-        private int _selectedIndex = -1;
+        private int _selectedIndex = INVALID_POSITION;
 
         public DisksListAdapter(Context context) {
             super(context, 0);

@@ -64,10 +64,10 @@ public class Core {
 		return mIsInitialized;
 	}
 
-	public Boolean initEmulation(Core core, ByteBuffer rom) {
-		System.loadLibrary(mContext.getString(R.string.moduleName));
+	public Boolean initEmulation(String moduleName, ByteBuffer rom) {
+		System.loadLibrary(moduleName);
 		mIsInitialized = true;
-		return init(core, rom);
+		return init(this, rom);
 	}
 
 	public void wantMacReset() {
@@ -163,12 +163,12 @@ public class Core {
 
 	public boolean MySound_Init() {
         try {
-		    mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, SOUND_SAMPLERATE, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_8BIT, kAllBuffLen, AudioTrack.MODE_STREAM);
+			mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, SOUND_SAMPLERATE, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_8BIT, kAllBuffLen, AudioTrack.MODE_STREAM);
 
-	    	mAudioTrack.pause();
-	    	return true;
-	    } catch (Exception e) {
-	    	Log.e(TAG, "MySound_Init() can't init sound.", e);
+			mAudioTrack.pause();
+			return true;
+	    } catch (Throwable tr) {
+	    	Log.e(TAG, "MySound_Init() can't init sound.", tr);
 	    	return false;
 	    }
 	}
@@ -187,7 +187,11 @@ public class Core {
 
 	public void MySound_Stop () {
 		if (mAudioTrack != null) {
-		    mAudioTrack.stop();
+			try {
+				mAudioTrack.stop();
+			} catch (Throwable tr) {
+				Log.e(TAG, "MySound_Stop() can't stop sound.", tr);
+			}
 		}
 	}
 

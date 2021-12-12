@@ -29,6 +29,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.view.MenuCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -108,7 +109,7 @@ public class EmulatorFragment extends Fragment
         requireActivity().invalidateOptionsMenu();
 
         Thread emulation = new Thread(() -> {
-            mCore = new Core(getContext());
+            mCore = new Core(requireContext());
 
             mCore.setOnInitScreenListener((screenWidth, screenHeight) -> mUIHandler.post(() -> mScreenView.setTargetScreenSize(screenWidth, screenHeight)
             ));
@@ -131,7 +132,10 @@ public class EmulatorFragment extends Fragment
 
                 @Override
                 public void onDiskInserted(String path) {
-                    requireActivity().invalidateOptionsMenu();
+                    FragmentActivity activity = getActivity();
+                    if (activity != null) {
+                        activity.invalidateOptionsMenu();
+                    }
                 }
 
                 @Override
@@ -141,7 +145,10 @@ public class EmulatorFragment extends Fragment
                         Utils.showShareDialog(getContext(), f, f.getName());
                     }
 
-                    requireActivity().invalidateOptionsMenu();
+                    FragmentActivity activity = getActivity();
+                    if (activity != null) {
+                        activity.invalidateOptionsMenu();
+                    }
                 }
 
                 @Override
@@ -151,8 +158,7 @@ public class EmulatorFragment extends Fragment
                 }
             });
 
-            //mCore.resumeEmulation();
-            mCore.initEmulation(mCore, rom);
+            mCore.initEmulation(requireContext().getString(R.string.moduleName), rom);
             System.exit(0);
         });
         mEmulatorStarted = true;

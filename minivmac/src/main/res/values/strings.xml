@@ -71,6 +71,7 @@
 	<string name="prefs_home">Visit our website&#8230;</string>
 	<string name="prefs_about">About</string>
 	<string name="rom_load_error">Unable to load this ROM file. Please choose a valid ROM file.</string>
+	<string name="browse_error">Your device does not support file browsing.</string>
 
 	<string name="welcome_title">Welcome to %s</string>
 	<string name="welcome_desc">For this emulator to work, a valid %s ROM file must be provided. Please click the \"Browse&#8230;\" button to select the file from your device.\n\nPlease refer https://www.gryphel.com/c/minivmac/start.html for more info.\n

@@ -51,7 +51,13 @@ public class FileManager {
         mContentResolver = context.getContentResolver();
         // find data directory
         mCacheDir = context.getExternalCacheDir();
+        if (mCacheDir == null) {
+            mCacheDir = context.getCacheDir();
+        }
         File dataDir = context.getExternalFilesDir(null);
+        if (dataDir == null) {
+            dataDir = context.getFilesDir();
+        }
         mRomDir = new File(dataDir, DIRECTORY_ROM);
         mDisksDir = new File(dataDir, DIRECTORY_DISKS);
         mDownloadDir = new File(mCacheDir, DIRECTORY_DOWNLOADS);
