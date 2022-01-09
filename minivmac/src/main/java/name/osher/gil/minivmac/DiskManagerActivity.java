@@ -115,8 +115,8 @@ public class DiskManagerActivity extends AppCompatActivity {
                 return;
             }
             String diskName = FileManager.getInstance().getFileName(uri);
-            File dst = FileManager.getInstance().getDisksFile(diskName);
             try {
+                File dst = FileManager.getInstance().getDisksFile(diskName);
                 FileManager.getInstance().copy(diskFile, dst);
             } catch (IOException ex) {
                 // Unable to copy Disk

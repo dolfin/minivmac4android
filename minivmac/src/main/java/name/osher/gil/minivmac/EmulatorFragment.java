@@ -3,6 +3,8 @@ package name.osher.gil.minivmac;
 import static android.os.Looper.getMainLooper;
 
 import android.app.Dialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
@@ -91,17 +93,19 @@ public class EmulatorFragment extends Fragment
         // load ROM
         String romFileName = getString(R.string.romFileName);
         File romFile = FileManager.getInstance().getRomFile(romFileName);
-        final ByteBuffer rom = ByteBuffer.allocateDirect((int)romFile.length());
+        ByteBuffer rom;
         try {
+            rom = ByteBuffer.allocateDirect((int)romFile.length());
             FileInputStream romReader = new FileInputStream(romFile);
             romReader.getChannel().read(rom);
             romReader.close();
         } catch (Exception x) {
+            Log.w(TAG, "Unable to load ROM file.", x);
             SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
             SharedPreferences.Editor edit = sharedPref.edit();
             edit.remove(SettingsFragment.KEY_PREF_ROM);
             edit.apply();
-            Utils.showAlert(getContext(), String.format(getString(R.string.errNoROM)), false,
+            Utils.showAlert(getContext(), null, getString(R.string.errNoROM), false,
                     (dialog, which) -> showSettings());
             return;
         }
@@ -109,7 +113,7 @@ public class EmulatorFragment extends Fragment
         requireActivity().invalidateOptionsMenu();
 
         Thread emulation = new Thread(() -> {
-            mCore = new Core(requireContext());
+            mCore = new Core();
 
             mCore.setOnInitScreenListener((screenWidth, screenHeight) -> mUIHandler.post(() -> mScreenView.setTargetScreenSize(screenWidth, screenHeight)
             ));
@@ -155,6 +159,28 @@ public class EmulatorFragment extends Fragment
                 public void onCreateDisk(int size, String filename) {
                     mCore.makeNewDisk(size, FileManager.getInstance().getDownloadDir().getAbsolutePath(), filename);
                     Core.notifyDiskCreated();
+                }
+            });
+
+            mCore.setOnAlertListener(new Core.OnAlertListener() {
+                @Override
+                public void onAlert(String title, String msg, boolean end, DialogInterface.OnClickListener listener) {
+                    Context context = getContext();
+                    if (context != null) {
+                        Utils.showAlert(context, title, msg, end, listener);
+                    } else {
+                        Log.w(TAG, "Unable to show alert because there is no context attached.");
+                    }
+                }
+
+                @Override
+                public void onAlert(int msgResId, boolean end) {
+                    Context context = getContext();
+                    if (context != null) {
+                        Utils.showAlert(context, context.getString(msgResId), end);
+                    } else {
+                        Log.w(TAG, "Unable to show alert because there is no context attached.");
+                    }
                 }
             });
 
@@ -457,16 +483,15 @@ public class EmulatorFragment extends Fragment
                 return;
             }
             String diskName = FileManager.getInstance().getFileName(uri);
-            File dst = FileManager.getInstance().getCacheFile(diskName);
             try {
+                File dst = FileManager.getInstance().getCacheFile(diskName);
                 FileManager.getInstance().copy(diskFile, dst);
+                dst.setWritable(false);
+                mCore.insertDisk(dst);
             } catch (IOException ex) {
                 // Unable to copy Disk
                 Log.e(TAG, String.format("Unable to copy file: %s", uri), ex);
-                return;
             }
-            dst.setWritable(false);
-            mCore.insertDisk(dst);
         } else {
             Log.i(TAG, "No file was selected.");
         }

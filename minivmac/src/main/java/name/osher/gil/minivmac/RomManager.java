@@ -63,8 +63,8 @@ public class RomManager {
             return false;
         }
 
-        File dst = FileManager.getInstance().getRomFile(context.getString(R.string.romFileName));
         try {
+            File dst = FileManager.getInstance().getRomFile(context.getString(R.string.romFileName));
             FileManager.getInstance().copy(romFile, dst);
         } catch (IOException ex) {
             // Unable to copy ROM

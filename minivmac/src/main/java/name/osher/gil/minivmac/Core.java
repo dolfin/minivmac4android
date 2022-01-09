@@ -4,24 +4,26 @@ import java.io.File;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 
-import android.content.Context;
+import android.content.DialogInterface;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.util.Log;
 
+import androidx.annotation.StringRes;
+
 public class Core {
 	private static final String TAG = "minivmac.Core";
 	
 	private int numInsertedDisks = 0;
-	private String[] diskPath;
-	private RandomAccessFile[] diskFile;
+	@SuppressWarnings("unused") private String[] diskPath;
+	@SuppressWarnings("unused") private RandomAccessFile[] diskFile;
 	private boolean initOk = false;
 
-	private Context mContext;
 	private OnInitScreenListener mOnInitScreenListener;
 	private OnUpdateScreenListener mOnUpdateScreenListener;
 	private OnDiskEventListener mOnDiskEventListener;
+	private OnAlertListener mOnAlertListener;
 
 	private static Boolean mIsInitialized = false;
 
@@ -31,8 +33,7 @@ public class Core {
 		Log.e(TAG, "Native crashed!");
 	}
 
-	public Core(Context context) {
-		mContext = context;
+	public Core() {
 	}
 
 	public void setOnInitScreenListener(OnInitScreenListener listener) {
@@ -45,6 +46,10 @@ public class Core {
 
 	public void setOnDiskEventListener(OnDiskEventListener listener) {
 		mOnDiskEventListener = listener;
+	}
+
+	public void setOnAlertListener(OnAlertListener listener) {
+		mOnAlertListener = listener;
 	}
 	
 	// initialization
@@ -110,12 +115,12 @@ public class Core {
 	}
 	
 	// mouse
-	private native static void moveMouse(int dx, int dy);
+	@SuppressWarnings("unused") private native static void moveMouse(int dx, int dy);
 	private native static void setMousePos(int x, int y);
 	private native static void setMouseButton(boolean down);
-	private native static int getMouseX();
-	private native static int getMouseY();
-	private native static boolean getMouseButton();
+	@SuppressWarnings("unused") private native static int getMouseX();
+	@SuppressWarnings("unused") private native static int getMouseY();
+	@SuppressWarnings("unused") private native static boolean getMouseButton();
 
 	public void setMousePosition(int x, int y) {
 		setMousePos(x, y);
@@ -210,7 +215,7 @@ public class Core {
 	private native static void notifyDiskEjected(int driveNum);
 	public native static void notifyDiskCreated();
 	private native static int getFirstFreeDisk();
-	private native static int getNumDrives();
+	@SuppressWarnings("unused") private native static int getNumDrives();
 	
 	// disk driver callbacks
 	public int sonyTransfer(boolean isWrite, ByteBuffer buf, int driveNum, int start, int length) {
@@ -318,7 +323,7 @@ public class Core {
 		int driveNum = getFirstFreeDisk();
 		// check for free drive
 		if (driveNum == -1) {
-			Utils.showAlert(mContext, mContext.getString(R.string.errTooManyDisks), false);
+			mOnAlertListener.onAlert(R.string.errTooManyDisks, false);
 			return false;
 		}
 		
@@ -363,7 +368,7 @@ public class Core {
 	public void warnMsg(final String shortMsg, final String longMsg) {
 		pauseEmulation();
 
-		Utils.showWarnMessage(mContext, shortMsg, longMsg, false, (di, i) -> resumeEmulation());
+		mOnAlertListener.onAlert(shortMsg, longMsg, false, (di, i) -> resumeEmulation());
 	}
 
 	interface OnInitScreenListener {
@@ -378,5 +383,10 @@ public class Core {
 		void onDiskInserted(String path);
 		void onDiskEjected(String path);
 		void onCreateDisk(int size, String filename);
+	}
+
+	interface OnAlertListener {
+		void onAlert(String title, String msg, boolean end, DialogInterface.OnClickListener listener);
+		void onAlert(@StringRes int msgResId, boolean end);
 	}
 }
