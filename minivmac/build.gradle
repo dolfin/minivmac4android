@@ -1,4 +1,7 @@
-apply plugin: 'com.android.application'
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android' version '1.8.22'
+}
 
 Properties props = new Properties()
 props.load(new FileInputStream(rootProject.file('release.properties')))
@@ -11,6 +14,8 @@ android {
 
         minSdkVersion 19
         targetSdkVersion 34
+
+        multiDexEnabled true
     }
 
     signingConfigs {
@@ -74,7 +79,7 @@ android {
 }
 
 dependencies {
-    implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.8.0"))
+    implementation 'com.android.support:multidex:1.0.3'
 
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
