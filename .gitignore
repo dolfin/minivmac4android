@@ -1,4 +1,5 @@
 # built application files
+*.aab
 *.apk
 *.ap_
 
