@@ -203,12 +203,21 @@ public class FileManager {
     }
 
     public String getFileName(Uri uri) {
-        Cursor cursor = mContentResolver.query(uri, null, null, null, null);
-        int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-        cursor.moveToFirst();
-        String name = cursor.getString(nameIndex);
-        cursor.close();
-        return name;
+        String result = null;
+        if (uri.getScheme().equals("content")) {
+            Cursor cursor = mContentResolver.query(uri, null, null, null, null);
+            try {
+                if (cursor != null && cursor.moveToFirst()) {
+                    result = cursor.getString(cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME));
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+        if (result == null) {
+            result = uri.getLastPathSegment();
+        }
+        return result;
     }
 
     public String getMimeType(Uri uri) {

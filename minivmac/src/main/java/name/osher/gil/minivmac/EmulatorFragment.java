@@ -84,9 +84,16 @@ public class EmulatorFragment extends Fragment
 
         updateByPrefs();
 
-        initEmulator();
-
         return root;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        if (!mEmulatorStarted) {
+            initEmulator();
+        }
     }
 
     private void initEmulator() {
