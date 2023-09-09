@@ -45,6 +45,9 @@
 	<string name="sizeInMiB">%s MiB</string>
 	<string name="progressInKiB"> %4.0f KiB</string>
 	<string name="progressInMiB"> %3.2f MiB</string>
+	<string name="copyingFile">Copying File…</string>
+	<string name="validatingRom">Validating ROM…</string>
+	<string name="copyingRom">Copying ROM…</string>
 
 	<!-- Settings view -->
 	<string name="pref_emulator_title">Emulator</string>

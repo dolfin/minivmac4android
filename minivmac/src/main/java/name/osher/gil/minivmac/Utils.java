@@ -1,26 +1,36 @@
 package name.osher.gil.minivmac;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
 import android.text.util.Linkify;
+import android.util.Log;
 import android.widget.TextView;
 
 import androidx.core.content.FileProvider;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Created by dolfin on 16/12/2015.
  */
 public class Utils {
+    private static final String TAG = "minivmac.Utils";
+
     public static void showAlert(Context context, String msg, boolean end) {
         showAlert(context, null, msg, end, null);
     }
@@ -64,5 +74,52 @@ public class Utils {
             context.grantUriPermission(packageName, exportUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
         }
         context.startActivity(chooser);
+    }
+
+    public static void loadFileWithProgressBar(Context context, Uri uri, IAsyncCopyCallback onSuccess) {
+        if (uri != null) {
+            Log.w(TAG, uri.toString());
+            InputStream diskFile;
+            int fileSize;
+            try {
+                diskFile = context.getContentResolver().openInputStream(uri);
+                fileSize = diskFile.available();
+            } catch (IOException ex) {
+                // Unable to open Disk file.
+                Log.e(TAG, String.format("Unable to open file: %s", uri), ex);
+                return;
+            }
+
+            ProgressDialog progressDialog;
+            progressDialog = new ProgressDialog(context);
+            progressDialog.setTitle(R.string.copyingFile);
+            progressDialog.setCancelable(false);
+            progressDialog.setIndeterminate(false);
+            progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+            progressDialog.setMax(fileSize);
+
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            Handler handler = new Handler(Looper.getMainLooper());
+
+            executor.execute(() -> {
+                String diskName = FileManager.getInstance().getFileName(uri);
+                File dst;
+                try {
+                    handler.post(progressDialog::show);
+                    dst = FileManager.getInstance().getDisksFile(diskName);
+                    FileManager.getInstance().copy(diskFile, dst, progress ->
+                            handler.post(() -> progressDialog.setProgress(progress)));
+                    handler.post(progressDialog::dismiss);
+                } catch (IOException ex) {
+                    // Unable to copy Disk
+                    Log.e(TAG, String.format("Unable to copy file: %s", uri), ex);
+                    return;
+                }
+
+                handler.post(() -> onSuccess.onSuccessfulCopy(dst));
+            });
+        } else {
+            Log.i(TAG, "No file was selected.");
+        }
     }
 }

@@ -179,6 +179,10 @@ public class FileManager {
     }
 
     public void copy(InputStream in, File dst) throws IOException {
+        copy(in, dst, null);
+    }
+
+    public void copy(InputStream in, File dst, IProgressCallback callback) throws IOException {
         if (dst.exists()) {
             dst.delete();
         }
@@ -192,8 +196,18 @@ public class FileManager {
             // Transfer bytes from in to out
             byte[] buf = new byte[ZERO_BUFFER_SIZE];
             int len;
+            long totalBytesCopied = 0;
+            long fileSize = in.available();
+
             while ((len = in.read(buf)) > 0) {
                 out.write(buf, 0, len);
+
+                totalBytesCopied += len;
+                int progress = (int) totalBytesCopied;
+
+                if (callback != null) {
+                    callback.onProgressUpdated(progress);
+                }
             }
         }
     }

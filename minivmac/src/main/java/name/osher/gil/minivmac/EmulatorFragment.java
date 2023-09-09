@@ -35,9 +35,6 @@ import androidx.fragment.app.FragmentActivity;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -479,29 +476,13 @@ public class EmulatorFragment extends Fragment
 
     private final ActivityResultLauncher<String> _importFile = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
         onActivity = false;
-
-        if (uri != null) {
-            InputStream diskFile;
-            try {
-                diskFile = requireActivity().getContentResolver().openInputStream(uri);
-            } catch (FileNotFoundException ex) {
-                // Unable to open Disk file.
-                Log.e(TAG, String.format("Unable to open file: %s", uri), ex);
-                return;
+        Utils.loadFileWithProgressBar(requireContext(), uri, new IAsyncCopyCallback() {
+            @Override
+            public void onSuccessfulCopy(File file) {
+                file.setWritable(false);
+                mCore.insertDisk(file);
             }
-            String diskName = FileManager.getInstance().getFileName(uri);
-            try {
-                File dst = FileManager.getInstance().getCacheFile(diskName);
-                FileManager.getInstance().copy(diskFile, dst);
-                dst.setWritable(false);
-                mCore.insertDisk(dst);
-            } catch (IOException ex) {
-                // Unable to copy Disk
-                Log.e(TAG, String.format("Unable to copy file: %s", uri), ex);
-            }
-        } else {
-            Log.i(TAG, "No file was selected.");
-        }
+        });
     });
 
     public void showSelectDisk() {

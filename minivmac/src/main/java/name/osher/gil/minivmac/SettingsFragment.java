@@ -14,9 +14,6 @@ import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
-import android.util.Log;
-import android.widget.Toast;
-
 public class SettingsFragment extends PreferenceFragmentCompat {
 	private static final String TAG = "minivmac.SettingsFrag";
 
@@ -41,22 +38,14 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 			new ActivityResultCallback<Uri>() {
 				@Override
 				public void onActivityResult(Uri uri) {
-					if (uri != null) {
-						Log.i(TAG, String.format("Selected ROM file: %s", uri.toString()));
+					RomManager romManager = new RomManager();
+					romManager.loadRom(requireContext(), uri, () -> {
 						Preference pref_rom = findPreference(KEY_PREF_ROM);
-
-						RomManager romManager = new RomManager();
-						if (romManager.loadRom(requireContext(), uri)) {
-							pref_rom.setSummary(romManager.getRomName());
-							SharedPreferences.Editor edit = _preferences.edit();
-							edit.putString(KEY_PREF_ROM, romManager.getRomName());
-							edit.apply();
-						} else {
-							Toast.makeText(getContext(), R.string.rom_load_error, Toast.LENGTH_LONG).show();
-						}
-					} else {
-						Log.i(TAG, "No file was selected.");
-					}
+						pref_rom.setSummary(romManager.getRomName());
+						SharedPreferences.Editor edit = _preferences.edit();
+						edit.putString(KEY_PREF_ROM, romManager.getRomName());
+						edit.apply();
+					});
 				}
 			});
 

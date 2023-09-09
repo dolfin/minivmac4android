@@ -24,9 +24,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 
@@ -103,31 +100,7 @@ public class DiskManagerActivity extends AppCompatActivity {
     }
 
     private final ActivityResultLauncher<String> _openFile = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
-        if (uri != null) {
-            Log.w("DiskManagerActivity", uri.toString());
-
-            InputStream diskFile;
-            try {
-                diskFile = this.getContentResolver().openInputStream(uri);
-            } catch (FileNotFoundException ex) {
-                // Unable to open Disk file.
-                Log.e(TAG, String.format("Unable to open file: %s", uri), ex);
-                return;
-            }
-            String diskName = FileManager.getInstance().getFileName(uri);
-            try {
-                File dst = FileManager.getInstance().getDisksFile(diskName);
-                FileManager.getInstance().copy(diskFile, dst);
-            } catch (IOException ex) {
-                // Unable to copy Disk
-                Log.e(TAG, String.format("Unable to copy file: %s", uri), ex);
-                return;
-            }
-        } else {
-            Log.i(TAG, "No file was selected.");
-        }
-
-        refreshDisksList();
+        Utils.loadFileWithProgressBar(this, uri, file -> refreshDisksList());
     });
 
 	private void showOpenFileDialog() {

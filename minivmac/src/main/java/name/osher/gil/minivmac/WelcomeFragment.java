@@ -24,22 +24,14 @@ public class WelcomeFragment extends Fragment {
 
     ActivityResultLauncher<String> _getRom = registerForActivityResult(new ActivityResultContracts.GetContent(),
             uri -> {
-                if (uri != null) {
-                    Log.i(TAG, String.format("Selected ROM file: %s", uri.toString()));
-
-                    RomManager romManager = new RomManager();
-                    if (romManager.loadRom(requireContext(), uri)) {
-                        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
-                        SharedPreferences.Editor edit = sharedPref.edit();
-                        edit.putString(SettingsFragment.KEY_PREF_ROM, romManager.getRomName());
-                        edit.apply();
-                        ((MiniVMac)requireActivity()).showEmulator();
-                    } else {
-                        Toast.makeText(getContext(), R.string.rom_load_error, Toast.LENGTH_LONG).show();
-                    }
-                } else {
-                    Log.i(TAG, "No file was selected.");
-                }
+                RomManager romManager = new RomManager();
+                romManager.loadRom(requireContext(), uri, () -> {
+                    SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
+                    SharedPreferences.Editor edit = sharedPref.edit();
+                    edit.putString(SettingsFragment.KEY_PREF_ROM, romManager.getRomName());
+                    edit.apply();
+                    ((MiniVMac)requireActivity()).showEmulator();
+                });
             });
 
     @Override
