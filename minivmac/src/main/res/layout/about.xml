@@ -23,6 +23,12 @@
 				android:paddingBottom="20dp"
 				android:textSize="16sp"
 				android:autoLink="web" />
+			<TextView android:id="@+id/privacyPolicyText"
+				android:text="@string/privacyPolicy"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:paddingBottom="20dp"
+				android:textSize="16sp" />
 			<TextView
 				android:id="@+id/license_header"
 				android:text="@string/thirdparty_license_header"

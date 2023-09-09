@@ -4,6 +4,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.text.method.LinkMovementMethod;
 import android.widget.TextView;
 
 public class AboutDialog extends Dialog {
@@ -17,6 +18,10 @@ public class AboutDialog extends Dialog {
     private void initDialog() {
         setContentView(R.layout.about);
         setTitle(R.string.aboutTitle);
+
+		TextView privacyPolicyText = (TextView) findViewById(R.id.privacyPolicyText);
+		privacyPolicyText.setMovementMethod(LinkMovementMethod.getInstance());
+
         findViewById(R.id.versionText).setOnClickListener(view -> setBuildDisplay(!showBuild));
         setBuildDisplay(false);
     }
