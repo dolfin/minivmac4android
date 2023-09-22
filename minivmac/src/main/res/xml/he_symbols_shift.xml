@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
+          android:keyWidth="10%p"
+          android:horizontalGap="0px"
+          android:verticalGap="0px"
+          android:keyHeight="@dimen/key_height"
+    >
+    <Row>
+        <Key android:codes="18" android:keyLabel="!" android:keyEdgeFlags="left"/>
+        <Key android:codes="19" android:keyLabel="\@"/>
+        <Key android:codes="20" android:keyLabel="#"/>
+        <Key android:codes="21" android:keyLabel="$"/>
+        <Key android:codes="23" android:keyLabel="%"/>
+        <Key android:codes="22" android:keyLabel="^"/>
+        <Key android:codes="26" android:keyLabel="₪"/>
+        <Key android:codes="28" android:keyLabel="*"/>
+        <Key android:codes="25" android:keyLabel="("/>
+        <Key android:codes="29" android:keyLabel=")" android:keyEdgeFlags="right"/>
+    </Row>
+
+    <Row>
+        <Key android:codes="10" android:keyLabel="±" android:keyEdgeFlags="left"/>
+        <Key android:codes="41" android:keyLabel=":"/>
+        <Key android:codes="43" android:keyLabel="&lt;"/>
+        <Key android:codes="47" android:keyLabel="&gt;"/>
+        <Key android:codes="33" android:keyLabel="{"/>
+        <Key android:codes="30" android:keyLabel="}"/>
+        <Key android:codes="77" android:keyLabel="↑" android:horizontalGap="5%p"/>
+        <Key android:codes="27" android:keyLabel="_" android:horizontalGap="5%p"/>
+        <Key android:codes="24" android:keyLabel="+" android:keyEdgeFlags="right"/>
+    </Row>
+
+    <Row>
+        <Key android:codes="56" android:keyIcon="@drawable/kb_shift"
+            android:keyWidth="15%p" android:isModifier="true"
+            android:isSticky="true" android:keyEdgeFlags="left"/>
+        <Key android:codes="50" android:keyLabel="~"/>
+        <Key android:codes="44" android:keyLabel="\?"/>
+        <Key android:codes="39" android:keyLabel="&quot;"/>
+        <Key android:codes="42" android:keyLabel="|"/>
+        <Key android:codes="70" android:keyLabel="←"/>
+        <Key android:codes="72" android:keyLabel="↓"/>
+        <Key android:codes="66" android:keyLabel="→"/>
+        <Key android:codes="51" android:keyIcon="@drawable/kb_backspace_rtl"
+            android:keyWidth="15%p" android:keyEdgeFlags="right"
+            android:isRepeatable="true"/>
+    </Row>
+
+    <Row  android:rowEdgeFlags="bottom">
+        <Key android:codes="-2" android:keyLabel="אבג" android:keyWidth="15%p"/>
+        <Key android:codes="58" android:keyIcon="@drawable/kb_option"
+             android:keyWidth="10%p" android:isModifier="true"
+             android:isSticky="true"/>
+        <Key android:codes="55" android:keyIcon="@drawable/kb_command"
+             android:keyWidth="10%p" android:isModifier="true"
+             android:isSticky="true"/>
+        <Key android:codes="49" android:keyIcon="@drawable/kb_spacebar"
+             android:keyWidth="30%p" android:isRepeatable="true"/>
+        <Key android:codes="53" android:keyIcon="@drawable/sym_keyboard_esc"
+             android:keyWidth="10%p"/>
+        <Key android:codes="48" android:keyIcon="@drawable/kb_tab_rtl"
+             android:keyWidth="10%p"/>
+        <Key android:codes="36" android:keyIcon="@drawable/kb_return_rtl"
+             android:keyWidth="15%p" android:keyEdgeFlags="right"/>
+    </Row>
+</Keyboard>

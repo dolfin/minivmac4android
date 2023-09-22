@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
 import android.os.Bundle;
@@ -37,6 +38,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Objects;
 
 public class EmulatorFragment extends Fragment
         implements IOnIOEventListener {
@@ -47,6 +49,7 @@ public class EmulatorFragment extends Fragment
     private final static int KEYCODE_MAC_SHIFT = 56;
 
     private ScreenView mScreenView;
+    private String mLang;
     private Boolean onActivity = false;
     private Boolean isLandscape = false;
     private Boolean mEmulatorStarted = false;
@@ -77,7 +80,6 @@ public class EmulatorFragment extends Fragment
 
         isLandscape = (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
         toggleFullscreen(isLandscape);
-        initKeyboard();
 
         updateByPrefs();
 
@@ -196,18 +198,33 @@ public class EmulatorFragment extends Fragment
         emulation.start();
     }
 
-    private void initKeyboard() {
-        // Create the Keyboard
-        mQwertyKeyboard = new Keyboard(getContext(), R.xml.qwerty);
-        mSymbolsKeyboard = new Keyboard(getContext(), R.xml.symbols);
-        mSymbolsShiftedKeyboard = new Keyboard(getContext(), R.xml.symbols_shift);
+    private void initKeyboard(String langCode) {
+        if (!Objects.equals(mLang, langCode)) {
+            Log.i(TAG, "initKeyboard: New keyboard: " + langCode);
 
-        // Attach the keyboard to the view
-        mKeyboardView.setKeyboard(mQwertyKeyboard);
-        // Do not show the preview balloons
-        mKeyboardView.setPreviewEnabled(false);
-        // Install the key handler
-        mKeyboardView.setOnKeyboardActionListener(mOnKeyboardActionListener);
+            mLang = langCode;
+
+            // Create the Keyboard
+            final String QWERTY = "_qwerty";
+            final String SYMBOLS = "_symbols";
+            final String SYMBOLS_SHIFT = "_symbols_shift";
+
+            int qwerty = getResources().getIdentifier(langCode + QWERTY, "xml", getContext().getApplicationInfo().packageName);
+            int symbols = getResources().getIdentifier(langCode + SYMBOLS, "xml", getContext().getApplicationInfo().packageName);
+            int symbols_shift = getResources().getIdentifier(langCode + SYMBOLS_SHIFT, "xml", getContext().getApplicationInfo().packageName);
+            mQwertyKeyboard = new Keyboard(getContext(), qwerty);
+            mSymbolsKeyboard = new Keyboard(getContext(), symbols);
+            mSymbolsShiftedKeyboard = new Keyboard(getContext(), symbols_shift);
+
+            // Attach the keyboard to the view
+            mKeyboardView.setKeyboard(mQwertyKeyboard);
+            // Do not show the preview balloons
+            mKeyboardView.setPreviewEnabled(false);
+            // Install the key handler
+            mKeyboardView.setOnKeyboardActionListener(mOnKeyboardActionListener);
+        } else {
+            Log.i(TAG, "initKeyboard: No keyboard change.");
+        }
     }
 
     private final KeyboardView.OnKeyboardActionListener mOnKeyboardActionListener = new KeyboardView.OnKeyboardActionListener() {
@@ -309,6 +326,9 @@ public class EmulatorFragment extends Fragment
         boolean scrollPref = sharedPref.getBoolean(SettingsFragment.KEY_PREF_SCROLL, false);
         mScreenView.setScaled(scalePref);
         mScreenView.setScroll(scrollPref);
+
+        String newLang = sharedPref.getString(SettingsFragment.KEY_PREF_KEYBOARDS, "us");
+        initKeyboard(newLang);
     }
 
     @Override
@@ -396,7 +416,7 @@ public class EmulatorFragment extends Fragment
         super.onConfigurationChanged(newConfig);
         isLandscape = (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE);
         toggleFullscreen(isLandscape);
-        initKeyboard();
+        initKeyboard(mLang);
     }
 
     private void toggleFullscreen(Boolean isFullscreen) {

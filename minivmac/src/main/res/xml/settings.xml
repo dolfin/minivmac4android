@@ -12,6 +12,12 @@
 		app:key="pref_disk_manager"
 		app:title="@string/menu_manage_disks"
 		app:icon="@drawable/ic_floppy" />
+	<ListPreference
+		app:key="pref_keyboards"
+		app:title="@string/menu_keyboards"
+		app:icon="@drawable/ic_keyboard"
+		app:entries="@array/kbd_entries"
+		app:entryValues="@array/kbd_values"/>
 	</PreferenceCategory>
 	<PreferenceCategory
 		app:title="@string/pref_view_title"

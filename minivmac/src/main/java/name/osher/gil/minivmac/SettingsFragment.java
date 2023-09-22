@@ -14,11 +14,14 @@ import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
+import java.util.Objects;
+
 public class SettingsFragment extends PreferenceFragmentCompat {
 	private static final String TAG = "minivmac.SettingsFrag";
 
 	public static final String KEY_PREF_ROM = "pref_rom";
 	public static final String KEY_PREF_DISK_MANAGER = "pref_disk_manager";
+	public static final String KEY_PREF_KEYBOARDS = "pref_keyboards";
 	public static final String KEY_PREF_SCALE = "pref_scale";
 	public static final String KEY_PREF_SCROLL = "pref_scroll";
 	public static final String KEY_PREF_SPEED = "pref_speed";
@@ -63,6 +66,14 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 		});
 		String romName = _preferences.getString(KEY_PREF_ROM, getString(R.string.pref_rom_summ));
 		pref_rom.setSummary(romName);
+
+		ListPreference pref_keyboards = findPreference( KEY_PREF_KEYBOARDS );
+		pref_keyboards.setSummary(getKbdString(pref_keyboards.getValue()));
+		pref_keyboards.setOnPreferenceChangeListener((preference, newValue) -> {
+			//Set KBD
+			pref_keyboards.setSummary(getKbdString(newValue.toString()));
+			return true;
+		});
 
 		Preference pref_disk_manager = findPreference( KEY_PREF_DISK_MANAGER );
 		pref_disk_manager.setOnPreferenceClickListener(preference -> {
@@ -123,6 +134,20 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 		});
     }
 
+	private String getKbdString(String kbd) {
+		String summary = "";
+		TypedArray kbd_ent = getContext().getResources().obtainTypedArray(R.array.kbd_entries);
+		TypedArray kbd_val = getContext().getResources().obtainTypedArray(R.array.kbd_values);
+		for (int i = 0 ; i < kbd_val.length() ; i++) {
+			String val = kbd_val.getString(i);
+			if (Objects.equals(kbd, val)) {
+				summary = kbd_ent.getString(i);
+			}
+		}
+		kbd_ent.recycle();
+		kbd_val.recycle();
+		return summary;
+	}
 	private String getSpeedString(int speed) {
 		String summary = "";
 		TypedArray speeds_ent = getContext().getResources().obtainTypedArray(R.array.speed_entries);
