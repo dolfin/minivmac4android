@@ -204,7 +204,11 @@ public class Core {
 		if (mAudioTrack != null) {
 			AudioTrack deletedTrack = mAudioTrack;
 			mAudioTrack = null;
-			deletedTrack.pause();
+			try {
+				deletedTrack.pause();
+			} catch (IllegalStateException e) {
+				Log.w(TAG, "MySound_UnInit() can't pause sound.", e);
+			}
 			deletedTrack.flush();
 			deletedTrack.release();
 		}
