@@ -45,6 +45,7 @@ public class EmulatorFragment extends Fragment
     private final static int[] keycodeTranslationTable = {-1, -1, -1, -1, -1, -1, -1, 0x1D, 0x12, 0x13, 0x14, 0x15, 0x17, 0x16, 0x1A, 0x1C, 0x19, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0x00, 0x0B, 0x08, 0x02, 0x0E, 0x03, 0x05, 0x04, 0x22, 0x26, 0x28, 0x25, 0x2E, 0x2D, 0x1F, 0x23, 0x0C, 0x0F, 0x01, 0x11, 0x20, 0x09, 0x0D, 0x07, 0x10, 0x06, 0x2B, 0x2F, 0x37, 0x37, 0x38, 0x38, 0x30, 0x31, 0x3A, -1, -1, 0x24, 0x33, 0x32, 0x1B, 0x18, 0x21, 0x1E, 0x2A, 0x29, 0x27, 0x2C, 0x37, 0x3A, -1, -1, 0x45, -1, -1, 0x3A, -1, -1, -1, -1, -1, -1, -1};
     private final static int TRACKBALL_SENSITIVITY = 8;
     private final static int KEYCODE_MAC_SHIFT = 56;
+    private final static int KEYCODE_NUMPAD = -20;
 
     private ScreenView mScreenView;
     private String mLang;
@@ -56,6 +57,7 @@ public class EmulatorFragment extends Fragment
     private Keyboard mQwertyKeyboard;
     private Keyboard mSymbolsKeyboard;
     private Keyboard mSymbolsShiftedKeyboard;
+    private Keyboard mNumpadKeyboard;
 
     private Core mCore;
     private Handler mUIHandler;
@@ -201,13 +203,23 @@ public class EmulatorFragment extends Fragment
         final String QWERTY = "_qwerty";
         final String SYMBOLS = "_symbols";
         final String SYMBOLS_SHIFT = "_symbols_shift";
+        final String NUMPAD = "_numpad";
 
         int qwerty = getResources().getIdentifier(langCode + QWERTY, "xml", getContext().getApplicationInfo().packageName);
         int symbols = getResources().getIdentifier(langCode + SYMBOLS, "xml", getContext().getApplicationInfo().packageName);
         int symbols_shift = getResources().getIdentifier(langCode + SYMBOLS_SHIFT, "xml", getContext().getApplicationInfo().packageName);
+        int numpad = getResources().getIdentifier(langCode + NUMPAD, "xml", getContext().getApplicationInfo().packageName);
+
         mQwertyKeyboard = new Keyboard(getContext(), qwerty);
-        mSymbolsKeyboard = new Keyboard(getContext(), symbols);
-        mSymbolsShiftedKeyboard = new Keyboard(getContext(), symbols_shift);
+        if (symbols != 0) {
+            mSymbolsKeyboard = new Keyboard(getContext(), symbols);
+        }
+        if (symbols_shift != 0) {
+            mSymbolsShiftedKeyboard = new Keyboard(getContext(), symbols_shift);
+        }
+        if (numpad != 0) {
+            mNumpadKeyboard = new Keyboard(getContext(), numpad);
+        }
 
         // Attach the keyboard to the view
         mKeyboardView.setKeyboard(mQwertyKeyboard);
@@ -231,6 +243,10 @@ public class EmulatorFragment extends Fragment
                         mKeyboardView.setKeyboard(mQwertyKeyboard);
                         setShifted(true);
                         mKeyboardView.setShifted(true);
+                    } else if (current == mNumpadKeyboard) {
+                        mKeyboardView.setKeyboard(mSymbolsKeyboard);
+                        setShifted(false);
+                        mKeyboardView.setShifted(false);
                     } else {
                         if (getKey(KEYCODE_MAC_SHIFT).on) {
                             mKeyboardView.setKeyboard(mSymbolsShiftedKeyboard);
@@ -240,6 +256,9 @@ public class EmulatorFragment extends Fragment
                             setShifted(false);
                         }
                     }
+                } else if (primaryCode == KEYCODE_NUMPAD) {
+                    resetShift();
+                    mKeyboardView.setKeyboard(mNumpadKeyboard);
                 } else if (primaryCode == KEYCODE_MAC_SHIFT) {
                     Keyboard currentKeyboard = mKeyboardView.getKeyboard();
                     if (mQwertyKeyboard == currentKeyboard) {
@@ -306,6 +325,14 @@ public class EmulatorFragment extends Fragment
             Keyboard.Key shiftKey = getKey(KEYCODE_MAC_SHIFT);
             if (shiftKey != null) {
                 shiftKey.on = shiftState;
+            }
+        }
+
+        private void resetShift() {
+            Keyboard.Key shiftKey = getKey(KEYCODE_MAC_SHIFT);
+            if (shiftKey != null && shiftKey.on) {
+                mCore.keyUp(KEYCODE_MAC_SHIFT);
+                shiftKey.on = false;
             }
         }
     };

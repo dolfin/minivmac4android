@@ -18,6 +18,7 @@
 		app:icon="@drawable/ic_keyboard"
 		app:dialogTitle="@string/prefs_keyboards_title"
 		app:dialogIcon="@drawable/ic_keyboard"
+		app:defaultValue="us"
 		app:entries="@array/kbd_entries"
 		app:entryValues="@array/kbd_values"/>
 	</PreferenceCategory>

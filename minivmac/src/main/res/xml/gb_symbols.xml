@@ -56,8 +56,8 @@
              android:isSticky="true"/>
         <Key android:codes="49" android:keyIcon="@drawable/kb_spacebar"
              android:keyWidth="30%p" android:isRepeatable="true"/>
-        <Key android:codes="53" android:keyIcon="@drawable/sym_keyboard_esc"
-             android:keyWidth="10%p"/>
+        <Key android:codes="-20" android:keyIcon="@drawable/kb_numpad"
+            android:keyWidth="10%p"/>
         <Key android:codes="48" android:keyIcon="@drawable/kb_tab"
              android:keyWidth="10%p"/>
         <Key android:codes="36" android:keyIcon="@drawable/kb_return"
