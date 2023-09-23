@@ -19,31 +19,30 @@
     </Row>
 
     <Row>
-        <Key android:codes="50" android:keyLabel="`"  android:horizontalGap="4%p"
-             android:keyEdgeFlags="left"/>
-        <Key android:codes="27" android:keyLabel="-"/>
-        <Key android:codes="24" android:keyLabel="="/>
-        <Key android:codes="77" android:keyLabel="↑" android:horizontalGap="1.5%p"/>
-        <Key android:codes="33" android:keyLabel="[" android:horizontalGap="1.5%p"/>
+        <Key android:codes="50" android:keyLabel="`" android:keyEdgeFlags="left"/>
+        <Key android:codes="33" android:keyLabel="["/>
         <Key android:codes="30" android:keyLabel="]"/>
-        <Key android:codes="41" android:keyLabel=";" android:horizontalGap="5%p"/>
-        <Key android:codes="39" android:keyLabel="'" android:keyEdgeFlags="right"/>
+        <Key android:codes="41" android:keyLabel=";"/>
+        <Key android:codes="39" android:keyLabel="'"/>
+        <Key android:codes="42" android:keyLabel="\\"/>
+        <Key android:codes="77" android:keyLabel="↑" android:horizontalGap="5%p"/>
+        <Key android:codes="27" android:keyLabel="-" android:horizontalGap="5%p"/>
+        <Key android:codes="24" android:keyLabel="=" android:keyEdgeFlags="right"/>
     </Row>
 
     <Row>
         <Key android:codes="56" android:keyIcon="@drawable/kb_shift"
-             android:keyWidth="15%p" android:isModifier="true"
+             android:keyWidth="12.5%p" android:isModifier="true"
              android:isSticky="true" android:keyEdgeFlags="left"/>
-        <Key android:codes="42" android:keyLabel="\\"/>
-        <Key android:codes="70" android:keyLabel="←"/>
-        <Key android:codes="72" android:keyLabel="↓"/>
-        <Key android:codes="66" android:keyLabel="→"/>
-        <Key android:codes="43" android:keyLabel=","/>
+        <Key android:codes="43" android:keyLabel="," android:horizontalGap="7.5%p"/>
         <Key android:codes="47" android:keyLabel="."/>
         <Key android:codes="44" android:keyLabel="/"/>
+        <Key android:codes="70" android:keyLabel="←" android:horizontalGap="5%p"/>
+        <Key android:codes="72" android:keyLabel="↓"/>
+        <Key android:codes="66" android:keyLabel="→"/>
         <Key android:codes="51" android:keyIcon="@drawable/kb_backspace"
-             android:keyWidth="15%p" android:keyEdgeFlags="right"
-             android:isRepeatable="true"/>
+             android:keyWidth="12.5%p" android:keyEdgeFlags="right"
+             android:horizontalGap="2.5%p" android:isRepeatable="true"/>
     </Row>
 
     <Row  android:rowEdgeFlags="bottom">
@@ -54,7 +53,7 @@
         <Key android:codes="55" android:keyIcon="@drawable/kb_command"
              android:keyWidth="10%p" android:isModifier="true"
              android:isSticky="true"/>
-        <Key android:codes="49" android:keyIcon="@drawable/kb_backspace"
+        <Key android:codes="49" android:keyIcon="@drawable/kb_spacebar"
              android:keyWidth="30%p" android:isRepeatable="true"/>
         <Key android:codes="53" android:keyIcon="@drawable/sym_keyboard_esc"
              android:keyWidth="10%p"/>

@@ -32,18 +32,18 @@
 
     <Row>
         <Key android:codes="56" android:keyIcon="@drawable/kb_shift"
-            android:keyWidth="15%p" android:isModifier="true"
+            android:keyWidth="10%p" android:isModifier="true"
             android:isSticky="true" android:keyEdgeFlags="left"/>
         <Key android:codes="50" android:keyLabel="~"/>
         <Key android:codes="44" android:keyLabel="\?"/>
         <Key android:codes="39" android:keyLabel="&quot;"/>
         <Key android:codes="42" android:keyLabel="|"/>
-        <Key android:codes="70" android:keyLabel="←"/>
+        <Key android:codes="70" android:keyLabel="←" android:horizontalGap="5%p"/>
         <Key android:codes="72" android:keyLabel="↓"/>
         <Key android:codes="66" android:keyLabel="→"/>
         <Key android:codes="51" android:keyIcon="@drawable/kb_backspace_rtl"
-            android:keyWidth="15%p" android:keyEdgeFlags="right"
-            android:isRepeatable="true"/>
+            android:keyWidth="12.5%p" android:keyEdgeFlags="right"
+            android:horizontalGap="2.5%p" android:isRepeatable="true"/>
     </Row>
 
     <Row  android:rowEdgeFlags="bottom">

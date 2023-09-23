@@ -16,6 +16,8 @@
 		app:key="pref_keyboards"
 		app:title="@string/menu_keyboards"
 		app:icon="@drawable/ic_keyboard"
+		app:dialogTitle="@string/prefs_keyboards_title"
+		app:dialogIcon="@drawable/ic_keyboard"
 		app:entries="@array/kbd_entries"
 		app:entryValues="@array/kbd_values"/>
 	</PreferenceCategory>
@@ -42,6 +44,8 @@
 			app:key="pref_speed"
 			app:title="@string/prefs_speed"
 			app:icon="@drawable/ic_speedometer"
+			app:dialogTitle="@string/prefs_speed_title"
+			app:dialogIcon="@drawable/ic_speedometer"
 			app:entries="@array/speed_entries"
 			app:entryValues="@array/speed_values">
 		</ListPreference>

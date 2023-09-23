@@ -6,27 +6,28 @@
           android:keyHeight="@dimen/key_height"
     >
     <Row>
-        <Key android:codes="18" android:keyLabel="1" android:keyEdgeFlags="left"/>
-        <Key android:codes="19" android:keyLabel="2"/>
-        <Key android:codes="20" android:keyLabel="3"/>
-        <Key android:codes="21" android:keyLabel="4"/>
-        <Key android:codes="23" android:keyLabel="5"/>
-        <Key android:codes="22" android:keyLabel="6"/>
-        <Key android:codes="26" android:keyLabel="7"/>
-        <Key android:codes="28" android:keyLabel="8"/>
-        <Key android:codes="25" android:keyLabel="9"/>
-        <Key android:codes="29" android:keyLabel="0" android:keyEdgeFlags="right"/>
+        <Key android:codes="18" android:keyLabel="&amp;" android:keyEdgeFlags="left"/>
+        <Key android:codes="19" android:keyLabel="é"/>
+        <Key android:codes="20" android:keyLabel="&quot;"/>
+        <Key android:codes="21" android:keyLabel="'"/>
+        <Key android:codes="23" android:keyLabel="("/>
+        <Key android:codes="22" android:keyLabel="§"/>
+        <Key android:codes="26" android:keyLabel="è"/>
+        <Key android:codes="28" android:keyLabel="!"/>
+        <Key android:codes="25" android:keyLabel="ç"/>
+        <Key android:codes="29" android:keyLabel="à" android:keyEdgeFlags="right"/>
     </Row>
 
     <Row>
-        <Key android:codes="10" android:keyLabel="[ {" android:keyEdgeFlags="left"/>
-        <Key android:codes="33" android:keyLabel="´"/>
-        <Key android:codes="30" android:keyLabel="` |"/>
-        <Key android:codes="39" android:keyLabel=";" android:horizontalGap="7.5%p"/>
-        <Key android:codes="42" android:keyLabel="'"/>
-        <Key android:codes="62" android:keyLabel="↑" android:horizontalGap="7.5%p"/>
-        <Key android:codes="27" android:keyLabel="-" android:horizontalGap="5%p"/>
-        <Key android:codes="24" android:keyLabel="=" android:keyEdgeFlags="right"/>
+        <Key android:codes="10" android:keyLabel="\@" android:keyEdgeFlags="left"/>
+        <Key android:codes="33" android:keyLabel="^"/>
+        <Key android:codes="30" android:keyLabel="$"/>
+        <Key android:codes="46" android:keyLabel=","/>
+        <Key android:codes="39" android:keyLabel="ù"/>
+        <Key android:codes="42" android:keyLabel="`"/>
+        <Key android:codes="62" android:keyLabel="↑" android:horizontalGap="5%p"/>
+        <Key android:codes="27" android:keyLabel=")" android:horizontalGap="5%p"/>
+        <Key android:codes="24" android:keyLabel="-" android:keyEdgeFlags="right"/>
     </Row>
 
     <Row>
@@ -34,9 +35,9 @@
              android:keyWidth="10%p" android:isModifier="true"
              android:isSticky="true" android:keyEdgeFlags="left"/>
         <Key android:codes="50" android:keyLabel="&lt;"/>
-        <Key android:codes="43" android:keyLabel=","/>
-        <Key android:codes="47" android:keyLabel="."/>
-        <Key android:codes="44" android:keyLabel="ç"/>
+        <Key android:codes="43" android:keyLabel=";"/>
+        <Key android:codes="47" android:keyLabel=":"/>
+        <Key android:codes="44" android:keyLabel="="/>
         <Key android:codes="59" android:keyLabel="←" android:horizontalGap="5%p"/>
         <Key android:codes="61" android:keyLabel="↓"/>
         <Key android:codes="60" android:keyLabel="→"/>
@@ -45,7 +46,7 @@
              android:horizontalGap="2.5%p" android:isRepeatable="true"/>
     </Row>
 
-    <Row  android:rowEdgeFlags="bottom">
+    <Row android:rowEdgeFlags="bottom">
         <Key android:codes="-2" android:keyLabel="ABC" android:keyWidth="15%p"/>
         <Key android:codes="58" android:keyIcon="@drawable/kb_option"
              android:keyWidth="10%p" android:isModifier="true"

@@ -8,7 +8,7 @@
     <Row>
         <Key android:codes="18" android:keyLabel="!" android:keyEdgeFlags="left"/>
         <Key android:codes="19" android:keyLabel="\@"/>
-        <Key android:codes="20" android:keyLabel="#"/>
+        <Key android:codes="20" android:keyLabel="£"/>
         <Key android:codes="21" android:keyLabel="$"/>
         <Key android:codes="23" android:keyLabel="%"/>
         <Key android:codes="22" android:keyLabel="^"/>
@@ -19,7 +19,7 @@
     </Row>
 
     <Row>
-        <Key android:codes="50" android:keyLabel="~" android:keyEdgeFlags="left"/>
+        <Key android:codes="10" android:keyLabel="±" android:keyEdgeFlags="left"/>
         <Key android:codes="33" android:keyLabel="{"/>
         <Key android:codes="30" android:keyLabel="}"/>
         <Key android:codes="41" android:keyLabel=":"/>
@@ -32,9 +32,10 @@
 
     <Row>
         <Key android:codes="56" android:keyIcon="@drawable/kb_shift"
-             android:keyWidth="12.5%p" android:isModifier="true"
+             android:keyWidth="10%p" android:isModifier="true"
              android:isSticky="true" android:keyEdgeFlags="left"/>
-        <Key android:codes="43" android:keyLabel="&lt;" android:horizontalGap="7.5%p"/>
+        <Key android:codes="50" android:keyLabel="~"/>
+        <Key android:codes="43" android:keyLabel="&lt;"/>
         <Key android:codes="47" android:keyLabel="&gt;"/>
         <Key android:codes="44" android:keyLabel="\?"/>
         <Key android:codes="70" android:keyLabel="←" android:horizontalGap="5%p"/>
