@@ -61,12 +61,13 @@ public class RomManager {
                 return;
             }
 
+            int romSize = RomManager.getRomSize();
             ProgressDialog validateProgressDialog;
             validateProgressDialog = new ProgressDialog(context);
             validateProgressDialog.setCancelable(false);
             validateProgressDialog.setIndeterminate(false);
             validateProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-            validateProgressDialog.setMax(RomManager.getRomSize());
+            validateProgressDialog.setMax(100);
 
             ProgressDialog copyProgressDialog;
             copyProgressDialog = new ProgressDialog(context);
@@ -87,7 +88,7 @@ public class RomManager {
                     validateProgressDialog.show();
                 });
                 long checksum = validateRom(romFileForValidation, progress
-                        -> handler.post(() -> validateProgressDialog.setProgress(progress)));
+                        -> handler.post(() -> validateProgressDialog.setProgress((progress / romSize) * 100));
                 handler.post(validateProgressDialog::dismiss);
 
                 // Copy ROM
