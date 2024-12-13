@@ -188,6 +188,8 @@ public class FileManager {
         }
 
         dst.createNewFile();
+        dst.setReadable(true);
+        dst.setWritable(true);
         if (isInCache(dst.getAbsolutePath())) {
             dst.deleteOnExit();
         }

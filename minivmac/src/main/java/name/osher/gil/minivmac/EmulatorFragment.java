@@ -519,7 +519,6 @@ public class EmulatorFragment extends Fragment
         Utils.loadFileWithProgressBar(requireContext(), uri, new IAsyncCopyCallback() {
             @Override
             public void onSuccessfulCopy(File file) {
-                file.setWritable(false);
                 mCore.insertDisk(file);
             }
         });
