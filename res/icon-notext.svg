@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg width="89" height="128" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 89 128">
+  <g>
+    <title>background</title>
+    <rect fill="none" id="canvas_background" height="130" width="91" y="-1" x="-1"/>
+    <g display="none" overflow="visible" y="0" x="0" height="100%" width="100%" id="canvasGrid">
+      <rect fill="url(#gridpattern)" stroke-width="0" y="0" x="0" height="100%" width="100%"/>
+    </g>
+  </g>
+  <g>
+    <title>Layer 1</title>
+    <rect rx="5" id="svg_2" height="109" width="85" y="2" x="2" stroke-width="4" stroke="#000" fill="#b2b2b2"/>
+    <rect stroke="#000" id="svg_3" height="14" width="79.000001" y="112" x="5" stroke-width="4" fill="#666666"/>
+    <rect stroke="#0f0f00" id="svg_4" height="52" width="69.000001" y="14" x="10" stroke-width="4" fill="#007fff"/>
+    <line stroke="#000" stroke-linecap="null" stroke-linejoin="null" id="svg_5" y2="87" x2="77" y1="87" x1="52" fill-opacity="null" stroke-opacity="null" stroke-width="4" fill="none"/>
+    <path d="M 44.326 55.25 L 37.565 55.25 L 32.043 24.47 L 38.363 24.47 L 42.268 47.754 L 55.013 24.47 L 61.291 24.47 Z" style="stroke: rgb(0, 0, 0); stroke-width: 0px; text-wrap-mode: nowrap;"/>
+    <rect stroke="#00bf00" id="svg_16" height="0.500011" width="3.000053" y="100.500641" x="8.749374" stroke-width="3" fill="#00bf00"/>
+    <rect stroke="#bf0000" id="svg_20" height="0.500011" width="3.000053" y="104.00843" x="8.749374" stroke-width="3" fill="#00bf00"/>
+  </g>
+</svg>

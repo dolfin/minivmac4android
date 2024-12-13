@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg width="123" height="116" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 123 116">
+  <g>
+    <title>background</title>
+    <rect x="-1" y="-1" width="125" height="118" id="canvas_background" fill="none"/>
+    <g id="canvasGrid" display="none">
+      <rect id="svg_2" width="533" height="482" x="1" y="1" stroke-width="0" fill="url(#gridpattern)"/>
+    </g>
+  </g>
+  <g>
+    <title>Layer 1</title>
+    <rect stroke="#000" rx="5" fill="#b2b2b2" stroke-width="4" x="2.25" y="71.25" width="118" height="32" id="svg_1"/>
+    <rect stroke="#000" fill="#b2b2b2" stroke-width="4" x="17.75" y="2.25" width="85" height="66" id="svg_12" rx="5"/>
+    <rect stroke="#000" fill="#666666" stroke-width="4" x="9.25" y="106.25" width="104.00001" height="7" id="svg_13"/>
+    <rect fill="#007fff" stroke-width="4" x="25.75" y="9.25" width="69" height="52" id="svg_14" stroke="#0f0f00"/>
+    <line stroke="#000" fill="none" stroke-width="4" stroke-opacity="null" fill-opacity="null" x1="83.25" y1="82.25" x2="108.25" y2="82.25" id="svg_5" stroke-linejoin="null" stroke-linecap="null"/>
+    <path d="M 60.076 50.016 L 53.315 50.016 L 47.793 19.235 L 54.113 19.235 L 58.018 42.52 L 70.763 19.235 L 77.041 19.235 Z" style="stroke: rgb(0, 0, 0); stroke-width: 0px; text-wrap-mode: nowrap;"/>
+    <rect fill="#00bf00" stroke-width="3" x="9.99937" y="92.75064" width="3.00005" height="0.50001" id="svg_16" stroke="#00bf00"/>
+    <rect fill="#00bf00" stroke-width="3" x="9.99937" y="96.25843" width="3.00005" height="0.50001" id="svg_20" stroke="#bf0000"/>
+  </g>
+</svg>
