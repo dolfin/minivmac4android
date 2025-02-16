@@ -8,6 +8,7 @@
 	<string name="menu_import_file">Import file&#8230;</string>
 	<string name="menu_manage_disks">Manage Disks&#8230;</string>
 	<string name="menu_keyboards">Keyboards&#8230;</string>
+	<string name="menu_speed">Speed</string>
 	<string name="btn_quit">Quit</string>
 	<string name="btn_continue">Continue</string>
 	<string name="btn_ok">OK</string>

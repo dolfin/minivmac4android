@@ -496,6 +496,7 @@ public class EmulatorFragment extends Fragment
     }
 
     public void onPrepareOptionsMenu(Menu menu) {
+        // Populate disk group
         SubMenu dm = menu.findItem(R.id.action_insert_disk).getSubMenu();
         MenuCompat.setGroupDividerEnabled(dm,true);
         dm.removeGroup(R.id.disks_group);
@@ -507,9 +508,23 @@ public class EmulatorFragment extends Fragment
             m.setEnabled(mCore == null || !mCore.isDiskInserted(disks[i]));
             m.setIcon(R.drawable.ic_disk_floppy);
         }
+
+        // Populate speed group
+        SubMenu speedMenu = menu.findItem(R.id.action_speed).getSubMenu();
+
+        String[] speedEntries = getResources().getStringArray(R.array.speed_entries);
+        String[] speedValues = getResources().getStringArray(R.array.speed_values);
+
+        for (int i = 0; i < speedEntries.length; i++) {
+            MenuItem item = speedMenu.add(R.id.speed_group, Integer.parseInt(speedValues[i]), i, speedEntries[i]);
+            item.setChecked(Core.getSpeed() == Integer.parseInt(speedValues[i]));
+        }
+
+        speedMenu.setGroupCheckable(R.id.speed_group, true, true);
     }
 
     public boolean onOptionsItemSelected (MenuItem item) {
+        // Disk group
         if (item.getGroupId() == R.id.disks_group) {
             File[] disks = FileManager.getInstance().getAvailableDisks();
             if (disks != null) {
@@ -523,6 +538,15 @@ public class EmulatorFragment extends Fragment
             // disk not found
             return true;
         }
+
+        // Speed group
+        if (item.getGroupId() == R.id.speed_group) {
+            Core.setSpeed(item.getItemId());
+            item.setChecked(true);
+            return true;
+        }
+
+        // Other actions
         switch(item.getItemId()) {
             case R.id.action_keyboard:
                 toggleKeyboard();

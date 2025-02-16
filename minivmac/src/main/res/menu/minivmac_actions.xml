@@ -1,14 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
       xmlns:minivmac="http://schemas.android.com/apk/res-auto">
+    <item android:id="@+id/action_speed"
+        android:icon="@drawable/ic_action_speedometer"
+        android:title="@string/menu_speed"
+        minivmac:showAsAction="always">
+        <menu>
+            <group android:id="@+id/speed_group"
+                   android:checkableBehavior="single" />
+        </menu>
+    </item>
     <item android:id="@+id/action_keyboard"
         android:icon="@drawable/ic_action_keyboard"
         android:title="@string/menu_keyboard"
-        minivmac:showAsAction="ifRoom" />
+        minivmac:showAsAction="always" />
     <item android:id="@+id/action_insert_disk"
         android:icon="@drawable/ic_action_floppy"
         android:title="@string/menu_insert_disk"
-        minivmac:showAsAction="ifRoom">
+        minivmac:showAsAction="always">
         <menu>
             <group android:id="@+id/actions_grp">
                 <item android:id="@+id/action_manage_disks"
@@ -24,5 +33,5 @@
     <item android:id="@+id/action_settings"
         android:icon="@drawable/ic_action_settings"
         android:title="@string/menu_settings"
-        minivmac:showAsAction="ifRoom" />
+        minivmac:showAsAction="always" />
 </menu>

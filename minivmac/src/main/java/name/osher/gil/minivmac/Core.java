@@ -53,8 +53,8 @@ public class Core {
 	private native static void _resumeEmulation();
 	private native static void _pauseEmulation();
 	private native static boolean isPaused();
-	public native static void setSpeed(int value);
-	public native static int getSpeed();
+	private native static void _setSpeed(int value);
+	private native static int _getSpeed();
 	private native static void setWantMacReset();
 	private native static void setWantMacInterrupt();
 	private native static void setRequestMacOff();
@@ -94,6 +94,16 @@ public class Core {
 		if (!initOk) return;
 		if (isPaused()) return;
 		_pauseEmulation();
+	}
+
+	public static void setSpeed(int value) {
+		if (!mIsInitialized) return;
+		_setSpeed(value);
+	}
+
+	public static int getSpeed() {
+		if (!mIsInitialized) return 0;
+		return _getSpeed();
 	}
 
 	public boolean initScreen() {
