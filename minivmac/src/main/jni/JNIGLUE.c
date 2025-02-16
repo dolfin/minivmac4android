@@ -18,25 +18,10 @@
 	Java Native Interface GLUE
 */
 
-#include <jni.h>
+#include "OSGCOMUI.h"
+#include "OSGCOMUD.h"
 
-#include <stdio.h>
-#include <assert.h>
-#include <stdarg.h>
-#include <errno.h>
-#include <ctype.h>
-#include <signal.h>
-
-#include <time.h>
-#include <stdlib.h>
-
-#include "CNFGRAPI.h"
-#include "SYSDEPNS.h"
-#include "ENDIANAC.h"
-
-#include "MYOSGLUE.h"
-
-#include "STRCONST.h"
+#ifdef WantOSGLUJNI
 
 #define BLACK 0xFF000000
 #define WHITE 0xFFFFFFFF
@@ -62,8 +47,6 @@ jmethodID jInitScreen, jUpdateScreen;
 jmethodID jMySoundInit, jMySoundUnInit, jPlaySound, jMySoundStart, jMySoundStop;
 jobject mCore;
 
-static jmethodID nativeCrashed;
-
 GLOBALPROC MyMoveBytes(anyp srcPtr, anyp destPtr, si5b byteCount)
 {
     memcpy((char *)destPtr, (char *)srcPtr, byteCount);
@@ -74,6 +57,52 @@ GLOBALPROC MyMoveBytes(anyp srcPtr, anyp destPtr, si5b byteCount)
 #define NeedCell2PlainAsciiMap 1
 
 #include "INTLCHAR.h"
+
+/* --- sending debugging info to file --- */
+
+#if dbglog_HAVE
+
+#ifndef dbglog_ToStdErr
+#define dbglog_ToStdErr 1
+#endif
+
+#if ! dbglog_ToStdErr
+LOCALVAR FILE *dbglog_File = NULL;
+#endif
+
+LOCALFUNC blnr dbglog_open0(void)
+{
+#if dbglog_ToStdErr
+    return trueblnr;
+#else
+    dbglog_File = fopen("dbglog.txt", "w");
+    return (NULL != dbglog_File);
+#endif
+}
+
+LOCALPROC dbglog_write0(char *s, uimr L)
+{
+#if dbglog_ToStdErr
+    __android_log_print(ANDROID_LOG_INFO, "Mini vMac", "%.*s", L, s);
+    //(void) fwrite(s, 1, L, stderr);
+#else
+    if (dbglog_File != NULL) {
+        (void) fwrite(s, 1, L, dbglog_File);
+    }
+#endif
+}
+
+LOCALPROC dbglog_close0(void)
+{
+#if ! dbglog_ToStdErr
+    if (dbglog_File != NULL) {
+        fclose(dbglog_File);
+        dbglog_File = NULL;
+    }
+#endif
+}
+
+#endif
 
 #if 0
 #pragma mark -
@@ -107,7 +136,10 @@ LOCALPROC GetCurrentTicks(void)
 		s = localtime(&Current_Time);
 		TimeDelta = Date2MacSeconds(s->tm_sec, s->tm_min, s->tm_hour,
 			s->tm_mday, 1 + s->tm_mon, 1900 + s->tm_year) - t.tv_sec;
-
+#if 0 && AutoTimeZone /* how portable is this ? */
+        CurMacDelta = ((ui5b)(s->tm_gmtoff) & 0x00FFFFFF)
+			| ((s->tm_isdst ? 0x80 : 0) << 24);
+#endif
 		HaveTimeDelta = trueblnr;
 	}
 
@@ -498,6 +530,76 @@ LOCALPROC NativeStrFromCStr(char *r, char *s)
 	r[L] = 0;
 }
 
+#if EmLocalTalk
+LOCALFUNC blnr EntropyGather(void)
+{
+    {
+        ui5b dat[2];
+        int fd;
+
+        if (-1 == (fd = open("/dev/urandom", O_RDONLY))) {
+#if dbglog_HAVE
+            dbglog_writeCStr("open /dev/urandom fails");
+            dbglog_writeNum(errno);
+            dbglog_writeCStr(" (");
+            dbglog_writeCStr(strerror(errno));
+            dbglog_writeCStr(")");
+            dbglog_writeReturn();
+#endif
+        } else {
+
+            if (read(fd, &dat, sizeof(dat)) < 0) {
+#if dbglog_HAVE
+                dbglog_writeCStr("open /dev/urandom fails");
+                dbglog_writeNum(errno);
+                dbglog_writeCStr(" (");
+                dbglog_writeCStr(strerror(errno));
+                dbglog_writeCStr(")");
+                dbglog_writeReturn();
+#endif
+            } else {
+
+#if dbglog_HAVE
+                dbglog_writeCStr("dat: ");
+                dbglog_writeHex(dat[0]);
+                dbglog_writeCStr(" ");
+                dbglog_writeHex(dat[1]);
+                dbglog_writeReturn();
+#endif
+
+                e_p[0] ^= dat[0];
+                e_p[1] ^= dat[1];
+                /*
+                    if "/dev/urandom" is working correctly,
+                    this should make the previous contents of e_p
+                    irrelevant. if it is completely broken, like
+                    returning 0, this will not make e_p any less
+                    random.
+                */
+
+#if dbglog_HAVE
+                dbglog_writeCStr("ep: ");
+                dbglog_writeHex(e_p[0]);
+                dbglog_writeCStr(" ");
+                dbglog_writeHex(e_p[1]);
+                dbglog_writeReturn();
+#endif
+            }
+
+            close(fd);
+        }
+    }
+
+    return trueblnr;
+}
+#endif
+
+#if EmLocalTalk
+
+#include "LOCALTLK.h"
+
+#endif
+
 #if 0
 #pragma mark -
 #pragma mark Floppy Driver
@@ -592,16 +694,20 @@ LOCALPROC UnInitDrives(void)
 #if IncludeSonyGetName
 GLOBALFUNC tMacErr vSonyGetName(tDrive Drive_No, tPbuf *r)
 {
-	jstring result = (*jEnv)->CallObjectMethod(jEnv, mCore, jSonyGetName, (jint)Drive_No);
+    jstring result = (*jEnv)->CallObjectMethod(jEnv, mCore, jSonyGetName, (jint)Drive_No);
 
-	if (NULL == result) {
-		return -1;
-	} else {
-		const char *nativeString = (*jEnv)->GetStringUTFChars(jEnv, result, 0);
-		tMacErr res = NativeTextToMacRomanPbuf(nativeString, r);
-		(*jEnv)->ReleaseStringUTFChars(jEnv, result, nativeString);
-		return res;
-	}
+    if (NULL == result) {
+        return -1;
+    } else {
+        const char *nativeString = (*jEnv)->GetStringUTFChars(jEnv, result, NULL);
+        if (nativeString == NULL) {
+            return -1;
+        }
+        tMacErr res = NativeTextToMacRomanPbuf(nativeString, r);
+        (*jEnv)->ReleaseStringUTFChars(jEnv, result, nativeString);
+        (*jEnv)->DeleteLocalRef(jEnv, result);
+        return res;
+    }
 }
 #endif
 
@@ -1232,15 +1338,7 @@ LOCALFUNC tMacErr LoadMacRomFrom(void * romData, size_t romSize)
         err = mnvm_fnfErr;
     } else {
         memcpy(ROM, romData, kROM_Size);
-        if (kROM_Size != romSize) {
-            if (kROM_Size > romSize) {
-                MacMsgOverride(kStrShortROMTitle,
-                               kStrShortROMMessage);
-                err = mnvm_eofErr;
-            }
-        } else {
-            err = ROM_IsValid();
-        }
+        err = ROM_IsValid();
     }
 
     return err;
@@ -1270,29 +1368,32 @@ LOCALFUNC blnr InitOSGLU(void * romData, size_t romSize)
 {
     if (AllocMyMemory())
 #if CanGetAppPath
-        if (InitWhereAmI())
+    if (InitWhereAmI())
 #endif
 #if dbglog_HAVE
-        if (dbglog_open())
+    if (dbglog_open())
 #endif
-        //if (ScanCommandLine())
-        if (LoadMacRom(romData, romSize))
-        if (LoadInitialImages())
+    //if (ScanCommandLine())
+    if (LoadMacRom(romData, romSize))
+    if (LoadInitialImages())
 #if UseActvCode
-            if (ActvCodeInit())
+    if (ActvCodeInit())
 #endif
-            if (InitLocationDat())
+    if (InitLocationDat())
 #if MySoundEnabled
-                if ((*jEnv)->CallBooleanMethod(jEnv, mCore, jMySoundInit))
+    if ((*jEnv)->CallBooleanMethod(jEnv, mCore, jMySoundInit))
 #endif
-                if (Screen_Init())
-                    //if (CreateMainWindow())
-                    //if (KC2MKCInit())
-                {
-					(*jEnv)->CallVoidMethod(jEnv, mCore, jInitScreen);
-                    initDone = trueblnr;
-                    return trueblnr;
-                }
+    if (Screen_Init())
+    if ((*jEnv)->CallBooleanMethod(jEnv, mCore, jInitScreen))
+    //if (KC2MKCInit())
+#if EmLocalTalk
+    if (EntropyGather())
+    if (InitLocalTalk())
+#endif
+    if (WaitForRom())
+    {
+        return trueblnr;
+    }
     return falseblnr;
 }
 
@@ -1302,12 +1403,16 @@ LOCALPROC UnInitOSGLU(void)
         MacMsgDisplayOff();
     }
 
+#if EmLocalTalk
+    UnInitLocalTalk();
+#endif
+
     //RestoreKeyRepeat();
 #if MayFullScreen
     //UngrabMachine();
 #endif
 #if MySoundEnabled
-	(*jEnv)->CallVoidMethod(jEnv, mCore, jMySoundStop);
+    (*jEnv)->CallVoidMethod(jEnv, mCore, jMySoundStop);
 #endif
 #if MySoundEnabled
     (*jEnv)->CallVoidMethod(jEnv, mCore, jMySoundUnInit);
@@ -1354,7 +1459,7 @@ JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_init (JNIEnv * env,
 		jSonyMakeNewDisk = (*env)->GetMethodID(env, this, "sonyMakeNewDisk", "(ILjava/lang/String;)I");
         jSonyInsert2 = (*env)->GetMethodID(env, this, "sonyInsert2", "(Ljava/lang/String;)Z");
 		jWarnMsg = (*env)->GetMethodID(env, this, "warnMsg", "(Ljava/lang/String;Ljava/lang/String;)V");
-		jInitScreen = (*env)->GetMethodID(env, this, "initScreen", "()V");
+		jInitScreen = (*env)->GetMethodID(env, this, "initScreen", "()Z");
 		jUpdateScreen = (*env)->GetMethodID(env, this, "updateScreen", "(IIII)V");
 		jPlaySound = (*env)->GetMethodID(env, this, "playSound", "([B)I");
         jMySoundInit = (*env)->GetMethodID(env, this, "MySound_Init", "()Z");
@@ -1394,30 +1499,34 @@ static struct sigaction old_sa[NSIG];
 
 void android_sigaction(int signal, siginfo_t *info, void *reserved)
 {
-	(*jEnv)->CallStaticVoidMethod(jEnv, jClass, nativeCrashed);
+    __android_log_print(ANDROID_LOG_ERROR, "NativeCrash", "Signal %d received", signal);
 	old_sa[signal].sa_handler(signal);
 }
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
 {
-	if ((*jvm)->GetEnv(jvm, (void **)&jEnv, JNI_VERSION_1_2)) return JNI_ERR;
-	jClass = (*jEnv)->FindClass(jEnv, "name/osher/gil/minivmac/Core");
+    if ((*jvm)->GetEnv(jvm, (void **)&jEnv, JNI_VERSION_1_2)) return JNI_ERR;
+    jclass localClass = (*jEnv)->FindClass(jEnv, "name/osher/gil/minivmac/Core");
+    if (localClass == NULL) return JNI_ERR;
 
-	nativeCrashed = (*jEnv)->GetStaticMethodID(jEnv, jClass, "nativeCrashed", "()V");
+    jClass = (jclass)(*jEnv)->NewGlobalRef(jEnv, localClass);
+    if (jClass == NULL) return JNI_ERR;
 
-	// Try to catch crashes...
-	struct sigaction handler;
-	memset(&handler, 0, sizeof(sigaction));
-	handler.sa_sigaction = android_sigaction;
-	handler.sa_flags = SA_RESETHAND;
-	#define CATCHSIG(X) sigaction(X, &handler, &old_sa[X])
-	CATCHSIG(SIGILL);
-	CATCHSIG(SIGABRT);
-	CATCHSIG(SIGBUS);
-	CATCHSIG(SIGFPE);
-	CATCHSIG(SIGSEGV);
-	//CATCHSIG(SIGSTKFLT);
-	CATCHSIG(SIGPIPE);
+    // Try to catch crashes...
+    struct sigaction handler;
+    memset(&handler, 0, sizeof(sigaction));
+    handler.sa_sigaction = android_sigaction;
+    handler.sa_flags = SA_RESETHAND;
+    #define CATCHSIG(X) sigaction(X, &handler, &old_sa[X])
+    CATCHSIG(SIGILL);
+    CATCHSIG(SIGABRT);
+    CATCHSIG(SIGBUS);
+    CATCHSIG(SIGFPE);
+    CATCHSIG(SIGSEGV);
+    //CATCHSIG(SIGSTKFLT);
+    CATCHSIG(SIGPIPE);
 
-	return JNI_VERSION_1_2;
+    return JNI_VERSION_1_2;
 }
+
+#endif /* WantOSGLUJNI */

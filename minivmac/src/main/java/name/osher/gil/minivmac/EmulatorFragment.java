@@ -10,6 +10,7 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -95,7 +96,36 @@ public class EmulatorFragment extends Fragment
         }
     }
 
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        if (mEmulatorStarted) {
+            // Release multicast lock
+            WifiManager wifi = (WifiManager) requireContext().getSystemService(Context.WIFI_SERVICE);
+            WifiManager.MulticastLock multicastLock = wifi.createMulticastLock("LToUDPMulticastLock");
+            multicastLock.setReferenceCounted(true);
+            if (multicastLock.isHeld())
+            {
+                Log.i(TAG, "Releasing multicast lock");
+                multicastLock.release();
+            }
+        }
+    }
+
     private void initEmulator() {
+        // Acquire multicast lock
+        WifiManager wifi = (WifiManager) requireContext().getSystemService(Context.WIFI_SERVICE);
+        WifiManager.MulticastLock multicastLock = wifi.createMulticastLock("LToUDPMulticastLock");
+        multicastLock.setReferenceCounted(true);
+        multicastLock.acquire();
+        if (!multicastLock.isHeld())
+        {
+            Log.e(TAG, "Failed to acquire multicast lock");
+        } else {
+            Log.i(TAG, "Acquired multicast lock");
+        }
+
         // load ROM
         String romFileName = getString(R.string.romFileName);
         File romFile = FileManager.getInstance().getRomFile(romFileName);
@@ -205,10 +235,10 @@ public class EmulatorFragment extends Fragment
         final String SYMBOLS_SHIFT = "_symbols_shift";
         final String NUMPAD = "_numpad";
 
-        int qwerty = getResources().getIdentifier(langCode + QWERTY, "xml", getContext().getApplicationInfo().packageName);
-        int symbols = getResources().getIdentifier(langCode + SYMBOLS, "xml", getContext().getApplicationInfo().packageName);
-        int symbols_shift = getResources().getIdentifier(langCode + SYMBOLS_SHIFT, "xml", getContext().getApplicationInfo().packageName);
-        int numpad = getResources().getIdentifier(langCode + NUMPAD, "xml", getContext().getApplicationInfo().packageName);
+        int qwerty = getResources().getIdentifier(langCode + QWERTY, "xml", requireContext().getApplicationInfo().packageName);
+        int symbols = getResources().getIdentifier(langCode + SYMBOLS, "xml", requireContext().getApplicationInfo().packageName);
+        int symbols_shift = getResources().getIdentifier(langCode + SYMBOLS_SHIFT, "xml", requireContext().getApplicationInfo().packageName);
+        int numpad = getResources().getIdentifier(langCode + NUMPAD, "xml", requireContext().getApplicationInfo().packageName);
 
         mQwertyKeyboard = new Keyboard(getContext(), qwerty);
         if (symbols != 0) {

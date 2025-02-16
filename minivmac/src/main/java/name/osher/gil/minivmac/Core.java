@@ -18,7 +18,7 @@ public class Core {
 	private int numInsertedDisks = 0;
 	@SuppressWarnings("unused") private String[] diskPath;
 	@SuppressWarnings("unused") private RandomAccessFile[] diskFile;
-	private boolean initOk = false;
+	private final boolean initOk = false;
 
 	private OnInitScreenListener mOnInitScreenListener;
 	private OnUpdateScreenListener mOnUpdateScreenListener;
@@ -26,12 +26,6 @@ public class Core {
 	private OnAlertListener mOnAlertListener;
 
 	private static Boolean mIsInitialized = false;
-
-	public static void nativeCrashed()
-	{
-		// TODO: Add Error handeling here.
-		Log.e(TAG, "Native crashed!");
-	}
 
 	public Core() {
 	}
@@ -76,14 +70,17 @@ public class Core {
 	}
 
 	public void wantMacReset() {
+		if (!initOk) return;
 		setWantMacReset();
 	}
 
 	public void wantMacInterrupt() {
+		if (!initOk) return;
 		setWantMacInterrupt();
 	}
 
 	public void requestMacOff() {
+		if (!initOk) return;
 		setRequestMacOff();
 	}
 	
@@ -99,12 +96,13 @@ public class Core {
 		_pauseEmulation();
 	}
 
-	public void initScreen() {
+	public boolean initScreen() {
 		final int width = getScreenWidth();
 		final int height = getScreenHeight();
 		if (mOnInitScreenListener != null) {
 			mOnInitScreenListener.onInitScreen(width, height);
 		}
+		return true;
 	}
 
 	public void updateScreen(final int top, final int left, final int bottom, final int right) {
@@ -375,21 +373,21 @@ public class Core {
 		mOnAlertListener.onAlert(shortMsg, longMsg, false, (di, i) -> resumeEmulation());
 	}
 
-	interface OnInitScreenListener {
+	public interface OnInitScreenListener {
 		void onInitScreen(int width, int height);
 	}
 
-	interface OnUpdateScreenListener {
+	public interface OnUpdateScreenListener {
 		void onUpdateScreen(int[] update, int top, int left, int bottom, int right);
 	}
 
-	interface OnDiskEventListener {
+	public interface OnDiskEventListener {
 		void onDiskInserted(String path);
 		void onDiskEjected(String path);
 		void onCreateDisk(int size, String filename);
 	}
 
-	interface OnAlertListener {
+	public interface OnAlertListener {
 		void onAlert(String title, String msg, boolean end, DialogInterface.OnClickListener listener);
 		void onAlert(@StringRes int msgResId, boolean end);
 	}

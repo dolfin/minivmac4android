@@ -140,13 +140,11 @@ public class MiniVMac extends AppCompatActivity
 
 		WindowCompat.setDecorFitsSystemWindows(window, true);
 		WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(window, decorView);
-		if (controller != null) {
-			controller.hide(WindowInsetsCompat.Type.statusBars()
-					| WindowInsetsCompat.Type.navigationBars());
-			controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-		}
+        controller.hide(WindowInsetsCompat.Type.statusBars()
+                | WindowInsetsCompat.Type.navigationBars());
+        controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
 
-		mUIVisible = false;
+        mUIVisible = false;
 	}
 
 	// Shows the system bars by removing all the flags
@@ -163,22 +161,20 @@ public class MiniVMac extends AppCompatActivity
 
 		WindowCompat.setDecorFitsSystemWindows(window, true);
 		WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(window, decorView);
-		if (controller != null) {
-			controller.show(WindowInsetsCompat.Type.statusBars()
-					| WindowInsetsCompat.Type.navigationBars());
-		}
+        controller.show(WindowInsetsCompat.Type.statusBars()
+                | WindowInsetsCompat.Type.navigationBars());
 
-		mUIVisible = true;
+        mUIVisible = true;
 	}
 
 	class SingleTapGestureListener extends GestureDetector.SimpleOnGestureListener {
 		@Override
-		public boolean onDown(MotionEvent event) {
+		public boolean onDown(@NonNull MotionEvent event) {
 			return true;
 		}
 
 		@Override
-		public boolean onSingleTapUp(MotionEvent e) {
+		public boolean onSingleTapUp(@NonNull MotionEvent e) {
 			if (mUIVisible) {
 				hideSystemUI();
 			} else {
