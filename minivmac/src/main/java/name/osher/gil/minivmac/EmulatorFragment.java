@@ -25,6 +25,8 @@ import android.view.SubMenu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -49,6 +51,8 @@ public class EmulatorFragment extends Fragment
     private final static int KEYCODE_NUMPAD = -20;
 
     private ScreenView mScreenView;
+    private View mRestartLayout;
+    private Button mRestartButton;
     private String mLang;
     private Boolean onActivity = false;
     private Boolean isLandscape = false;
@@ -76,6 +80,9 @@ public class EmulatorFragment extends Fragment
 
         onActivity = false;
         mScreenView = root.findViewById(R.id.screen);
+        mRestartLayout = root.findViewById(R.id.restart_layout);
+        mRestartButton = root.findViewById(R.id.restart_button);
+        mRestartButton.setOnClickListener(v -> initEmulator());
         mKeyboardView = root.findViewById(R.id.keyboard);
         mUIHandler = new Handler(getMainLooper());
 
@@ -151,8 +158,9 @@ public class EmulatorFragment extends Fragment
         Thread emulation = new Thread(() -> {
             mCore = new Core();
 
-            mCore.setOnInitScreenListener((screenWidth, screenHeight) -> mUIHandler.post(() -> mScreenView.setTargetScreenSize(screenWidth, screenHeight)
-            ));
+            mCore.setOnInitScreenListener((screenWidth, screenHeight) -> mUIHandler.post(() -> {
+                mScreenView.setTargetScreenSize(screenWidth, screenHeight);
+            }));
 
             mScreenView.setOnMouseEventListener(new ScreenView.OnMouseEventListener() {
                 @Override
@@ -220,8 +228,14 @@ public class EmulatorFragment extends Fragment
                 }
             });
 
+            mUIHandler.post(() -> mRestartLayout.setVisibility(View.GONE));
+
+            // Start the emulation
             mCore.initEmulation(requireContext().getString(R.string.moduleName), rom);
-            System.exit(0);
+
+            // Emulation Ended
+            mCore = null;
+            mUIHandler.post(() -> mRestartLayout.setVisibility(View.VISIBLE));
         });
         mEmulatorStarted = true;
         emulation.setName("EmulationThread");

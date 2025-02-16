@@ -50,6 +50,7 @@
 	<string name="copyingFile">Copying File…</string>
 	<string name="validatingRom">Validating ROM…</string>
 	<string name="copyingRom">Copying ROM…</string>
+	<string name="btn_restart_emulator">Restart Emulator</string>
 
 	<!-- Settings view -->
 	<string name="pref_emulator_title">Emulator</string>

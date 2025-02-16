@@ -40,11 +40,11 @@ LOCALVAR blnr initDone = falseblnr;
 
 // java
 JNIEnv * jEnv;
-jclass jClass;
 jmethodID jSonyTransfer, jSonyGetSize, jSonyEject, jSonyGetName, jSonyMakeNewDisk, jSonyInsert2;
 jmethodID jWarnMsg;
 jmethodID jInitScreen, jUpdateScreen;
 jmethodID jMySoundInit, jMySoundUnInit, jPlaySound, jMySoundStart, jMySoundStop;
+jfieldID sInitOk;
 jobject mCore;
 
 GLOBALPROC MyMoveBytes(anyp srcPtr, anyp destPtr, si5b byteCount)
@@ -1188,10 +1188,45 @@ label_retry:
 
 #include "PROGMAIN.h"
 
-LOCALPROC ZapOSGLUVars(void)
+LOCALPROC ZapOSGLUVars(JNIEnv * env, jclass this, jobject core)
 {
     //InitDrives();
     //ZapWinStateVars();
+
+    ForceMacOff = falseblnr;
+
+    mCore = (*env)->NewGlobalRef(env, core);
+    // get java method IDs
+    jSonyTransfer = (*env)->GetMethodID(env, this, "sonyTransfer", "(ZLjava/nio/ByteBuffer;III)I");
+    jSonyGetSize = (*env)->GetMethodID(env, this, "sonyGetSize", "(I)I");
+    jSonyEject = (*env)->GetMethodID(env, this, "sonyEject", "(IZ)I");
+    jSonyGetName = (*env)->GetMethodID(env, this, "sonyGetName", "(I)Ljava/lang/String;");
+    jSonyMakeNewDisk = (*env)->GetMethodID(env, this, "sonyMakeNewDisk", "(ILjava/lang/String;)I");
+    jSonyInsert2 = (*env)->GetMethodID(env, this, "sonyInsert2", "(Ljava/lang/String;)Z");
+    jWarnMsg = (*env)->GetMethodID(env, this, "warnMsg", "(Ljava/lang/String;Ljava/lang/String;)V");
+    jInitScreen = (*env)->GetMethodID(env, this, "initScreen", "()Z");
+    jUpdateScreen = (*env)->GetMethodID(env, this, "updateScreen", "(IIII)V");
+    jPlaySound = (*env)->GetMethodID(env, this, "playSound", "([B)I");
+    jMySoundInit = (*env)->GetMethodID(env, this, "MySound_Init", "()Z");
+    jMySoundUnInit = (*env)->GetMethodID(env, this, "MySound_UnInit", "()V");
+    jMySoundStart = (*env)->GetMethodID(env, this, "MySound_Start", "()V");
+    jMySoundStop = (*env)->GetMethodID(env, this, "MySound_Stop", "()V");
+
+    // initialize fields
+    jfieldID sDiskPath, sDiskFile, sNumInsertedDisks;
+    sDiskPath = (*env)->GetFieldID(env, this, "diskPath", "[Ljava/lang/String;");
+    sDiskFile = (*env)->GetFieldID(env, this, "diskFile", "[Ljava/io/RandomAccessFile;");
+    sNumInsertedDisks = (*env)->GetFieldID(env, this, "numInsertedDisks", "I");
+    sInitOk = (*env)->GetFieldID(env, this, "initOk", "Z");
+
+    // init drives
+    jobjectArray diskPath = (*env)->NewObjectArray(env, NumDrives, (*env)->FindClass(env, "java/lang/String"), NULL);
+    jobjectArray diskFile = (*env)->NewObjectArray(env, NumDrives, (*env)->FindClass(env, "java/io/RandomAccessFile"), NULL);
+    (*env)->SetIntField(env, mCore, sNumInsertedDisks, 0);
+    (*env)->SetObjectField(env, mCore, sDiskPath, diskPath);
+    (*env)->SetObjectField(env, mCore, sDiskFile, diskFile);
+    (*env)->DeleteLocalRef(env, diskPath);
+    (*env)->DeleteLocalRef(env, diskFile);
 }
 
 LOCALPROC ReserveAllocAll(void)
@@ -1446,44 +1481,18 @@ LOCALPROC UnInitOSGLU(void)
  */
 JNIEXPORT jboolean JNICALL Java_name_osher_gil_minivmac_Core_init (JNIEnv * env, jclass this, jobject core, jobject romBuffer) {
 	if (initDone) return JNI_FALSE;
-	
-	void * romData = (*env)->GetDirectBufferAddress(env, romBuffer);
-	size_t romSize = (*env)->GetDirectBufferCapacity(env, romBuffer);
 
-		mCore = (*env)->NewGlobalRef(env, core);
-		// get java method IDs
-		jSonyTransfer = (*env)->GetMethodID(env, this, "sonyTransfer", "(ZLjava/nio/ByteBuffer;III)I");
-		jSonyGetSize = (*env)->GetMethodID(env, this, "sonyGetSize", "(I)I");
-		jSonyEject = (*env)->GetMethodID(env, this, "sonyEject", "(IZ)I");
-		jSonyGetName = (*env)->GetMethodID(env, this, "sonyGetName", "(I)Ljava/lang/String;");
-		jSonyMakeNewDisk = (*env)->GetMethodID(env, this, "sonyMakeNewDisk", "(ILjava/lang/String;)I");
-        jSonyInsert2 = (*env)->GetMethodID(env, this, "sonyInsert2", "(Ljava/lang/String;)Z");
-		jWarnMsg = (*env)->GetMethodID(env, this, "warnMsg", "(Ljava/lang/String;Ljava/lang/String;)V");
-		jInitScreen = (*env)->GetMethodID(env, this, "initScreen", "()Z");
-		jUpdateScreen = (*env)->GetMethodID(env, this, "updateScreen", "(IIII)V");
-		jPlaySound = (*env)->GetMethodID(env, this, "playSound", "([B)I");
-        jMySoundInit = (*env)->GetMethodID(env, this, "MySound_Init", "()Z");
-        jMySoundUnInit = (*env)->GetMethodID(env, this, "MySound_UnInit", "()V");
-		jMySoundStart = (*env)->GetMethodID(env, this, "MySound_Start", "()V");
-		jMySoundStop = (*env)->GetMethodID(env, this, "MySound_Stop", "()V");
+    JavaVM *jvm;
+    if ((*env)->GetJavaVM(env, &jvm)) return JNI_ERR;
+    if ((*jvm)->GetEnv(jvm, (void **)&jEnv, JNI_VERSION_1_2)) return JNI_ERR;
 
-		// initialize fields
-		jfieldID sDiskPath, sDiskFile, sNumInsertedDisks, sInitOk;
-		sDiskPath = (*env)->GetFieldID(env, this, "diskPath", "[Ljava/lang/String;");
-		sDiskFile = (*env)->GetFieldID(env, this, "diskFile", "[Ljava/io/RandomAccessFile;");
-		sNumInsertedDisks = (*env)->GetFieldID(env, this, "numInsertedDisks", "I");
-		sInitOk = (*env)->GetFieldID(env, this, "initOk", "Z");
+    void * romData = (*env)->GetDirectBufferAddress(env, romBuffer);
+    size_t romSize = (*env)->GetDirectBufferCapacity(env, romBuffer);
 
-		// init drives
-		jobjectArray diskPath = (*env)->NewObjectArray(env, NumDrives, (*env)->FindClass(env, "java/lang/String"), NULL);
-		jobjectArray diskFile = (*env)->NewObjectArray(env, NumDrives, (*env)->FindClass(env, "java/io/RandomAccessFile"), NULL);
-		(*env)->SetIntField(env, mCore, sNumInsertedDisks, 0);
-		(*env)->SetObjectField(env, mCore, sDiskPath, diskPath);
-		(*env)->SetObjectField(env, mCore, sDiskFile, diskFile);
-
-	ZapOSGLUVars();
+	ZapOSGLUVars(env, this, core);
 	if (InitOSGLU(romData, romSize)) {
 		// init ok
+        initDone = trueblnr;
 		(*env)->SetBooleanField(env, mCore, sInitOk, JNI_TRUE);
 
 		ProgramMain();
@@ -1508,9 +1517,6 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
     if ((*jvm)->GetEnv(jvm, (void **)&jEnv, JNI_VERSION_1_2)) return JNI_ERR;
     jclass localClass = (*jEnv)->FindClass(jEnv, "name/osher/gil/minivmac/Core");
     if (localClass == NULL) return JNI_ERR;
-
-    jClass = (jclass)(*jEnv)->NewGlobalRef(jEnv, localClass);
-    if (jClass == NULL) return JNI_ERR;
 
     // Try to catch crashes...
     struct sigaction handler;

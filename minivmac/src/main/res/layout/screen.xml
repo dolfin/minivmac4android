@@ -5,11 +5,27 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#000000">
+
     <name.osher.gil.minivmac.ScreenView
         android:id="@+id/screen"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
         android:layout_weight="1"/>
+
+    <RelativeLayout
+        android:id="@+id/restart_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/transparent"
+        android:visibility="gone">
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/restart_button"
+            android:text="@string/btn_restart_emulator"
+            android:textAllCaps="false"
+            android:layout_centerInParent="true" />
+    </RelativeLayout>
 
     <android.inputmethodservice.KeyboardView
         android:id="@+id/keyboard"
