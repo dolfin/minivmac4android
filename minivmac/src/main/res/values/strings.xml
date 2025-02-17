@@ -58,7 +58,11 @@
 	<string name="pref_machine">Machine&#8230;</string>
 	<string name="pref_machine_title">Select the machine model:</string>
 	<string name="pref_machine_mac128k">Macintosh 128k (128k, 512x342)</string>
+	<string name="pref_machine_mac512ke">Macintosh 512ke (512k, 512x342)</string>
 	<string name="pref_machine_macPlus">Macintosh Plus (4M, 512x342)</string>
+	<string name="pref_machine_macSE">Macintosh SE (4M, 512x342)</string>
+	<string name="pref_machine_macClassic">Macintosh Classic (4M, 512x342)</string>
+	<string name="pref_machine_macSEFDHD">Macintosh SE FDHD (4M, 512x342)</string>
 	<string name="pref_machine_macII">Macintosh II (8M, 640x480)</string>
 	<string name="pref_machine_macIIx">Macintosh IIx (8M, 640x480)</string>
 	<string name="pref_machine_macII_1024">Macintosh II (8M, 1024x768)</string>

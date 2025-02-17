@@ -34,6 +34,7 @@ public class RomManager {
         aMap.put(0x4D1EEAE1, "Macintosh Plus v2");
         aMap.put(0x4D1F8172, "Macintosh Plus v3");
         aMap.put(0xB2E362A8, "Macintosh SE");
+        aMap.put(0xA49F9914, "Macintosh Classic");
         aMap.put(0x97851DB6, "Macintosh II (800k v1)");
         aMap.put(0x9779D2C4, "Macintosh II (800k v2)");
         aMap.put(0x97221136, "Macintosh IIx");
@@ -50,6 +51,7 @@ public class RomManager {
         aMap.put(0x4D1EEAE1, "vMac.ROM");
         aMap.put(0x4D1F8172, "vMac.ROM");
         aMap.put(0xB2E362A8, "MacSE.ROM");
+        aMap.put(0xA49F9914, "Classic.ROM");
         aMap.put(0x97851DB6, "MacII.ROM");
         aMap.put(0x9779D2C4, "MacII.ROM");
         aMap.put(0x97221136, "MacIIx.ROM");

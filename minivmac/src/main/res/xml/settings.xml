@@ -8,7 +8,7 @@
 			app:title="@string/pref_machine"
 			app:icon="@drawable/ic_machine"
 			app:dialogTitle="@string/pref_machine_title"
-			app:dialogIcon="@drawable/ic_chip"
+			app:dialogIcon="@drawable/ic_machine"
 			app:entries="@array/machine_entries"
 			app:entryValues="@array/machine_values" />
 		<Preference

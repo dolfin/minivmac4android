@@ -57,7 +57,7 @@ ifeq ($(NDK_FLAVOR),macII)
 
 	include $(BUILD_SHARED_LIBRARY)
 
-	# Build Mac128k library: libmnvmcore128.so
+	# Build Mac128K library: libmnvmcore128.so
 	LOCAL_PATH := $(MY_LOCAL_PATH)
 	include $(CLEAR_VARS)
 	LOCAL_MODULE := mnvmcore128
@@ -66,6 +66,54 @@ ifeq ($(NDK_FLAVOR),macII)
 	include $(LOCAL_PATH)/main/Android.mk
 	LOCAL_PATH := $(MY_LOCAL_PATH)
 	include $(LOCAL_PATH)/main/jni/variants/mac128k/Android.mk
+
+	include $(BUILD_SHARED_LIBRARY)
+
+	# Build Mac512Ke library: libmnvmcore512.so
+	LOCAL_PATH := $(MY_LOCAL_PATH)
+	include $(CLEAR_VARS)
+	LOCAL_MODULE := mnvmcore512
+	LOCAL_LDFLAGS := -Wl,--build-id
+
+	include $(LOCAL_PATH)/main/Android.mk
+	LOCAL_PATH := $(MY_LOCAL_PATH)
+	include $(LOCAL_PATH)/main/jni/variants/mac512ke/Android.mk
+
+	include $(BUILD_SHARED_LIBRARY)
+
+	# Build MacSE library: libmnvmcorese.so
+	LOCAL_PATH := $(MY_LOCAL_PATH)
+	include $(CLEAR_VARS)
+	LOCAL_MODULE := mnvmcorese
+	LOCAL_LDFLAGS := -Wl,--build-id
+
+	include $(LOCAL_PATH)/main/Android.mk
+	LOCAL_PATH := $(MY_LOCAL_PATH)
+	include $(LOCAL_PATH)/main/jni/variants/macSE/Android.mk
+
+	include $(BUILD_SHARED_LIBRARY)
+
+	# Build MacClassic library: libmnvmcoreclasssic.so
+	LOCAL_PATH := $(MY_LOCAL_PATH)
+	include $(CLEAR_VARS)
+	LOCAL_MODULE := mnvmcoreclassic
+	LOCAL_LDFLAGS := -Wl,--build-id
+
+	include $(LOCAL_PATH)/main/Android.mk
+	LOCAL_PATH := $(MY_LOCAL_PATH)
+	include $(LOCAL_PATH)/main/jni/variants/macClassic/Android.mk
+
+	include $(BUILD_SHARED_LIBRARY)
+
+	# Build MacSEFDHD library: libmnvmcoresefdhd.so
+	LOCAL_PATH := $(MY_LOCAL_PATH)
+	include $(CLEAR_VARS)
+	LOCAL_MODULE := mnvmcoresefdhd
+	LOCAL_LDFLAGS := -Wl,--build-id
+
+	include $(LOCAL_PATH)/main/Android.mk
+	LOCAL_PATH := $(MY_LOCAL_PATH)
+	include $(LOCAL_PATH)/main/jni/variants/macSEFDHD/Android.mk
 
 	include $(BUILD_SHARED_LIBRARY)
 endif
