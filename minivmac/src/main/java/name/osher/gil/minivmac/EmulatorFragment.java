@@ -50,6 +50,8 @@ public class EmulatorFragment extends Fragment
     private final static int KEYCODE_MAC_SHIFT = 56;
     private final static int KEYCODE_NUMPAD = -20;
 
+    private String mRomFileName;
+    private long mRomChecksum;
     private ScreenView mScreenView;
     private View mRestartLayout;
     private Button mRestartButton;
@@ -134,8 +136,7 @@ public class EmulatorFragment extends Fragment
         }
 
         // load ROM
-        String romFileName = getString(R.string.romFileName);
-        File romFile = FileManager.getInstance().getRomFile(romFileName);
+        File romFile = FileManager.getInstance().getRomFile(mRomFileName);
         ByteBuffer rom;
         try {
             rom = ByteBuffer.allocateDirect((int)romFile.length());
@@ -147,6 +148,7 @@ public class EmulatorFragment extends Fragment
             SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
             SharedPreferences.Editor edit = sharedPref.edit();
             edit.remove(SettingsFragment.KEY_PREF_ROM);
+            edit.remove(SettingsFragment.KEY_PREF_ROM_FILE);
             edit.apply();
             Utils.showAlert(getContext(), null, getString(R.string.errNoROM), false,
                     (dialog, which) -> showSettings());
@@ -231,7 +233,7 @@ public class EmulatorFragment extends Fragment
             mUIHandler.post(() -> mRestartLayout.setVisibility(View.GONE));
 
             // Start the emulation
-            mCore.initEmulation(requireContext().getString(R.string.moduleName), rom);
+            mCore.initEmulation(rom);
 
             // Emulation Ended
             mCore = null;
@@ -383,16 +385,35 @@ public class EmulatorFragment extends Fragment
 
     private void updateByPrefs() {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
+        String moduleName = sharedPref.getString(SettingsFragment.KEY_PREF_MACHINE, getDefaultModuleName());
+        mRomFileName = sharedPref.getString(SettingsFragment.KEY_PREF_ROM_FILE, getDefaultRomFile());
         boolean scalePref = sharedPref.getBoolean(SettingsFragment.KEY_PREF_SCALE, true);
         boolean scrollPref = sharedPref.getBoolean(SettingsFragment.KEY_PREF_SCROLL, false);
+        Core.setModule(moduleName);
         mScreenView.setScaled(scalePref);
         mScreenView.setScroll(scrollPref);
+
+        long romChecksum = mRomChecksum;
+        mRomChecksum = sharedPref.getLong(SettingsFragment.KEY_PREF_ROM_CHECKSUM, RomManager.INVALID_CHECKSUM);
+        if (romChecksum != mRomChecksum) {
+            if (mCore != null) {
+                mCore.forceMacOff();
+            }
+        }
 
         String newLang = sharedPref.getString(SettingsFragment.KEY_PREF_KEYBOARDS, "us");
         if (!newLang.equals(mLang)) {
             mLang = newLang;
             initKeyboard(newLang);
         }
+    }
+
+    private String getDefaultRomFile() {
+        return getResources().getString(R.string.defaultRomFileName);
+    }
+
+    private String getDefaultModuleName() {
+        return getResources().getString(R.string.defaultModuleName);
     }
 
     @Override

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Mini V II</string>
-    <string name="romFileName">MacII.ROM</string>
-    <string name="aboutTitle">A Macintosh II Emulator for Android based on Mini vMac</string>
-    <string name="moduleName">mnvmcoreii</string>
-    <string name="model">Macintosh II</string>
+    <string name="defaultRomFileName">MacII.ROM</string>
+    <string name="aboutTitle">A Macintosh Emulator for Android based on Mini vMac</string>
+    <string name="defaultModuleName">libmnvmcoreii.so</string>
+    <string name="model">Macintosh II, Macintosh Plus, or Macintosh 128K</string>
 </resources>

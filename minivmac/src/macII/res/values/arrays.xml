@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="machine_entries">
+        <item>@string/pref_machine_mac128k</item>
+        <item>@string/pref_machine_macPlus</item>
+        <item>@string/pref_machine_macII</item>
+        <item>@string/pref_machine_macIIx</item>
+        <item>@string/pref_machine_macII_1024</item>
+        <item>@string/pref_machine_macIIx_1024</item>
+        <item>@string/pref_machine_macII_512</item>
+        <item>@string/pref_machine_macIIx_512</item>
+    </string-array>
+    <string-array name="machine_values">
+        <item>libmnvmcore128.so</item>
+        <item>libmnvmcoreplus.so</item>
+        <item>libmnvmcoreii.so</item>
+        <item>libmnvmcoreii.so</item>
+        <item>libmnvmcoreii1024.so</item>
+        <item>libmnvmcoreii1024.so</item>
+        <item>libmnvmcoreii512.so</item>
+        <item>libmnvmcoreii512.so</item>
+    </string-array>
+    <string-array name="machine_rom_names">
+        <item>Mac128K.ROM</item>
+        <item>vMac.ROM</item>
+        <item>MacII.ROM</item>
+        <item>MacIIx.ROM</item>
+    </string-array>
+</resources>

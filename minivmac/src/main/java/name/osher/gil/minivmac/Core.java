@@ -3,6 +3,7 @@ package name.osher.gil.minivmac;
 import java.io.File;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 import android.content.DialogInterface;
 import android.media.AudioFormat;
@@ -27,7 +28,18 @@ public class Core {
 
 	private static Boolean mIsInitialized = false;
 
+	private static String mModuleName;
+
+	static {
+		System.loadLibrary("jni_proxy");
+	}
+
 	public Core() {
+		if (mModuleName != null) {
+			loadVariant(mModuleName);
+		} else {
+			throw new IllegalStateException("Module name is not set.");
+		}
 	}
 
 	public void setOnInitScreenListener(OnInitScreenListener listener) {
@@ -47,6 +59,7 @@ public class Core {
 	}
 	
 	// initialization
+	public native boolean loadVariant(String libPath);
 	private native static boolean init(Core core, ByteBuffer rom);
 	
 	// emulation
@@ -58,13 +71,24 @@ public class Core {
 	private native static void setWantMacReset();
 	private native static void setWantMacInterrupt();
 	private native static void setRequestMacOff();
+	private native static void setForceMacOff();
+
+	public static void setModule(String moduleName) {
+		if (!Objects.equals(mModuleName, moduleName)) {
+			mModuleName = moduleName;
+			if (mIsInitialized) {
+				setForceMacOff();
+				mIsInitialized = false;
+			}
+		}
+	}
 
 	public static Boolean isInitialized() {
 		return mIsInitialized;
 	}
 
-	public Boolean initEmulation(String moduleName, ByteBuffer rom) {
-		System.loadLibrary(moduleName);
+	public Boolean initEmulation(ByteBuffer rom) {
+		loadVariant(mModuleName);
 		mIsInitialized = true;
 		return init(this, rom);
 	}
@@ -82,6 +106,18 @@ public class Core {
 	public void requestMacOff() {
 		if (!initOk) return;
 		setRequestMacOff();
+	}
+
+	public void forceMacOff() {
+		// eject all disks
+		for (int i = 0; i < diskFile.length; i++) {
+			if (diskFile[i] != null) {
+				sonyEject(i, false);
+			}
+		}
+
+		// force off
+		setForceMacOff();
 	}
 	
 	public void resumeEmulation() {

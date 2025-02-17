@@ -17,6 +17,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.AppCompatTextView;
 import androidx.fragment.app.Fragment;
+import androidx.preference.ListPreference;
 
 
 public class WelcomeFragment extends Fragment {
@@ -27,8 +28,24 @@ public class WelcomeFragment extends Fragment {
                 RomManager romManager = new RomManager();
                 romManager.loadRom(requireContext(), uri, () -> {
                     SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
+
+                    // Update machine based on ROM file
+                    String machine = getResources().getString(R.string.defaultModuleName);
+                    String[] romNames = getResources().getStringArray(R.array.machine_rom_names);
+                    String[] machineValues = getResources().getStringArray(R.array.machine_values);
+                    for (int i = 0; i < romNames.length; i++) {
+                        if (romNames[i].equals(romManager.getRomFileName())) {
+                            machine = machineValues[i];
+                            break;
+                        }
+                    }
+
+                    // Save ROM file and machine in shared preferences
                     SharedPreferences.Editor edit = sharedPref.edit();
                     edit.putString(SettingsFragment.KEY_PREF_ROM, romManager.getRomName());
+                    edit.putString(SettingsFragment.KEY_PREF_ROM_FILE, romManager.getRomFileName());
+                    edit.putLong(SettingsFragment.KEY_PREF_ROM_CHECKSUM, romManager.getRomChecksum());
+                    edit.putString(SettingsFragment.KEY_PREF_MACHINE, machine);
                     edit.apply();
                     ((MiniVMac)requireActivity()).showEmulator();
                 });

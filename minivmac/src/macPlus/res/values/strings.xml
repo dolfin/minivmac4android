@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Mini vMac</string>
-    <string name="romFileName">vMac.ROM</string>
+    <string name="defaultRomFileName">vMac.ROM</string>
     <string name="aboutTitle">Mini vMac for Android</string>
-    <string name="moduleName">mnvmcoreplus</string>
+    <string name="defaultModuleName">libmnvmcoreplus.so</string>
     <string name="model">Macintosh Plus</string>
 </resources>

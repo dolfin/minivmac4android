@@ -3,7 +3,7 @@ LOCAL_PATH := $(call my-dir)
 LOCAL_SRC_FILES := \
 	$(LOCAL_PATH)/jni/src/GLOBGLUE.c \
 	$(LOCAL_PATH)/jni/src/IWMEMDEV.c \
-	$(LOCAL_PATH)/jni/JNIGLUE.c \
+	$(LOCAL_PATH)/jni/src/OSGLUJNI.c \
 	$(LOCAL_PATH)/jni/src/M68KITAB.c \
 	$(LOCAL_PATH)/jni/src/MINEM68K.c \
 	$(LOCAL_PATH)/jni/src/MOUSEMDV.c \

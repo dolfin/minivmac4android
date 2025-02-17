@@ -39,7 +39,7 @@ public class MiniVMac extends AppCompatActivity
 		// Check that the the file-system is readable
 		if (!FileManager.getInstance().init(this)) {
 			Utils.showAlert(this, String.format(getString(R.string.errNoDataDir), FileManager.getInstance().getRomDir().getPath(),
-					getString(R.string.romFileName)), true);
+					getString(R.string.defaultRomFileName)), true);
 		}
 
 		// Check if ROM file was already provided and copied to the ROM directory

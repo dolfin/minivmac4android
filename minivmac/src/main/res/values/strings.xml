@@ -55,6 +55,16 @@
 
 	<!-- Settings view -->
 	<string name="pref_emulator_title">Emulator</string>
+	<string name="pref_machine">Machine&#8230;</string>
+	<string name="pref_machine_title">Select the machine model:</string>
+	<string name="pref_machine_mac128k">Macintosh 128k (128k, 512x342)</string>
+	<string name="pref_machine_macPlus">Macintosh Plus (4M, 512x342)</string>
+	<string name="pref_machine_macII">Macintosh II (8M, 640x480)</string>
+	<string name="pref_machine_macIIx">Macintosh IIx (8M, 640x480)</string>
+	<string name="pref_machine_macII_1024">Macintosh II (8M, 1024x768)</string>
+	<string name="pref_machine_macIIx_1024">Macintosh IIx (8M, 1024x768)</string>
+	<string name="pref_machine_macII_512">Macintosh II (8M, 512x342)</string>
+	<string name="pref_machine_macIIx_512">Macintosh IIx (8M, 512x342)</string>
 	<string name="pref_rom">ROM File&#8230;</string>
 	<string name="pref_rom_summ">No ROM file was selected</string>
 	<string name="pref_view_title">View</string>

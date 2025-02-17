@@ -3,24 +3,32 @@
 	<PreferenceCategory
 		app:title="@string/pref_emulator_title"
 		app:key="pref_key_emulator_settings">
-	<Preference
-		app:key="pref_rom"
-		app:title="@string/pref_rom"
-		app:summary="@string/pref_rom_summ"
-		app:icon="@drawable/ic_chip" />
-	<Preference
-		app:key="pref_disk_manager"
-		app:title="@string/menu_manage_disks"
-		app:icon="@drawable/ic_floppy" />
-	<ListPreference
-		app:key="pref_keyboards"
-		app:title="@string/menu_keyboards"
-		app:icon="@drawable/ic_keyboard"
-		app:dialogTitle="@string/prefs_keyboards_title"
-		app:dialogIcon="@drawable/ic_keyboard"
-		app:defaultValue="us"
-		app:entries="@array/kbd_entries"
-		app:entryValues="@array/kbd_values"/>
+		<ListPreference
+			app:key="pref_machine"
+			app:title="@string/pref_machine"
+			app:icon="@drawable/ic_machine"
+			app:dialogTitle="@string/pref_machine_title"
+			app:dialogIcon="@drawable/ic_chip"
+			app:entries="@array/machine_entries"
+			app:entryValues="@array/machine_values" />
+		<Preference
+			app:key="pref_rom"
+			app:title="@string/pref_rom"
+			app:summary="@string/pref_rom_summ"
+			app:icon="@drawable/ic_chip" />
+		<Preference
+			app:key="pref_disk_manager"
+			app:title="@string/menu_manage_disks"
+			app:icon="@drawable/ic_floppy" />
+		<ListPreference
+			app:key="pref_keyboards"
+			app:title="@string/menu_keyboards"
+			app:icon="@drawable/ic_keyboard"
+			app:dialogTitle="@string/prefs_keyboards_title"
+			app:dialogIcon="@drawable/ic_keyboard"
+			app:defaultValue="us"
+			app:entries="@array/kbd_entries"
+			app:entryValues="@array/kbd_values"/>
 	</PreferenceCategory>
 	<PreferenceCategory
 		app:title="@string/pref_view_title"

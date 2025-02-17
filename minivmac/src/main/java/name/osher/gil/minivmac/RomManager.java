@@ -23,6 +23,7 @@ public class RomManager {
     private static final int ROM_SIZE_MAC_PLUS = 0x20000;
     private static final int ROM_SIZE_MAC_II   = 0x40000;
     private static final String UNKNOWN_ROM = "Unknown ROM";
+    private static final String GENERIC_ROM = "vMac.ROM";
     public static final long INVALID_CHECKSUM = -1;
     private static final Map<Integer, String> _romVersions;
     static {
@@ -40,9 +41,34 @@ public class RomManager {
         _romVersions = Collections.unmodifiableMap(aMap);
     }
 
+    private static final Map<Integer, String> _romFileNames;
+    static {
+        Map<Integer, String> aMap = new HashMap<>();
+        aMap.put(0x28BA61CE, "Mac128K.ROM");
+        aMap.put(0x28BA4E50, "Mac128K.ROM");
+        aMap.put(0x4D1EEEE1, "vMac.ROM");
+        aMap.put(0x4D1EEAE1, "vMac.ROM");
+        aMap.put(0x4D1F8172, "vMac.ROM");
+        aMap.put(0xB2E362A8, "MacSE.ROM");
+        aMap.put(0x97851DB6, "MacII.ROM");
+        aMap.put(0x9779D2C4, "MacII.ROM");
+        aMap.put(0x97221136, "MacIIx.ROM");
+        aMap.put(0xB306E171, "SEFDHD.ROM");
+        _romFileNames = Collections.unmodifiableMap(aMap);
+    }
+
     private String _romName = UNKNOWN_ROM;
+    private String _romFileName = GENERIC_ROM;
+
+    private long _romChecksum = INVALID_CHECKSUM;
 
     public String getRomName() { return _romName; }
+
+    public String getRomFileName() { return _romFileName; }
+
+    public long getRomChecksum() {
+        return _romChecksum;
+    }
 
     public void loadRom(Context context, Uri romUri, Runnable onSuccess) {
         if (romUri != null) {
@@ -96,7 +122,7 @@ public class RomManager {
                         copyProgressDialog.setTitle(R.string.copyingRom);
                         copyProgressDialog.show();
                     });
-                    romCopiedSuccessfully = copyRom(context, romFile, progress
+                    romCopiedSuccessfully = copyRom(context, romFile, _romFileNames.get((int)checksum), progress
                             -> handler.post(() -> copyProgressDialog.setProgress(progress)));
                     handler.post(copyProgressDialog::dismiss);
                 } else {
@@ -137,12 +163,21 @@ public class RomManager {
             _romName = romName;
         }
 
+        String romFileName = _romFileNames.get((int)checksum);
+        if (romFileName == null) {
+            _romFileName = GENERIC_ROM;
+        } else {
+            _romFileName = romFileName;
+        }
+
+        _romChecksum = checksum;
+
         return checksum;
     }
 
-    private boolean copyRom(Context context, InputStream romFile, IProgressCallback callback) {
+    private boolean copyRom(Context context, InputStream romFile, String dstFileName, IProgressCallback callback) {
         try {
-            File dst = FileManager.getInstance().getRomFile(context.getString(R.string.romFileName));
+            File dst = FileManager.getInstance().getRomFile(dstFileName);
             FileManager.getInstance().copy(romFile, dst, callback);
         } catch (IOException ex) {
             // Unable to copy ROM
@@ -174,9 +209,8 @@ public class RomManager {
             totalBytesCopied++;
         }
 
-        for (i = (getRomSize() - 4) >> 1; --i >= 0; ) {
-            long b1 = romFile.read();
-            long b2 = romFile.read();
+        int b1 = 0, b2 = 0;
+        for (i = 0; (b1 = romFile.read()) != -1 && (b2 = romFile.read()) != -1 && totalBytesCopied < getRomSize(); i++) {
             calculatedChecksum += (b1 << 8) | b2;
 
             totalBytesCopied += 2;
@@ -185,12 +219,12 @@ public class RomManager {
             if (callback != null) {
                 callback.onProgressUpdated(progress);
             }
+
+            if (signatureChecksum == calculatedChecksum) {
+                return signatureChecksum;
+            }
         }
 
-        if (signatureChecksum == calculatedChecksum) {
-            return signatureChecksum;
-        } else {
-            return -1;
-        }
+        return -1;
     }
 }

@@ -1,5 +1,6 @@
 package name.osher.gil.minivmac;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -19,7 +20,10 @@ import java.util.Objects;
 public class SettingsFragment extends PreferenceFragmentCompat {
 	private static final String TAG = "minivmac.SettingsFrag";
 
+	public static final String KEY_PREF_MACHINE = "pref_machine";
 	public static final String KEY_PREF_ROM = "pref_rom";
+	public static final String KEY_PREF_ROM_FILE = "pref_rom_file";
+	public static final String KEY_PREF_ROM_CHECKSUM = "pref_rom_checksum";
 	public static final String KEY_PREF_DISK_MANAGER = "pref_disk_manager";
 	public static final String KEY_PREF_KEYBOARDS = "pref_keyboards";
 	public static final String KEY_PREF_SCALE = "pref_scale";
@@ -35,6 +39,8 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 	public static final int RESULT_INTERRUPT = 20;
 	public static final int RESULT_ABOUT = 30;
 
+	private static String MAC_II_ROM_PREFIX = "MacII";
+
 	private SharedPreferences _preferences;
 
 	ActivityResultLauncher<String> _getRom = registerForActivityResult(new ActivityResultContracts.GetContent(),
@@ -47,7 +53,21 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 						pref_rom.setSummary(romManager.getRomName());
 						SharedPreferences.Editor edit = _preferences.edit();
 						edit.putString(KEY_PREF_ROM, romManager.getRomName());
+						edit.putString(KEY_PREF_ROM_FILE, romManager.getRomFileName());
+						edit.putLong(KEY_PREF_ROM_CHECKSUM, romManager.getRomChecksum());
 						edit.apply();
+
+						// Update machine based on ROM file
+						ListPreference pref_machine = findPreference( KEY_PREF_MACHINE );
+						String[] romNames = getResources().getStringArray(R.array.machine_rom_names);
+						String[] machineValues = getResources().getStringArray(R.array.machine_values);
+						for (int i = 0; i < romNames.length; i++) {
+							if (romNames[i].equals(romManager.getRomFileName())) {
+								pref_machine.setValue(machineValues[i]);
+								pref_machine.setSummary(getMachineString(machineValues[i]));
+								break;
+							}
+						}
 					});
 				}
 			});
@@ -59,11 +79,33 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 		_preferences = getPreferenceManager().getSharedPreferences();
 		Context context = getPreferenceManager().getContext();
 
+		ListPreference pref_machine = findPreference( KEY_PREF_MACHINE );
+		String machineName = _preferences.getString(KEY_PREF_MACHINE, getDefaultMachine());
+		pref_machine.setValue(machineName);
+		pref_machine.setSummary(getMachineString(machineName));
+
+		pref_machine.setOnPreferenceChangeListener((preference, newValue) -> {
+			new AlertDialog.Builder(context)
+					.setTitle("Confirm Change")
+					.setMessage("Are you sure you want to change the machine? This will restart the emulator, and you will have to provide a new ROM file.")
+					.setPositiveButton(android.R.string.yes, (dialog, which) -> {
+						String moduleName = newValue.toString();
+						SharedPreferences.Editor edit = _preferences.edit();
+						edit.putString(KEY_PREF_MACHINE, moduleName);
+						edit.apply();
+						pref_machine.setSummary(getMachineString(moduleName));
+					})
+					.setNegativeButton(android.R.string.no, null)
+					.show();
+			return false;
+		});
+
 		Preference pref_rom = findPreference(KEY_PREF_ROM);
 		pref_rom.setOnPreferenceClickListener(preference -> {
 			_getRom.launch("application/octet-stream");
 			return true;
 		});
+		String romFile = _preferences.getString(KEY_PREF_ROM_FILE, getResources().getString(R.string.defaultRomFileName));
 		String romName = _preferences.getString(KEY_PREF_ROM, getString(R.string.pref_rom_summ));
 		pref_rom.setSummary(romName);
 
@@ -104,7 +146,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 		});
 
 		Preference pref_reset = findPreference( KEY_PREF_RESET );
-		pref_reset.setEnabled(BuildConfig.FLAVOR.equals("macPlus") && Core.isInitialized());
+		pref_reset.setEnabled(!romFile.startsWith(MAC_II_ROM_PREFIX) && Core.isInitialized());
 		pref_reset.setOnPreferenceClickListener(preference -> {
 			requireActivity().setResult(RESULT_RESET);
 			requireActivity().finish();
@@ -112,7 +154,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 		});
 
 		Preference pref_interrupt = findPreference( KEY_PREF_INTERRUPT );
-		pref_interrupt.setEnabled(BuildConfig.FLAVOR.equals("macPlus") && Core.isInitialized());
+		pref_interrupt.setEnabled(!romFile.startsWith(MAC_II_ROM_PREFIX) && Core.isInitialized());
 		pref_interrupt.setOnPreferenceClickListener(preference -> {
 			requireActivity().setResult(RESULT_INTERRUPT);
 			requireActivity().finish();
@@ -161,5 +203,24 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 		speeds_ent.recycle();
 		speeds_val.recycle();
 		return summary;
+	}
+
+	private String getMachineString(String machine) {
+		String summary = "";
+		TypedArray machines_ent = getContext().getResources().obtainTypedArray(R.array.machine_entries);
+		TypedArray machines_val = getContext().getResources().obtainTypedArray(R.array.machine_values);
+		for (int i = 0 ; i < machines_val.length() ; i++) {
+			String val = machines_val.getString(i);
+			if (Objects.equals(machine, val)) {
+				summary = machines_ent.getString(i);
+			}
+		}
+		machines_ent.recycle();
+		machines_val.recycle();
+		return summary;
+	}
+
+	private String getDefaultMachine() {
+		return getResources().getString(R.string.defaultModuleName);
 	}
 }
