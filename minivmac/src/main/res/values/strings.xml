@@ -8,6 +8,7 @@
 	<string name="menu_import_file">Import file&#8230;</string>
 	<string name="menu_manage_disks">Manage Disks&#8230;</string>
 	<string name="menu_keyboards">Keyboards&#8230;</string>
+	<string name="menu_mouse">Mouse Type&#8230;</string>
 	<string name="menu_speed">Speed</string>
 	<string name="btn_quit">Quit</string>
 	<string name="btn_continue">Continue</string>
@@ -52,6 +53,7 @@
 	<string name="validatingRom">Validating ROM…</string>
 	<string name="copyingRom">Copying ROM…</string>
 	<string name="btn_restart_emulator">Restart Emulator</string>
+	<string name="toggle_system_ui">Toggle Menu</string>
 
 	<!-- Settings view -->
 	<string name="pref_emulator_title">Emulator</string>
@@ -93,6 +95,9 @@
 	<string name="prefs_kbd_he">Hebrew</string>
 	<string name="prefs_kbd_es">Spanish</string>
 	<string name="prefs_kbd_es_iso">Spanish (ISO)</string>
+	<string name="prefs_mouse_title">Select Mouse Type:</string>
+	<string name="prefs_mouse_touchscreen">Touchscreen</string>
+	<string name="prefs_mouse_trackpad">Trackpad</string>
 	<string name="prefs_reset">Reset</string>
 	<string name="prefs_interrupt">Interrupt</string>
 	<string name="pref_learn_title">Learn</string>

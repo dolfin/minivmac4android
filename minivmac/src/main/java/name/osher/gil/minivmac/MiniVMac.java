@@ -127,6 +127,18 @@ public class MiniVMac extends AppCompatActivity
 		}
 	}
 
+	public boolean isUIVisible() {
+		return mUIVisible;
+	}
+
+	public void toggleSystemUI() {
+		if (mUIVisible) {
+			hideSystemUI();
+		} else {
+			showSystemUI();
+		}
+	}
+
 	private void hideSystemUI() {
 		// Enables regular immersive mode.
 		Window window = getWindow();
@@ -175,11 +187,7 @@ public class MiniVMac extends AppCompatActivity
 
 		@Override
 		public boolean onSingleTapUp(@NonNull MotionEvent e) {
-			if (mUIVisible) {
-				hideSystemUI();
-			} else {
-				showSystemUI();
-			}
+			toggleSystemUI();
 			return true;
 		}
 	}

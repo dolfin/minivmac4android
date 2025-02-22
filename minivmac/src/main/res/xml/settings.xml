@@ -3,6 +3,11 @@
 	<PreferenceCategory
 		app:title="@string/pref_emulator_title"
 		app:key="pref_key_emulator_settings">
+		<Preference
+			app:key="pref_rom"
+			app:title="@string/pref_rom"
+			app:summary="@string/pref_rom_summ"
+			app:icon="@drawable/ic_chip" />
 		<ListPreference
 			app:key="pref_machine"
 			app:title="@string/pref_machine"
@@ -11,11 +16,6 @@
 			app:dialogIcon="@drawable/ic_machine"
 			app:entries="@array/machine_entries"
 			app:entryValues="@array/machine_values" />
-		<Preference
-			app:key="pref_rom"
-			app:title="@string/pref_rom"
-			app:summary="@string/pref_rom_summ"
-			app:icon="@drawable/ic_chip" />
 		<Preference
 			app:key="pref_disk_manager"
 			app:title="@string/menu_manage_disks"
@@ -29,6 +29,16 @@
 			app:defaultValue="us"
 			app:entries="@array/kbd_entries"
 			app:entryValues="@array/kbd_values"/>
+		<ListPreference
+			app:key="pref_mouse"
+			app:title="@string/menu_mouse"
+			app:icon="@drawable/ic_mouse"
+			app:dialogTitle="@string/prefs_mouse_title"
+			app:dialogIcon="@drawable/ic_mouse"
+			app:entries="@array/mouse_entries"
+			app:entryValues="@array/mouse_values"
+			app:useSimpleSummaryProvider="true"
+			app:defaultValue="touchscreen" />
 	</PreferenceCategory>
 	<PreferenceCategory
 		app:title="@string/pref_view_title"

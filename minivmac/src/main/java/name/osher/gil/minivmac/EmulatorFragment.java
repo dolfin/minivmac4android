@@ -26,6 +26,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -53,11 +54,13 @@ public class EmulatorFragment extends Fragment
     private String mRomFileName;
     private long mRomChecksum;
     private ScreenView mScreenView;
+    private TrackPadView mTrackPadView;
+    private ImageButton mFullScreenButton;
     private View mRestartLayout;
     private Button mRestartButton;
     private String mLang;
+    private boolean mIsTrackpad;
     private Boolean onActivity = false;
-    private Boolean isLandscape = false;
     private Boolean mEmulatorStarted = false;
 
     private KeyboardView mKeyboardView;
@@ -82,14 +85,25 @@ public class EmulatorFragment extends Fragment
 
         onActivity = false;
         mScreenView = root.findViewById(R.id.screen);
+        mTrackPadView = root.findViewById(R.id.trackpad);
         mRestartLayout = root.findViewById(R.id.restart_layout);
         mRestartButton = root.findViewById(R.id.restart_button);
         mRestartButton.setOnClickListener(v -> initEmulator());
         mKeyboardView = root.findViewById(R.id.keyboard);
         mUIHandler = new Handler(getMainLooper());
 
-        isLandscape = (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
-        toggleFullscreen(isLandscape);
+        mFullScreenButton = root.findViewById(R.id.toggle_ui_button);
+        mFullScreenButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ((MiniVMac)requireActivity()).toggleSystemUI();
+                if (((MiniVMac)requireActivity()).isUIVisible()) {
+                    mFullScreenButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_fullscreen));
+                } else {
+                    mFullScreenButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_fullscreen_exit));
+                }
+            }
+        });
 
         updateByPrefs();
 
@@ -168,6 +182,18 @@ public class EmulatorFragment extends Fragment
                 @Override
                 public void onMouseMove(int x, int y) {
                     mCore.setMousePosition(x, y);
+                }
+
+                @Override
+                public void onMouseClick(boolean down) {
+                    mCore.setMouseBtn(down);
+                }
+            });
+
+            mTrackPadView.setOnMouseEventListener(new ScreenView.OnMouseEventListener() {
+                @Override
+                public void onMouseMove(int dx, int dy) {
+                    mCore.setMoveMouse(dx, dy);
                 }
 
                 @Override
@@ -383,6 +409,16 @@ public class EmulatorFragment extends Fragment
         }
     };
 
+    private void setTrackpad(boolean isTrackpad) {
+        if (isTrackpad) {
+            mTrackPadView.setVisibility(View.VISIBLE);
+            mFullScreenButton.setVisibility(View.VISIBLE);
+        } else {
+            mTrackPadView.setVisibility(View.GONE);
+            mFullScreenButton.setVisibility(View.GONE);
+        }
+    }
+
     private void updateByPrefs() {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
         String moduleName = sharedPref.getString(SettingsFragment.KEY_PREF_MACHINE, getDefaultModuleName());
@@ -405,6 +441,13 @@ public class EmulatorFragment extends Fragment
         if (!newLang.equals(mLang)) {
             mLang = newLang;
             initKeyboard(newLang);
+        }
+
+        String mouseType = sharedPref.getString(SettingsFragment.KEY_PREF_MOUSE, "touchscreen");
+        Boolean isTrackpad = mouseType.equals("trackpad");
+        if (!isTrackpad.equals(mIsTrackpad)) {
+            mIsTrackpad = isTrackpad;
+            setTrackpad(mIsTrackpad);
         }
     }
 
@@ -499,17 +542,7 @@ public class EmulatorFragment extends Fragment
     @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        isLandscape = (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE);
-        toggleFullscreen(isLandscape);
         initKeyboard(mLang);
-    }
-
-    private void toggleFullscreen(Boolean isFullscreen) {
-        if(isFullscreen) {
-            requireActivity().getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        } else {
-            requireActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        }
     }
 
     public void onCreateOptionsMenu(@NonNull Menu menu, MenuInflater inflater) {

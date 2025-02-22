@@ -34,4 +34,12 @@
         <item>es</item>
         <item>es_iso</item>
     </string-array>
+    <string-array name="mouse_entries">
+        <item>@string/prefs_mouse_touchscreen</item>
+        <item>@string/prefs_mouse_trackpad</item>
+    </string-array>
+    <string-array name="mouse_values">
+        <item>touchscreen</item>
+        <item>trackpad</item>
+    </string-array>
 </resources>

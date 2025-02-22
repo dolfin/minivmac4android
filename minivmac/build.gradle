@@ -12,7 +12,7 @@ android {
     defaultConfig {
         versionCode 52
 
-        minSdkVersion 24
+        minSdkVersion 21
         targetSdkVersion 34
 
         multiDexEnabled true

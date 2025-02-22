@@ -159,7 +159,7 @@ public class Core {
 	}
 	
 	// mouse
-	@SuppressWarnings("unused") private native static void moveMouse(int dx, int dy);
+	private native static void moveMouse(int dx, int dy);
 	private native static void setMousePos(int x, int y);
 	private native static void setMouseButton(boolean down);
 	@SuppressWarnings("unused") private native static int getMouseX();
@@ -172,6 +172,10 @@ public class Core {
 
 	public void setMouseBtn(Boolean down) {
 		setMouseButton(down);
+	}
+
+	public void setMoveMouse(int dx, int dy) {
+		moveMouse(dx, dy);
 	}
 	
 	// keyboard
