@@ -125,7 +125,7 @@ public class EmulatorFragment extends Fragment
 
         if (mEmulatorStarted) {
             // Release multicast lock
-            WifiManager wifi = (WifiManager) requireContext().getSystemService(Context.WIFI_SERVICE);
+            WifiManager wifi = (WifiManager) requireContext().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
             WifiManager.MulticastLock multicastLock = wifi.createMulticastLock("LToUDPMulticastLock");
             multicastLock.setReferenceCounted(true);
             if (multicastLock.isHeld())
@@ -138,7 +138,7 @@ public class EmulatorFragment extends Fragment
 
     private void initEmulator() {
         // Acquire multicast lock
-        WifiManager wifi = (WifiManager) requireContext().getSystemService(Context.WIFI_SERVICE);
+        WifiManager wifi = (WifiManager) requireContext().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         WifiManager.MulticastLock multicastLock = wifi.createMulticastLock("LToUDPMulticastLock");
         multicastLock.setReferenceCounted(true);
         multicastLock.acquire();
