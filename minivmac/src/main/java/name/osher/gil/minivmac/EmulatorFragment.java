@@ -105,6 +105,8 @@ public class EmulatorFragment extends Fragment
             }
         });
 
+        mScreenView.requestFocus();
+
         updateByPrefs();
 
         return root;
@@ -180,8 +182,13 @@ public class EmulatorFragment extends Fragment
 
             mScreenView.setOnMouseEventListener(new ScreenView.OnMouseEventListener() {
                 @Override
-                public void onMouseMove(int x, int y) {
+                public void onMousePosition(int x, int y) {
                     mCore.setMousePosition(x, y);
+                }
+
+                @Override
+                public void onMouseMove(int dx, int dy) {
+                    mCore.setMoveMouse(dx, dy);
                 }
 
                 @Override
@@ -191,6 +198,10 @@ public class EmulatorFragment extends Fragment
             });
 
             mTrackPadView.setOnMouseEventListener(new ScreenView.OnMouseEventListener() {
+                @Override
+                public void onMousePosition(int x, int y) {
+                    mCore.setMousePosition(x, y);
+                }
                 @Override
                 public void onMouseMove(int dx, int dy) {
                     mCore.setMoveMouse(dx, dy);

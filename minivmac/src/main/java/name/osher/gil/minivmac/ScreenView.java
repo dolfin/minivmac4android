@@ -6,6 +6,8 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import androidx.annotation.NonNull;
+
+import android.os.Build;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.view.*;
@@ -26,7 +28,9 @@ public class ScreenView extends View {
 
 		mScreenPaint = new Paint();
 		setScaled(false);
-	}
+
+		setFocusable(true);
+    }
 	
 	public ScreenView(Context context) {
 		super(context);
@@ -78,18 +82,75 @@ public class ScreenView extends View {
 	private int translateScreenYCoord(int y) {
 		return (int)(y / (mSrcRect.bottom / (double) mDstRect.height())) + mDstRect.top;
 	}
-	
+
+	@Override
 	protected void onDraw (Canvas canvas) {
 		if (mScreenBits != null) {
 			canvas.drawBitmap(mScreenBits, null, mDstRect, mScreenPaint);
 		}
 	}
-	
+
+	@Override
+	public void onWindowFocusChanged(boolean hasWindowFocus) {
+		super.onWindowFocusChanged(hasWindowFocus);
+		if (hasWindowFocus) {
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+				requestPointerCapture();
+			}
+		} else {
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+				releasePointerCapture();
+			}
+		}
+	}
+
+	@Override
 	public boolean onTouchEvent (@NonNull MotionEvent event) {
 		if (mListener != null &&
 				mDstRect.contains((int) event.getX(), (int) event.getY())) {
 			int[] macCoords;
 			macCoords = translateMouseCoords((int) event.getX(), (int) event.getY());
+			switch (event.getAction()) {
+				case MotionEvent.ACTION_DOWN:
+					mListener.onMousePosition(macCoords[0], macCoords[1]);
+					mListener.onMouseClick(true);
+					return true;
+				case MotionEvent.ACTION_MOVE:
+					mListener.onMousePosition(macCoords[0], macCoords[1]);
+					return true;
+				case MotionEvent.ACTION_CANCEL:
+					mListener.onMouseClick(false);
+					return true;
+				case MotionEvent.ACTION_UP:
+					mListener.onMousePosition(macCoords[0], macCoords[1]);
+					mListener.onMouseClick(false);
+					return true;
+			}
+		}
+		return super.onTouchEvent(event);
+	}
+
+	@Override
+    public boolean onGenericMotionEvent (MotionEvent event) {
+        if (mListener != null &&
+				event.getSource() == InputDevice.SOURCE_MOUSE) {
+            int[] macCoords;
+            macCoords = translateMouseCoords((int)event.getX(), (int)event.getY());
+
+			if (event.getAction() == MotionEvent.ACTION_HOVER_MOVE) {
+				mListener.onMousePosition(macCoords[0], macCoords[1]);
+				return true;
+			}
+        }
+
+        return super.onGenericMotionEvent(event);
+    }
+
+	@Override
+	public boolean onCapturedPointerEvent(MotionEvent event) {
+		if (mListener != null) {
+			int[] macCoords;
+			macCoords = translateMouseCoords((int)(event.getX() + mDstRect.left), (int)(event.getY() + mDstRect.top));
 			switch (event.getAction()) {
 				case MotionEvent.ACTION_DOWN:
 					mListener.onMouseMove(macCoords[0], macCoords[1]);
@@ -98,32 +159,14 @@ public class ScreenView extends View {
 				case MotionEvent.ACTION_MOVE:
 					mListener.onMouseMove(macCoords[0], macCoords[1]);
 					return true;
-				case MotionEvent.ACTION_CANCEL:
-					mListener.onMouseClick(false);
-					return true;
 				case MotionEvent.ACTION_UP:
 					mListener.onMouseMove(macCoords[0], macCoords[1]);
 					mListener.onMouseClick(false);
 					return true;
 			}
 		}
-		return super.onTouchEvent(event);
+		return super.onCapturedPointerEvent(event);
 	}
-
-    public boolean onGenericMotionEvent (MotionEvent event) {
-        if (mListener != null &&
-				event.getSource() == InputDevice.SOURCE_MOUSE) {
-            int[] macCoords;
-            macCoords = translateMouseCoords((int)event.getX(), (int)event.getY());
-
-			if (event.getAction() == MotionEvent.ACTION_HOVER_MOVE) {
-				mListener.onMouseMove(macCoords[0], macCoords[1]);
-				return true;
-			}
-        }
-
-        return super.onGenericMotionEvent(event);
-    }
 
 	private int[] translateMouseCoords(int x, int y) {
 		int[] coords = new int[2];
@@ -228,7 +271,8 @@ public class ScreenView extends View {
 	}
 
 	public interface OnMouseEventListener {
-		void onMouseMove(int x, int y);
+		void onMousePosition(int x, int y);
+		void onMouseMove(int dx, int dy);
 		void onMouseClick(boolean down);
 	}
 }
