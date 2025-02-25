@@ -44,6 +44,7 @@ jmethodID jSonyTransfer, jSonyGetSize, jSonyEject, jSonyGetName, jSonyMakeNewDis
 jmethodID jWarnMsg;
 jmethodID jInitScreen, jUpdateScreen;
 jmethodID jMySoundInit, jMySoundUnInit, jPlaySound, jMySoundStart, jMySoundStop;
+jmethodID jGetClipboardText, jSetClipboardText;
 jfieldID sInitOk;
 jobject mCore;
 
@@ -1038,6 +1039,84 @@ LOCALPROC CheckSavedMacMsg(void)
     }
 }
 
+/* --- clipboard --- */
+
+#if IncludeHostTextClipExchange
+LOCALVAR ui3p MyClipBuffer = NULL;
+#endif
+
+#if IncludeHostTextClipExchange
+LOCALPROC FreeMyClipBuffer(void)
+{
+    if (MyClipBuffer != NULL) {
+        free(MyClipBuffer);
+        MyClipBuffer = NULL;
+    }
+}
+#endif
+
+#if IncludeHostTextClipExchange
+GLOBALOSGLUFUNC tMacErr HTCEexport(tPbuf i)
+{
+    tMacErr err = mnvm_miscErr;
+
+    FreeMyClipBuffer();
+    if (MacRomanTextToNativePtr(i, falseblnr,
+                                &MyClipBuffer))
+    {
+        // Convert Pbuf to a JNI string
+        MacRomanTextToNativePtr(i, falseblnr, (ui3p *)&PbufDat[i]);
+        jstring text = (*jEnv)->NewStringUTF(jEnv, (char *)MyClipBuffer);
+        // Call Java method
+        (*jEnv)->CallVoidMethod(jEnv, mCore, jSetClipboardText, text);
+        (*jEnv)->DeleteLocalRef(jEnv, text);
+        err = mnvm_noErr;
+    }
+
+    PbufDispose(i);
+
+    return err;
+}
+#endif
+
+#if IncludeHostTextClipExchange
+LOCALPROC HTCEimport_do(void)
+{
+    // Call Java method to get clipboard text
+    jstring result = (jstring) (*jEnv)->CallObjectMethod(jEnv, mCore, jGetClipboardText);
+
+    if (result == NULL) {
+        /* error */
+    } else {
+        FreeMyClipBuffer();
+        // Convert Java string to C string
+        const char *clipboardText = (*jEnv)->GetStringUTFChars(jEnv, result, NULL);
+        size_t len = strlen(clipboardText);
+        MyClipBuffer = (ui3p) malloc(len + 1);
+        if (NULL == MyClipBuffer) {
+            MacMsg(kStrOutOfMemTitle,
+                   kStrOutOfMemMessage, falseblnr);
+        } else {
+            MyMoveBytes((anyp) clipboardText, (anyp) MyClipBuffer,
+                        (si5b) len);
+            MyClipBuffer[len] = 0;
+        }
+
+        (*jEnv)->ReleaseStringUTFChars(jEnv, result, clipboardText);
+        (*jEnv)->DeleteLocalRef(jEnv, result);
+    }
+}
+#endif
+
+#if IncludeHostTextClipExchange
+GLOBALOSGLUFUNC tMacErr HTCEimport(tPbuf *r)
+{
+    HTCEimport_do();
+
+    return NativeTextToMacRomanPbuf((char *)MyClipBuffer, r);
+}
+#endif
+
 #if 0
 #pragma mark -
 #pragma mark Emulation
@@ -1213,6 +1292,8 @@ LOCALPROC ZapOSGLUVars(JNIEnv * env, jclass this, jobject core)
     jMySoundUnInit = (*env)->GetMethodID(env, this, "MySound_UnInit", "()V");
     jMySoundStart = (*env)->GetMethodID(env, this, "MySound_Start", "()V");
     jMySoundStop = (*env)->GetMethodID(env, this, "MySound_Stop", "()V");
+    jGetClipboardText = (*env)->GetMethodID(env, this, "getClipboardText", "()Ljava/lang/String;");
+    jSetClipboardText = (*env)->GetMethodID(env, this, "setClipboardText", "(Ljava/lang/String;)V");
 
     // initialize fields
     jfieldID sDiskPath, sDiskFile, sNumInsertedDisks;

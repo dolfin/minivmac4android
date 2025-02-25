@@ -5,6 +5,8 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.DialogInterface;
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -19,6 +21,8 @@ public class Core {
 	private int numInsertedDisks = 0;
 	@SuppressWarnings("unused") private String[] diskPath;
 	@SuppressWarnings("unused") private RandomAccessFile[] diskFile;
+
+	private static ClipboardManager mClipboardManager;
 	private final boolean initOk = false;
 
 	private OnInitScreenListener mOnInitScreenListener;
@@ -414,6 +418,27 @@ public class Core {
 	
 	public boolean hasDisksInserted() {
 		return numInsertedDisks > 0;
+	}
+
+	public void initClipboardManager(ClipboardManager clipboardManager) {
+		mClipboardManager = clipboardManager;
+	}
+
+	public void setClipboardText(String text) {
+		if (mClipboardManager != null) {
+			ClipData clip = ClipData.newPlainText("CopiedText", text);
+			mClipboardManager.setPrimaryClip(clip);
+		}
+	}
+
+	public String getClipboardText() {
+		if (mClipboardManager != null && mClipboardManager.hasPrimaryClip()) {
+			ClipData clipData = mClipboardManager.getPrimaryClip();
+			if (clipData != null && clipData.getItemCount() > 0) {
+				return clipData.getItemAt(0).coerceToText(null).toString();
+			}
+		}
+		return null;
 	}
 
 	// warnings

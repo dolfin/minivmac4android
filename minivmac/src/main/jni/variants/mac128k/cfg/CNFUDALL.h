@@ -16,7 +16,7 @@
 #define WantAbnormalReports 0
 
 #define NumDrives 2
-#define NonDiskProtect 1
+#define NonDiskProtect 0
 #define IncludeSonyRawMode 1
 #define IncludeSonyGetName 1
 #define IncludeSonyNew 1
@@ -33,7 +33,7 @@
 
 #define EnableMouseMotion 1
 
-#define IncludeHostTextClipExchange 0
+#define IncludeHostTextClipExchange 1
 #define EnableAutoSlow 1
 #define EmLocalTalk 0
 #define AutoLocation 1

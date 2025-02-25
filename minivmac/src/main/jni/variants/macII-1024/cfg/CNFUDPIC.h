@@ -40,7 +40,7 @@
 
 #define MaxATTListN 20
 #define IncludeExtnPbufs 1
-#define IncludeExtnHostTextClipExchange 0
+#define IncludeExtnHostTextClipExchange 1
 
 #define Sony_SupportDC42 1
 #define Sony_SupportTags 0
