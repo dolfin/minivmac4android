@@ -719,6 +719,9 @@ public class EmulatorFragment extends Fragment
             case SettingsFragment.RESULT_INTERRUPT:
                 interrupt();
                 break;
+            case SettingsFragment.RESULT_POWEROFF:
+                powerOff();
+                break;
             case SettingsFragment.RESULT_ABOUT:
                 showAbout();
                 break;
@@ -750,6 +753,10 @@ public class EmulatorFragment extends Fragment
 
     public void interrupt() {
         mCore.wantMacInterrupt();
+    }
+
+    public void powerOff() {
+        mCore.forceMacOff();
     }
 }
 

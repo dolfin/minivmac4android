@@ -100,6 +100,7 @@
 	<string name="prefs_mouse_trackpad">Trackpad</string>
 	<string name="prefs_reset">Reset</string>
 	<string name="prefs_interrupt">Interrupt</string>
+	<string name="prefs_poweroff">Force Power Off</string>
 	<string name="pref_learn_title">Learn</string>
 	<string name="prefs_start">How to start&#8230;</string>
 	<string name="prefs_home">Visit our website&#8230;</string>

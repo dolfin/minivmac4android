@@ -32,12 +32,14 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 	public static final String KEY_PREF_SPEED = "pref_speed";
 	public static final String KEY_PREF_RESET = "pref_reset";
 	public static final String KEY_PREF_INTERRUPT = "pref_interrupt";
+	public static final String KEY_PREF_POWEROFF = "pref_poweroff";
 	public static final String KEY_PREF_WEBSITE_START = "pref_website_start";
 	public static final String KEY_PREF_WEBSITE = "pref_website";
 	public static final String KEY_PREF_ABOUT = "pref_about";
 
 	public static final int RESULT_RESET = 10;
 	public static final int RESULT_INTERRUPT = 20;
+	public static final int RESULT_POWEROFF =50;
 	public static final int RESULT_ABOUT = 30;
 
 	private static final String MAC_II_ROM_PREFIX = "MacII";
@@ -179,6 +181,16 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 			pref_interrupt.setEnabled(!romFile.startsWith(MAC_II_ROM_PREFIX) && Core.isInitialized());
 			pref_interrupt.setOnPreferenceClickListener(preference -> {
 				requireActivity().setResult(RESULT_INTERRUPT);
+				requireActivity().finish();
+				return true;
+			});
+		}
+
+		Preference pref_poweroff = findPreference( KEY_PREF_POWEROFF );
+		if (pref_poweroff != null) {
+			pref_poweroff.setEnabled(Core.isInitialized());
+			pref_poweroff.setOnPreferenceClickListener(preference -> {
+				requireActivity().setResult(RESULT_POWEROFF);
 				requireActivity().finish();
 				return true;
 			});

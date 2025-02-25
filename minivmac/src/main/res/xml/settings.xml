@@ -76,6 +76,10 @@
 			app:key="pref_interrupt"
 			app:title="@string/prefs_interrupt"
 			app:icon="@drawable/ic_interrupt" />
+		<Preference
+			app:key="pref_poweroff"
+			app:title="@string/prefs_poweroff"
+			app:icon="@drawable/ic_power" />
 	</PreferenceCategory>
     <PreferenceCategory
 		app:title="@string/pref_learn_title"
