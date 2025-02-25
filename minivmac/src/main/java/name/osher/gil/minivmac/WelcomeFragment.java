@@ -3,7 +3,6 @@ package name.osher.gil.minivmac;
 import android.content.ActivityNotFoundException;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,7 +16,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.AppCompatTextView;
 import androidx.fragment.app.Fragment;
-import androidx.preference.ListPreference;
+import androidx.preference.PreferenceManager;
 
 
 public class WelcomeFragment extends Fragment {
@@ -27,7 +26,7 @@ public class WelcomeFragment extends Fragment {
             uri -> {
                 RomManager romManager = new RomManager();
                 romManager.loadRom(requireContext(), uri, () -> {
-                    SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
+                    SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(requireContext());
 
                     // Update machine based on ROM file
                     String machine = getResources().getString(R.string.defaultModuleName);

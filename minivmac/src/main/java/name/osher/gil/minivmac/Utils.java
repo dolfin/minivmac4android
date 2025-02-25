@@ -83,6 +83,10 @@ public class Utils {
             int fileSize;
             try {
                 diskFile = context.getContentResolver().openInputStream(uri);
+                if (diskFile == null) {
+                    Log.e(TAG, String.format("Unable to open file: %s", uri));
+                    return;
+                }
                 fileSize = diskFile.available();
             } catch (IOException ex) {
                 // Unable to open Disk file.

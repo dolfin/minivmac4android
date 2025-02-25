@@ -14,7 +14,6 @@ import android.inputmethodservice.KeyboardView;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -25,18 +24,20 @@ import android.view.MotionEvent;
 import android.view.SubMenu;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.core.view.MenuCompat;
+import androidx.core.view.MenuHost;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
+import androidx.preference.PreferenceManager;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -70,7 +71,6 @@ public class EmulatorFragment extends Fragment
     private TrackPadView mTrackPadView;
     private ImageButton mFullScreenButton;
     private View mRestartLayout;
-    private Button mRestartButton;
     private String mLang;
     private boolean mIsTrackpad;
     private Boolean onActivity = false;
@@ -81,6 +81,7 @@ public class EmulatorFragment extends Fragment
     private Keyboard mSymbolsKeyboard;
     private Keyboard mSymbolsShiftedKeyboard;
     private Keyboard mNumpadKeyboard;
+    private MenuProvider mMenuProvider;
 
     private Core mCore;
     private Handler mUIHandler;
@@ -88,7 +89,6 @@ public class EmulatorFragment extends Fragment
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
     }
 
     @Override
@@ -100,8 +100,8 @@ public class EmulatorFragment extends Fragment
         mScreenView = root.findViewById(R.id.screen);
         mTrackPadView = root.findViewById(R.id.trackpad);
         mRestartLayout = root.findViewById(R.id.restart_layout);
-        mRestartButton = root.findViewById(R.id.restart_button);
-        mRestartButton.setOnClickListener(v -> initEmulator());
+        Button restartButton = root.findViewById(R.id.restart_button);
+        restartButton.setOnClickListener(v -> initEmulator());
         mKeyboardView = root.findViewById(R.id.keyboard);
         mUIHandler = new Handler(getMainLooper());
 
@@ -111,18 +111,113 @@ public class EmulatorFragment extends Fragment
             public void onClick(View v) {
                 ((MiniVMac)requireActivity()).toggleSystemUI();
                 if (((MiniVMac)requireActivity()).isUIVisible()) {
-                    mFullScreenButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_fullscreen));
+                    mFullScreenButton.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.ic_fullscreen, null));
                 } else {
-                    mFullScreenButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_fullscreen_exit));
+                    mFullScreenButton.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.ic_fullscreen_exit, null));
                 }
             }
         });
 
         mScreenView.requestFocus();
 
+        mMenuProvider = new MenuProvider() {
+            @Override
+            public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+                menuInflater.inflate(R.menu.minivmac_actions, menu);
+            }
+
+            @Override
+            public void onPrepareMenu(@NonNull Menu menu) {
+                // Populate disk group
+                SubMenu dm = menu.findItem(R.id.action_insert_disk).getSubMenu();
+                if (dm != null) {
+                    MenuCompat.setGroupDividerEnabled(dm, true);
+                    dm.removeGroup(R.id.disks_group);
+                    // add disks
+                    File[] disks = FileManager.getInstance().getAvailableDisks();
+                    for (int i = 0; disks != null && i < disks.length; i++) {
+                        String diskName = disks[i].getName();
+                        MenuItem m = dm.add(R.id.disks_group, diskName.hashCode(), i + 2, diskName.substring(0, diskName.lastIndexOf(".")));
+                        m.setEnabled(mCore == null || !mCore.isDiskInserted(disks[i]));
+                        m.setIcon(R.drawable.ic_disk_floppy);
+                    }
+                }
+
+                // Populate speed group
+                if (getActivity() != null) {
+                    SubMenu speedMenu = menu.findItem(R.id.action_speed).getSubMenu();
+                    if (speedMenu != null) {
+                        speedMenu.removeGroup(R.id.speed_group);
+
+                        String[] speedEntries = getResources().getStringArray(R.array.speed_entries);
+                        String[] speedValues = getResources().getStringArray(R.array.speed_values);
+
+                        for (int i = 0; i < speedEntries.length; i++) {
+                            MenuItem item = speedMenu.add(R.id.speed_group, Integer.parseInt(speedValues[i]), i, speedEntries[i]);
+                            item.setChecked(Core.getSpeed() == Integer.parseInt(speedValues[i]));
+                        }
+
+                        speedMenu.setGroupCheckable(R.id.speed_group, true, true);
+                    }
+                }
+            }
+
+            @Override
+            public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+                // Disk group
+                if (menuItem.getGroupId() == R.id.disks_group) {
+                    File[] disks = FileManager.getInstance().getAvailableDisks();
+                    if (disks != null) {
+                        for (File disk : disks) {
+                            if (disk.getName().hashCode() == menuItem.getItemId()) {
+                                mCore.insertDisk(disk);
+                                return true;
+                            }
+                        }
+                    }
+                    // disk not found
+                    return true;
+                }
+
+                // Speed group
+                if (menuItem.getGroupId() == R.id.speed_group) {
+                    Core.setSpeed(menuItem.getItemId());
+                    menuItem.setChecked(true);
+                    return true;
+                }
+
+                // Other actions
+                if (menuItem.getItemId() == R.id.action_keyboard) {
+                    toggleKeyboard();
+                    return true;
+                } else if (menuItem.getItemId() == R.id.action_manage_disks) {
+                    showDiskManager();
+                    return true;
+                } else if (menuItem.getItemId() == R.id.action_import_file) {
+                    showSelectDisk();
+                    return true;
+                } else if (menuItem.getItemId() == R.id.action_settings) {
+                    showSettings();
+                    return true;
+                }
+
+                return false;
+            }
+        };
+
+        MenuHost menuHost = requireActivity();
+        menuHost.addMenuProvider(mMenuProvider);
+
         updateByPrefs();
 
         return root;
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        MenuHost menuHost = requireActivity();
+        menuHost.removeMenuProvider(mMenuProvider);
     }
 
     @Override
@@ -174,7 +269,7 @@ public class EmulatorFragment extends Fragment
             romReader.close();
         } catch (Exception x) {
             Log.w(TAG, "Unable to load ROM file.", x);
-            SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
+            SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(requireContext());
             SharedPreferences.Editor edit = sharedPref.edit();
             edit.remove(SettingsFragment.KEY_PREF_ROM);
             edit.remove(SettingsFragment.KEY_PREF_ROM_FILE);
@@ -570,79 +665,6 @@ public class EmulatorFragment extends Fragment
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         initKeyboard(mLang);
-    }
-
-    public void onCreateOptionsMenu(@NonNull Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.minivmac_actions, menu);
-    }
-
-    public void onPrepareOptionsMenu(Menu menu) {
-        // Populate disk group
-        SubMenu dm = menu.findItem(R.id.action_insert_disk).getSubMenu();
-        MenuCompat.setGroupDividerEnabled(dm,true);
-        dm.removeGroup(R.id.disks_group);
-        // add disks
-        File[] disks = FileManager.getInstance().getAvailableDisks();
-        for (int i = 0; disks != null && i < disks.length; i++) {
-            String diskName = disks[i].getName();
-            MenuItem m = dm.add(R.id.disks_group, diskName.hashCode(), i+2, diskName.substring(0, diskName.lastIndexOf(".")));
-            m.setEnabled(mCore == null || !mCore.isDiskInserted(disks[i]));
-            m.setIcon(R.drawable.ic_disk_floppy);
-        }
-
-        // Populate speed group
-        SubMenu speedMenu = menu.findItem(R.id.action_speed).getSubMenu();
-
-        String[] speedEntries = getResources().getStringArray(R.array.speed_entries);
-        String[] speedValues = getResources().getStringArray(R.array.speed_values);
-
-        for (int i = 0; i < speedEntries.length; i++) {
-            MenuItem item = speedMenu.add(R.id.speed_group, Integer.parseInt(speedValues[i]), i, speedEntries[i]);
-            item.setChecked(Core.getSpeed() == Integer.parseInt(speedValues[i]));
-        }
-
-        speedMenu.setGroupCheckable(R.id.speed_group, true, true);
-    }
-
-    public boolean onOptionsItemSelected (MenuItem item) {
-        // Disk group
-        if (item.getGroupId() == R.id.disks_group) {
-            File[] disks = FileManager.getInstance().getAvailableDisks();
-            if (disks != null) {
-                for (File disk : disks) {
-                    if (disk.getName().hashCode() == item.getItemId()) {
-                        mCore.insertDisk(disk);
-                        return true;
-                    }
-                }
-            }
-            // disk not found
-            return true;
-        }
-
-        // Speed group
-        if (item.getGroupId() == R.id.speed_group) {
-            Core.setSpeed(item.getItemId());
-            item.setChecked(true);
-            return true;
-        }
-
-        // Other actions
-        switch(item.getItemId()) {
-            case R.id.action_keyboard:
-                toggleKeyboard();
-                break;
-            case R.id.action_manage_disks:
-                showDiskManager();
-                break;
-            case R.id.action_import_file:
-                showSelectDisk();
-                break;
-            case R.id.action_settings:
-                showSettings();
-                break;
-        }
-        return super.onOptionsItemSelected(item);
     }
 
     private void showAbout() {

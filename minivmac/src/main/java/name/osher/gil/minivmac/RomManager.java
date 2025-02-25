@@ -74,7 +74,7 @@ public class RomManager {
 
     public void loadRom(Context context, Uri romUri, Runnable onSuccess) {
         if (romUri != null) {
-            Log.i(TAG, String.format("Selected ROM file: %s", romUri.toString()));
+            Log.i(TAG, String.format("Selected ROM file: %s", romUri));
 
             InputStream romFile;
             InputStream romFileForValidation;
@@ -149,12 +149,12 @@ public class RomManager {
         try {
             checksum = calculateChecksum(romFile, callback);
             if (checksum < 0) {
-                Log.w(TAG, String.format("Invalid ROM file"));
+                Log.w(TAG, "Invalid ROM file");
                 return INVALID_CHECKSUM;
             }
         } catch (IOException ex) {
             // Unable to validate ROM file.
-            Log.e(TAG, String.format("Unable to validate ROM file"), ex);
+            Log.e(TAG, "Unable to validate ROM file", ex);
             return INVALID_CHECKSUM;
         }
 
@@ -183,7 +183,7 @@ public class RomManager {
             FileManager.getInstance().copy(romFile, dst, callback);
         } catch (IOException ex) {
             // Unable to copy ROM
-            Log.e(TAG, String.format("Unable to copy ROM file"), ex);
+            Log.e(TAG, "Unable to copy ROM file", ex);
             return false;
         }
 
@@ -213,7 +213,7 @@ public class RomManager {
 
         int b1 = 0, b2 = 0;
         for (i = 0; (b1 = romFile.read()) != -1 && (b2 = romFile.read()) != -1 && totalBytesCopied < getRomSize(); i++) {
-            calculatedChecksum += (b1 << 8) | b2;
+            calculatedChecksum += ((long) b1 << 8) | b2;
 
             totalBytesCopied += 2;
             int progress = (int) totalBytesCopied;

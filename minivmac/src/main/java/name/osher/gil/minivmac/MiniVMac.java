@@ -8,13 +8,12 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.core.app.ActivityCompat;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.view.GestureDetectorCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.Fragment;
+import androidx.preference.PreferenceManager;
 
-import android.preference.PreferenceManager;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -28,13 +27,13 @@ public class MiniVMac extends AppCompatActivity
 	private Fragment _currentFragment;
 
 	private boolean mUIVisible = true;
-	private GestureDetectorCompat mGestureDetector;
+	private GestureDetector mGestureDetector;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		mGestureDetector = new GestureDetectorCompat(this, new MiniVMac.SingleTapGestureListener());
+		mGestureDetector = new GestureDetector(this, new MiniVMac.SingleTapGestureListener());
 
 		// Check that the the file-system is readable
 		if (!FileManager.getInstance().init(this)) {

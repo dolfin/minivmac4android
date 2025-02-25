@@ -130,7 +130,7 @@ public class FileManager {
                 return false;
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, "makeNewDisk: IO Exception", e);
             handleError(null, R.string.errGeneral, progressHandler);
             return false;
         }
@@ -139,7 +139,7 @@ public class FileManager {
         try {
             writer = new FileOutputStream(disk);
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            Log.e(TAG, "makeNewDisk: File not found", e);
             handleError(disk, R.string.errGeneral, progressHandler);
             return false;
         }
@@ -221,13 +221,10 @@ public class FileManager {
     public String getFileName(Uri uri) {
         String result = null;
         if (uri.getScheme().equals("content")) {
-            Cursor cursor = mContentResolver.query(uri, null, null, null, null);
-            try {
+            try (Cursor cursor = mContentResolver.query(uri, null, null, null, null)) {
                 if (cursor != null && cursor.moveToFirst()) {
                     result = cursor.getString(cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME));
                 }
-            } finally {
-                cursor.close();
             }
         }
         if (result == null) {

@@ -27,7 +27,7 @@ public class TrackPadView extends View {
     private boolean isDragging = false;
     private boolean didForceClick = false;
     // In Android, force touch isn’t widely supported so we leave this false.
-    private boolean supportsForceTouch = false;
+    private final boolean supportsForceTouch = false;
 
     // Track active pointer IDs
     private final Set<Integer> currentTouches = new HashSet<>();

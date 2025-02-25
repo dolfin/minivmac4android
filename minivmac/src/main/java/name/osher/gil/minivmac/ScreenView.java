@@ -84,7 +84,7 @@ public class ScreenView extends View {
 	}
 
 	@Override
-	protected void onDraw (Canvas canvas) {
+	protected void onDraw (@NonNull Canvas canvas) {
 		if (mScreenBits != null) {
 			canvas.drawBitmap(mScreenBits, null, mDstRect, mScreenPaint);
 		}
@@ -134,8 +134,8 @@ public class ScreenView extends View {
     public boolean onGenericMotionEvent (MotionEvent event) {
         if (mListener != null &&
 				event.getSource() == InputDevice.SOURCE_MOUSE) {
-            int[] macCoords;
-            macCoords = translateMouseCoords((int)event.getX(), (int)event.getY());
+			int[] macCoords;
+			macCoords = translateMouseCoords((int)event.getX(), (int)event.getY());
 
 			if (event.getAction() == MotionEvent.ACTION_HOVER_MOVE) {
 				mListener.onMousePosition(macCoords[0], macCoords[1]);

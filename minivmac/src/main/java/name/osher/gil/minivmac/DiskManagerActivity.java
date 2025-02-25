@@ -116,6 +116,10 @@ public class DiskManagerActivity extends AppCompatActivity {
                 Log.e(TAG, String.format("showShareDialog: Invalid position %d", selectedDiskImage), ex);
                 return;
             }
+            if (di == null) {
+                Log.e(TAG, String.format("showShareDialog: DiskImage at position %d is null", selectedDiskImage));
+                return;
+            }
             File file = di.getFile();
             String name = di.getName();
 
@@ -141,6 +145,10 @@ public class DiskManagerActivity extends AppCompatActivity {
                 di = _adapter.getItem(selectedDiskImage);
             } catch (IndexOutOfBoundsException ex) {
                 Log.e(TAG, String.format("removeDiskDialog: Invalid position %d", selectedDiskImage), ex);
+                return;
+            }
+            if (di == null) {
+                Log.e(TAG, String.format("removeDiskDialog: DiskImage at position %d is null", selectedDiskImage));
                 return;
             }
 
@@ -213,10 +221,16 @@ public class DiskManagerActivity extends AppCompatActivity {
             super(context, 0);
         }
 
+        @NonNull
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
+        public View getView(int position, View convertView, @NonNull ViewGroup parent) {
             // Get the data item for this position
             DiskImage di = getItem(position);
+            if (di == null) {
+                Log.e(TAG, String.format("getView: DiskImage at position %d is null", position));
+                return convertView;
+            }
+
             // Check if an existing view is being reused, otherwise inflate the view
             if (convertView == null) {
                 convertView = LayoutInflater.from(getContext()).inflate(R.layout.simple_list_item_2_single_choice, parent, false);

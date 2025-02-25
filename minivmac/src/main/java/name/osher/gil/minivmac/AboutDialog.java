@@ -36,9 +36,9 @@ public class AboutDialog extends Dialog {
         	return;
         }
 		if (showBuild) {
-			versionText.setText(ctx.getString(R.string.build) + " " + pi.versionCode);
+			versionText.setText(String.format(ctx.getString(R.string.build), pi.versionCode));
 		} else {
-			versionText.setText(ctx.getString(R.string.version) + " " + pi.versionName);
+			versionText.setText(String.format(ctx.getString(R.string.version), pi.versionName));
 		}
 		this.showBuild = showBuild;
 	}
