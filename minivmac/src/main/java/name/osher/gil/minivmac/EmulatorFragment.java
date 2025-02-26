@@ -748,15 +748,21 @@ public class EmulatorFragment extends Fragment
     }
 
     public void reset() {
-        mCore.wantMacReset();
+        if (mCore != null) {
+            mCore.wantMacReset();
+        }
     }
 
     public void interrupt() {
-        mCore.wantMacInterrupt();
+        if (mCore != null) {
+            mCore.wantMacInterrupt();
+        }
     }
 
     public void powerOff() {
-        mCore.forceMacOff();
+        if (mCore != null) {
+            mCore.forceMacOff();
+        }
     }
 }
 

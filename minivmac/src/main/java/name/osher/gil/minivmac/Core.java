@@ -23,7 +23,7 @@ public class Core {
 	@SuppressWarnings("unused") private RandomAccessFile[] diskFile;
 
 	private static ClipboardManager mClipboardManager;
-	private final boolean initOk = false;
+	@SuppressWarnings("FieldMayBeFinal") private boolean initOk = false;
 
 	private OnInitScreenListener mOnInitScreenListener;
 	private OnUpdateScreenListener mOnUpdateScreenListener;
@@ -99,18 +99,18 @@ public class Core {
 
 	public void wantMacReset() {
 		if (!initOk) return;
-		setWantMacReset();
-	}
+			setWantMacReset();
+		}
 
 	public void wantMacInterrupt() {
 		if (!initOk) return;
-		setWantMacInterrupt();
-	}
+			setWantMacInterrupt();
+		}
 
 	public void requestMacOff() {
 		if (!initOk) return;
-		setRequestMacOff();
-	}
+			setRequestMacOff();
+		}
 
 	public void forceMacOff() {
 		// eject all disks
