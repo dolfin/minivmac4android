@@ -23,3 +23,4 @@ LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/jni/cfg \
 
 LOCAL_LDLIBS := -llog
+LOCAL_CFLAGS += -O0
