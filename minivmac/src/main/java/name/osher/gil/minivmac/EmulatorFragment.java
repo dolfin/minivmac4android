@@ -81,6 +81,7 @@ public class EmulatorFragment extends Fragment
     private Keyboard mSymbolsKeyboard;
     private Keyboard mSymbolsShiftedKeyboard;
     private Keyboard mNumpadKeyboard;
+    private ClipboardManager mClipboardManager;
     private MenuProvider mMenuProvider;
 
     private Core mCore;
@@ -104,6 +105,8 @@ public class EmulatorFragment extends Fragment
         restartButton.setOnClickListener(v -> initEmulator());
         mKeyboardView = root.findViewById(R.id.keyboard);
         mUIHandler = new Handler(getMainLooper());
+
+        mClipboardManager = (ClipboardManager) requireContext().getSystemService(Context.CLIPBOARD_SERVICE);
 
         mFullScreenButton = root.findViewById(R.id.toggle_ui_button);
         mFullScreenButton.setOnClickListener(new View.OnClickListener() {
@@ -375,8 +378,7 @@ public class EmulatorFragment extends Fragment
                 }
             });
 
-            ClipboardManager clipboard = (ClipboardManager) requireContext().getSystemService(Context.CLIPBOARD_SERVICE);
-            mCore.initClipboardManager(clipboard);
+            mCore.initClipboardManager(mClipboardManager);
 
             mUIHandler.post(() -> mRestartLayout.setVisibility(View.GONE));
 
