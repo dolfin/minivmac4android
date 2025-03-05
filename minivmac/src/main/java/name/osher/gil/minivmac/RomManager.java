@@ -119,7 +119,7 @@ public class RomManager {
                 handler.post(validateProgressDialog::dismiss);
 
                 // Copy ROM
-                if (checksum != RomManager.INVALID_CHECKSUM) {
+                if (checksum != RomManager.INVALID_CHECKSUM && _romFileNames.containsKey((int)checksum)) {
                     handler.post(() -> {
                         copyProgressDialog.setTitle(R.string.copyingRom);
                         copyProgressDialog.show();

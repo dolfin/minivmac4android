@@ -426,7 +426,7 @@ public class Core {
 
 	public void setClipboardText(String text) {
 		if (mClipboardManager != null) {
-			ClipData clip = ClipData.newPlainText("CopiedText", text);
+			ClipData clip = ClipData.newPlainText("Mini vMac Clipboard", text);
 			mClipboardManager.setPrimaryClip(clip);
 		}
 	}

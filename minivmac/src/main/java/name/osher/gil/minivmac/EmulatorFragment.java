@@ -141,7 +141,7 @@ public class EmulatorFragment extends Fragment
                     for (int i = 0; disks != null && i < disks.length; i++) {
                         String diskName = disks[i].getName();
                         MenuItem m = dm.add(R.id.disks_group, diskName.hashCode(), i + 2, diskName.substring(0, diskName.lastIndexOf(".")));
-                        m.setEnabled(mCore == null || !mCore.isDiskInserted(disks[i]));
+                        m.setEnabled(mCore != null && !mCore.isDiskInserted(disks[i]));
                         m.setIcon(R.drawable.ic_disk_floppy);
                     }
                 }
@@ -173,7 +173,9 @@ public class EmulatorFragment extends Fragment
                     if (disks != null) {
                         for (File disk : disks) {
                             if (disk.getName().hashCode() == menuItem.getItemId()) {
-                                mCore.insertDisk(disk);
+                                if (mCore != null) {
+                                    mCore.insertDisk(disk);
+                                }
                                 return true;
                             }
                         }
@@ -282,8 +284,6 @@ public class EmulatorFragment extends Fragment
             return;
         }
 
-        requireActivity().invalidateOptionsMenu();
-
         Thread emulation = new Thread(() -> {
             mCore = new Core();
 
@@ -380,7 +380,10 @@ public class EmulatorFragment extends Fragment
 
             mCore.initClipboardManager(mClipboardManager);
 
-            mUIHandler.post(() -> mRestartLayout.setVisibility(View.GONE));
+            mUIHandler.post(() -> {
+                mRestartLayout.setVisibility(View.GONE);
+                requireActivity().invalidateOptionsMenu();
+            });
 
             // Start the emulation
             mCore.initEmulation(rom);
@@ -527,7 +530,9 @@ public class EmulatorFragment extends Fragment
         private void resetShift() {
             Keyboard.Key shiftKey = getKey(KEYCODE_MAC_SHIFT);
             if (shiftKey != null && shiftKey.on) {
-                mCore.keyUp(KEYCODE_MAC_SHIFT);
+                if (mCore != null) {
+                    mCore.keyUp(KEYCODE_MAC_SHIFT);
+                }
                 shiftKey.on = false;
             }
         }
@@ -619,7 +624,7 @@ public class EmulatorFragment extends Fragment
         }
 
         int macKey = translateKeyCode(keyCode);
-        if (macKey >= 0) {
+        if (mCore != null && macKey >= 0) {
             mCore.keyDown(macKey);
             return true;
         }
@@ -641,7 +646,7 @@ public class EmulatorFragment extends Fragment
     @Override
     public boolean onKeyUp (int keyCode, @NonNull KeyEvent event) {
         int macKey = translateKeyCode(keyCode);
-        if (macKey >= 0) {
+        if (mCore != null && macKey >= 0) {
             mCore.keyUp(macKey);
             return true;
         }
@@ -692,7 +697,9 @@ public class EmulatorFragment extends Fragment
         Utils.loadFileWithProgressBar(requireContext(), uri, new IAsyncCopyCallback() {
             @Override
             public void onSuccessfulCopy(File file) {
-                mCore.insertDisk(file);
+                if (mCore != null) {
+                    mCore.insertDisk(file);
+                }
             }
         });
     });

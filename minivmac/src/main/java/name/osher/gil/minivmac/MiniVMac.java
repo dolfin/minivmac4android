@@ -57,7 +57,7 @@ public class MiniVMac extends AppCompatActivity
 		getSupportFragmentManager()
 				.beginTransaction()
 				.replace(android.R.id.content, _currentFragment)
-				.commit();
+				.commitAllowingStateLoss();
 	}
 
 	public void showEmulator() {
@@ -65,7 +65,7 @@ public class MiniVMac extends AppCompatActivity
 		getSupportFragmentManager()
 				.beginTransaction()
 				.replace(android.R.id.content, _currentFragment)
-				.commit();
+				.commitAllowingStateLoss();
 	}
 
 	/*
